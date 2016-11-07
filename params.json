@@ -1,0 +1,6 @@
+{
+  "name": "Mile",
+  "tagline": "Mapic Tile Server ",
+  "body": "# Mapic Tileserver\r\n\r\n\r\n## Install\r\nSee [mapic/mapic](https://github.com/mapic/mapic) for installation instructions.\r\n\r\n\r\n## Testing\r\n\r\nTests are meant to be run from within the docker appropriately\r\nstarted with all links expected from the mapic docker\r\nconfiguration.\r\n\r\nInside the Docker container, tests are run using:\r\n\r\n```sh\r\n npm test\r\n````\r\n\r\n\r\n## Licence\r\nMapic is built entirely open source. We believe in a collaborative environment for creating strong solutions for an industry that is constantly moving. The Mapic platform is open for anyone to use and contribute to, which makes it an ideal platform for government organisations as well as NGO's and for-profit businesses.\r\n\r\nMapic is licenced under the [GPLv3 licence](https://github.com/mapic/mapic/blob/master/LICENCE.md)\r\n\r\n## Contributors\r\n- [Jørgen Evil Ekvoll](https://github.com/jorgenevil)\r\n- [Magdalini Fotiadou](https://github.com/mft74)\r\n- [Sandro Santilli](https://github.com/strk)\r\n- [Knut Ole Sjøli](https://github.com/knutole)\r\n- [Shahjada Talukdar](https://github.com/destromas1)\r\n- [Igor Ziegler](https://github.com/igorziegler)\r\n",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
