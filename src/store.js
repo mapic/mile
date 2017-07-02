@@ -12,7 +12,6 @@ var mapnik = require('mapnik');
 var colors = require('colors');
 var cluster = require('cluster');
 var numCPUs = require('os').cpus().length;
-// var mongoose = require('mongoose');
 var request = require('request');
 
 // global paths
@@ -30,6 +29,10 @@ var pile_settings = {
 var silentLog = function (err) {
 	if (err) console.log(err);
 }
+
+var REDIS_LAYERS_HOST = 'mapic_stream.redislayers.docker'; // config.redis.layers.host
+var REDIS_TEMP_HOST = 'http://mapic_stream.redistemp.docker'; // config.redis.temp.host
+var REDIS_STATS_HOST = 'http://mapic_stream.redisstats.docker'; // config.redis.stats.host
 
 var redisLayers = redis.createClient(config.redis.layers.port, config.redis.layers.host, {detect_buffers : true});
 redisLayers.auth(config.redis.layers.auth);
@@ -52,8 +55,8 @@ redisTemp.flushdb(silentLog);
 module.exports = store = { 
 
 	layers : redisLayers,
-	temp : redisTemp,
-	stats : redisStats,
+	temp   : redisTemp,
+	stats  : redisStats,
 
 
 	// save tiles generically
