@@ -8,8 +8,12 @@ See [mapic/mapic](https://github.com/mapic/mapic) for installation instructions.
 Mapic Tileserver uses [PostGIS](http://www.postgis.net/) under the hood for data storage. It can therefore can accept any PostGIS supported format, and can be easily modified to support other output formats.
 
 #### Input sources
-- [x] PostGIS
-- [x] Any format, incl. `GeoTIFF`, `GeoJSON`, `TopoJSON`, `Shapefile`
+- [x] `GeoTIFF`
+- [x] `GeoJSON`
+- [x] `TopoJSON`
+- [x] `Shapefile`
+- [x] `ECW`
+- [ ] Any PostGIS format can be included, request yours!
 
 #### Output formats
 - [x] Raster tiles (combined with [CartoCSS](https://carto.com/docs/carto-engine/cartocss/) stylesheet)
