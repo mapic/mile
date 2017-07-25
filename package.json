@@ -60,8 +60,6 @@
   "scripts": {
     "test": "mocha test/*test.js --recursive",
     "start": "node server.js",
-    "snyk-protect": "snyk protect",
-    "prepublish": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
