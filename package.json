@@ -59,7 +59,7 @@
   },
   "scripts": {
     "test": "mocha test/*test.js --recursive",
-    "start": "node server.js",
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",
