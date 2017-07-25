@@ -32,21 +32,60 @@ var silentLog = function (err) {
 }
 
 var redisLayers = redis.createClient(config.redis.layers.port, config.redis.layers.host, {detect_buffers : true});
-redisLayers.auth(config.redis.layers.auth);
 redisLayers.on('error', silentLog);
-redisLayers.select(config.redis.layers.db, silentLog)
 
 var redisTemp = redis.createClient(config.redis.temp.port, config.redis.temp.host);
-redisTemp.auth(config.redis.temp.auth);
 redisTemp.on('error', silentLog);
-redisTemp.select(config.redis.temp.db, silentLog);
-redisTemp.flushdb(silentLog);
 
 var redisStats = redis.createClient(config.redis.stats.port, config.redis.stats.host);
-redisStats.auth(config.redis.stats.auth);
 redisStats.on('error', silentLog);
-redisStats.select(config.redis.stats.db, silentLog)
-redisTemp.flushdb(silentLog);
+
+function redisLayersAuth () {
+    redisLayers.auth(config.redis.layers.auth, function (err) {
+        if (err) {
+            console.log('redisLayers auth error: ', err);
+            console.log('Retrying...')
+            setTimeout(redisLayersAuth, 500);
+        } else {    
+            console.log('Redis Layers authenticated OK')
+			redisLayers.select(config.redis.layers.db, silentLog)
+
+        }
+    });
+}
+function redisTempAuth () {
+    redisTemp.auth(config.redis.temp.auth, function (err) {
+        if (err) {
+            console.log('redisTemp auth error: ', err);
+            console.log('Retrying...')
+            setTimeout(redisTempAuth, 500);
+        } else {    
+            console.log('Redis Temp authenticated OK')
+			redisTemp.select(config.redis.temp.db, silentLog);
+			redisTemp.flushdb(silentLog);
+
+
+        }
+    });
+}
+function redisStatsAuth () {
+    redisStats.auth(config.redis.stats.auth, function (err) {
+        if (err) {
+            console.log('redisStats auth error: ', err);
+            console.log('Retrying...')
+            setTimeout(redisStatsAuth, 500);
+        } else {    
+            console.log('Redis Stats authenticated OK')
+			redisStats.select(config.redis.stats.db, silentLog)
+			redisStats.flushdb(silentLog);
+        }
+    });
+}
+
+// auth with automatic retry
+redisLayersAuth();
+redisStatsAuth();
+redisTempAuth();
 
 
 module.exports = store = { 
