@@ -16,7 +16,7 @@ var request = require('request');
 
 // config
 // var config = require('../config/wu-config');
-var config = require(process.env.PILE_CONFIG_PATH || '../../config/pile-config');
+var config = require(process.env.PILE_CONFIG_PATH || '/mapic/config/mile.config.js');
 
 
 // redis store for temp tokens and upload increments
@@ -58,6 +58,10 @@ if (whichRedis == 'temp') {
 }
 
 r.select(2, function () {
+
+    r.info(function (err, info) {
+        console.log('info:', err, info);
+    })
     
 
     var key = searchKeys ? searchKeys + '*' : '*';
