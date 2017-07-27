@@ -21,8 +21,8 @@ cd /mapic/mile
 # spin server
 if $MAPIC_PRODMODE; then
 	echo 'Mile | PostGIS Tile Server | Production mode'
-	forever src/pile.js production >> log/pile.log
+	forever src/mile.js production >> log/mile.log
 else
 	echo 'Mile Debug mode (with 8GB memory)'
-	nodemon --max-old-space-size=8192 -i node_modules/ -i test/ src/pile.js
+	nodemon --max-old-space-size=8192 -i node_modules/ -i test/ src/mile.js
 fi
