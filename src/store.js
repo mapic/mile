@@ -23,171 +23,135 @@ var GRIDPATH     = '/data/grid_tiles/';
 // config
 var config = global.config;
 
-var pile_settings = {
-	store : 'disk' // or redis
+var mile_settings = {
+    store : 'disk' // or redis
 }
 
 var silentLog = function (err) {
-	if (err) console.log(err);
+    if (err) console.log(err);
 }
 
-var redisLayers = redis.createClient(config.redis.layers.port, config.redis.layers.host, {detect_buffers : true});
-redisLayers.on('error', silentLog);
+var MAPIC_REDIS_AUTH = process.env.MAPIC_REDIS_AUTH;
+var MAPIC_REDIS_PORT = process.env.MAPIC_REDIS_PORT || 6379;
+var MAPIC_REDIS_DB   = process.env.MAPIC_REDIS_DB || 1;
 
-var redisTemp = redis.createClient(config.redis.temp.port, config.redis.temp.host);
-redisTemp.on('error', silentLog);
+var redis_instances = {};
+_.each(['redisLayers', 'redisStats', 'redisTemp'], function (i) {
+    
+    // connect redis
+    redis_instances[i] = redis.createClient(MAPIC_REDIS_PORT, _.toLower(i), {detect_buffers : true});
 
-var redisStats = redis.createClient(config.redis.stats.port, config.redis.stats.host);
-redisStats.on('error', silentLog);
-
-function redisLayersAuth () {
-    redisLayers.auth(config.redis.layers.auth, function (err) {
-        if (err) {
-            console.log('redisLayers auth error: ', err);
-            console.log('Retrying...')
-            setTimeout(redisLayersAuth, 500);
-        } else {    
-            console.log('Redis Layers authenticated OK')
-			redisLayers.select(config.redis.layers.db, silentLog)
-
-        }
+    // auth redis
+    async.retry({times: 10, interval: 2000}, connectRedis.bind(this, i), function (err, results) {
+        redis_instances[i].on('error', silentLog);
+        redis_instances[i].select(MAPIC_REDIS_DB, silentLog)
+        console.log('Connected to', i);
     });
+});
+function connectRedis (i, callback) {
+    redis_instances[i].auth(MAPIC_REDIS_AUTH, callback)
 }
-function redisTempAuth () {
-    redisTemp.auth(config.redis.temp.auth, function (err) {
-        if (err) {
-            console.log('redisTemp auth error: ', err);
-            console.log('Retrying...')
-            setTimeout(redisTempAuth, 500);
-        } else {    
-            console.log('Redis Temp authenticated OK')
-			redisTemp.select(config.redis.temp.db, silentLog);
-			redisTemp.flushdb(silentLog);
-
-
-        }
-    });
-}
-function redisStatsAuth () {
-    redisStats.auth(config.redis.stats.auth, function (err) {
-        if (err) {
-            console.log('redisStats auth error: ', err);
-            console.log('Retrying...')
-            setTimeout(redisStatsAuth, 500);
-        } else {    
-            console.log('Redis Stats authenticated OK')
-			redisStats.select(config.redis.stats.db, silentLog)
-			redisStats.flushdb(silentLog);
-        }
-    });
-}
-
-// auth with automatic retry
-redisLayersAuth();
-redisStatsAuth();
-redisTempAuth();
 
 
 module.exports = store = { 
 
-	layers : redisLayers,
-	temp : redisTemp,
-	stats : redisStats,
+    layers : redis_instances['redisLayers'],
+    temp : redis_instances['redisTemp'],
+    stats : redis_instances['redisStats'],
 
-
-	// save tiles generically
-	_saveVectorTile : function (tile, params, done) {
-		if (pile_settings.store == 'redis') return store._saveVectorTileRedis(tile, params, done);
-		if (pile_settings.store == 'disk')  return store._saveVectorTileDisk(tile, params, done);
-		return done('pile_settings.store not set!');
-	},
-	_readVectorTile : function (params, done) {
-		if (pile_settings.store == 'redis') return store._readVectorTileRedis(params, done);
-		if (pile_settings.store == 'disk')  return store._readVectorTileDisk(params, done);
-		return done('pile_settings.store not set!');
-	},
-	_saveRasterTile : function (tile, params, done) {
-		if (pile_settings.store == 'redis') return store._saveRasterTileRedis(tile, params, done);
-		if (pile_settings.store == 'disk')  return store._saveRasterTileDisk(tile, params, done);
-		return done('pile_settings.store not set!');
-	},
-	_readRasterTile : function (params, done) {
-		if (pile_settings.store == 'redis') return store._readRasterTileRedis(params, done);
-		if (pile_settings.store == 'disk')  return store._readRasterTileDisk(params, done);
-		return done('pile_settings.store not set!');
-	},
-
-
+    // save tiles generically
+    _saveVectorTile : function (tile, params, done) {
+        if (mile_settings.store == 'redis') return store._saveVectorTileRedis(tile, params, done);
+        if (mile_settings.store == 'disk')  return store._saveVectorTileDisk(tile, params, done);
+        return done('mile_settings.store not set!');
+    },
+    _readVectorTile : function (params, done) {
+        if (mile_settings.store == 'redis') return store._readVectorTileRedis(params, done);
+        if (mile_settings.store == 'disk')  return store._readVectorTileDisk(params, done);
+        return done('mile_settings.store not set!');
+    },
+    _saveRasterTile : function (tile, params, done) {
+        if (mile_settings.store == 'redis') return store._saveRasterTileRedis(tile, params, done);
+        if (mile_settings.store == 'disk')  return store._saveRasterTileDisk(tile, params, done);
+        return done('mile_settings.store not set!');
+    },
+    _readRasterTile : function (params, done) {
+        if (mile_settings.store == 'redis') return store._readRasterTileRedis(params, done);
+        if (mile_settings.store == 'disk')  return store._readRasterTileDisk(params, done);
+        return done('mile_settings.store not set!');
+    },
 
 
 
 
-	// read/write to redis
-	_saveVectorTileRedis : function (tile, params, done) {
-		// save png to redis
-		var keyString = 'vector_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
-		var key = new Buffer(keyString);
-		store.layers.set(key, tile.getData(), done);
-	},
-	_readVectorTileRedis : function (params, done) {
-		var keyString = 'vector_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
-		var key = new Buffer(keyString);
-		store.layers.get(key, done);
-	},
-	_saveRasterTileRedis : function (tile, params, done) {
-		// save png to redis
-		var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
-		var key = new Buffer(keyString);
-		store.layers.set(key, tile.encodeSync('png'), done);
-	},
-	_readRasterTileRedis : function (params, done) {
-		var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
-		var key = new Buffer(keyString);
-		store.layers.get(key, done);
-	},
-
-	
 
 
+    // read/write to redis
+    _saveVectorTileRedis : function (tile, params, done) {
+        // save png to redis
+        var keyString = 'vector_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
+        var key = new Buffer(keyString);
+        store.layers.set(key, tile.getData(), done);
+    },
+    _readVectorTileRedis : function (params, done) {
+        var keyString = 'vector_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
+        var key = new Buffer(keyString);
+        store.layers.get(key, done);
+    },
+    _saveRasterTileRedis : function (tile, params, done) {
+        // save png to redis
+        var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
+        var key = new Buffer(keyString);
+        store.layers.set(key, tile.encodeSync('png'), done);
+    },
+    _readRasterTileRedis : function (params, done) {
+        var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
+        var key = new Buffer(keyString);
+        store.layers.get(key, done);
+    },
 
-	// read/write to disk
-	_saveVectorTileDisk : function (tile, params, done) {
-		var keyString = 'vector_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.pbf';
-		var path = VECTORPATH + keyString;
-		fs.outputFile(path, tile.getData(), done);
-	},
-	_readVectorTileDisk : function (params, done) {
-		var keyString = 'vector_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.pbf';
-		var path = VECTORPATH + keyString;
-		fs.readFile(path, function (err, buffer) {
-			if (err) return done(null);
-			done(null, buffer);
-		});
-	},
-	_saveRasterTileDisk : function (tile, params, done) {
-		var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
-		var path = RASTERPATH + keyString;
-		tile.encode('png8', function (err, buffer) {
-			fs.outputFile(path, buffer, function (err) {
-				done(null);
-			});
-		});
-	},
-	_readRasterTileDisk : function (params, done) {
-		var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
-		var path = RASTERPATH + keyString;
-		fs.readFile(path, function (err, buffer) {
-			if (err) return done(null);
-			done(null, buffer);
-		});
-	},
+    
 
 
-	// get grid tiles from redis
-	getGridTile : function (params, done) {
-		var keyString = 'grid_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
-		store.layers.get(keyString, done);
-	},
+
+    // read/write to disk
+    _saveVectorTileDisk : function (tile, params, done) {
+        var keyString = 'vector_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.pbf';
+        var path = VECTORPATH + keyString;
+        fs.outputFile(path, tile.getData(), done);
+    },
+    _readVectorTileDisk : function (params, done) {
+        var keyString = 'vector_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.pbf';
+        var path = VECTORPATH + keyString;
+        fs.readFile(path, function (err, buffer) {
+            if (err) return done(null);
+            done(null, buffer);
+        });
+    },
+    _saveRasterTileDisk : function (tile, params, done) {
+        var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
+        var path = RASTERPATH + keyString;
+        tile.encode('png8', function (err, buffer) {
+            fs.outputFile(path, buffer, function (err) {
+                done(null);
+            });
+        });
+    },
+    _readRasterTileDisk : function (params, done) {
+        var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
+        var path = RASTERPATH + keyString;
+        fs.readFile(path, function (err, buffer) {
+            if (err) return done(null);
+            done(null, buffer);
+        });
+    },
+
+
+    // get grid tiles from redis
+    getGridTile : function (params, done) {
+        var keyString = 'grid_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
+        store.layers.get(keyString, done);
+    },
 
 
 

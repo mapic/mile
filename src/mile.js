@@ -40,6 +40,7 @@ var RASTERPATH   = '/data/raster_tiles/';
 var GRIDPATH     = '/data/grid_tiles/';
 var PROXYPATH    = '/data/proxy_tiles/';
 
+
 var pgsql_options = {
     dbhost: 'postgis',
     dbuser: process.env.SYSTEMAPIC_PGSQL_USERNAME || 'docker',
@@ -1235,8 +1236,15 @@ module.exports = pile = {
 // ###  Initialize Kue                   ###
 // #########################################
 // init kue
+var MAPIC_REDIS_AUTH = process.env.MAPIC_REDIS_AUTH;
+var redisConfig = {
+    port : 6379,
+    host : 'redistemp',
+    auth : MAPIC_REDIS_AUTH,
+    db : 1
+}
 var jobs = kue.createQueue({
-    redis : config.redis.temp,
+    redis : redisConfig,
     prefix : '_kue4'
 });
 
@@ -1272,7 +1280,6 @@ if (cluster.isMaster) {
 } else {
 
     console.log('...clustering!');
-
 
     // render vector job
     jobs.process('render_vector_tile', 1, function (job, done) {
