@@ -35,21 +35,33 @@ var MAPIC_REDIS_AUTH = process.env.MAPIC_REDIS_AUTH;
 var MAPIC_REDIS_PORT = process.env.MAPIC_REDIS_PORT || 6379;
 var MAPIC_REDIS_DB   = process.env.MAPIC_REDIS_DB || 1;
 
+console.log('store.js!');
+
 var redis_instances = {};
 _.each(['redisLayers', 'redisStats', 'redisTemp'], function (i) {
+
+    console.log('Attempting to connect to i:', i);
     
     // connect redis
-    redis_instances[i] = redis.createClient(MAPIC_REDIS_PORT, _.toLower(i), {detect_buffers : true});
+    // var redis_connect_string = _.toLower(i) + '.docker';
+    // var redis_connect_string = 'mapic_mapic.' + _.toLower(i);
+    var redis_connect_string = _.toLower(i);
+    console.log('redis_connect_string', redis_connect_string);
+    redis_instances[i] = redis.createClient(MAPIC_REDIS_PORT, redis_connect_string, {detect_buffers : true});
 
     // auth redis
     async.retry({times: 10, interval: 2000}, connectRedis.bind(this, i), function (err, results) {
+        console.log('async retry: err, results', err, results);
         redis_instances[i].on('error', silentLog);
         redis_instances[i].select(MAPIC_REDIS_DB, silentLog)
         console.log('Connected to', i);
     });
 });
 function connectRedis (i, callback) {
-    redis_instances[i].auth(MAPIC_REDIS_AUTH, callback)
+    redis_instances[i].auth(MAPIC_REDIS_AUTH, function (err) {
+        console.log('connectRedis:', err);
+        callback(err);
+    })
 }
 
 
