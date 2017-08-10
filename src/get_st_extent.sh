@@ -13,10 +13,12 @@ COL=the_geom_3857
 test -n "$3" && COL="$3"
 
 # get config
-source /mapic/config/env.sh || exit 1
+# source /mapic/config/env.sh || exit 1
+MAPIC_PGSQL_USERNAME=systemapic
+MAPIC_PGSQL_PASSWORD=docker
 
-export PGPASSWORD=$SYSTEMAPIC_PGSQL_PASSWORD
-export PGUSER=$SYSTEMAPIC_PGSQL_USERNAME
+export PGPASSWORD=$MAPIC_PGSQL_PASSWORD
+export PGUSER=$MAPIC_PGSQL_USERNAME
 export PGHOST=postgis
 export PGDATABASE=$DATABASE
 

@@ -41,10 +41,15 @@ var GRIDPATH     = '/data/grid_tiles/';
 var PROXYPATH    = '/data/proxy_tiles/';
 
 
+
+var MAPIC_PGSQL_USERNAME = 'systemapic';
+var MAPIC_PGSQL_PASSWORD = 'docker';
+
+
 var pgsql_options = {
     dbhost: 'postgis',
-    dbuser: process.env.SYSTEMAPIC_PGSQL_USERNAME || 'systemapic',
-    dbpass: process.env.SYSTEMAPIC_PGSQL_PASSWORD || 'docker'
+    dbuser: MAPIC_PGSQL_USERNAME,
+    dbpass: MAPIC_PGSQL_PASSWORD
 };
 
 module.exports = mile = { 

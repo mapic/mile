@@ -26,8 +26,9 @@ if [ "$3" == "" ]; then
 fi
 
 # get config
-source /mapic/config/env.sh
+# source /mapic/config/env.sh
+MAPIC_PGSQL_USERNAME=systemapic
+MAPIC_PGSQL_PASSWORD=docker
 
 # run query
-# PGPASSWORD=$SYSTEMAPIC_PGSQL_PASSWORD psql -U $SYSTEMAPIC_PGSQL_USERNAME -d $1 -h postgis -c "select row_to_json(t) from (select * from $2 where $3 = $4) t;"
-PGPASSWORD=$SYSTEMAPIC_PGSQL_PASSWORD psql -U $SYSTEMAPIC_PGSQL_USERNAME -d $1 -h postgis -c "select row_to_json(t) from (SELECT * FROM $2 AS q, ST_X(geom) as lng, ST_Y(geom) as lat where $3 = $4) t;"
+PGPASSWORD=$MAPIC_PGSQL_PASSWORD psql -U $MAPIC_PGSQL_USERNAME -d $1 -h postgis -c "select row_to_json(t) from (SELECT * FROM $2 AS q, ST_X(geom) as lng, ST_Y(geom) as lat where $3 = $4) t;"

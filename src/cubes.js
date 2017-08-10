@@ -44,11 +44,14 @@ var CUBEPATH   = '/data/cube_tiles/';
 var GRIDPATH   = '/data/grid_tiles/';
 var PROXYPATH  = '/data/proxy_tiles/';
 
+var MAPIC_PGSQL_USERNAME = 'systemapic';
+var MAPIC_PGSQL_PASSWORD = 'docker';
+
 // postgis conn
 var pgsql_options = {
     dbhost: 'postgis',
-    dbuser: process.env.SYSTEMAPIC_PGSQL_USERNAME || 'docker',
-    dbpass: process.env.SYSTEMAPIC_PGSQL_PASSWORD || 'docker'
+    dbuser: MAPIC_PGSQL_USERNAME,
+    dbpass: MAPIC_PGSQL_PASSWORD
 };
 
 module.exports = cubes = { 
@@ -731,8 +734,8 @@ module.exports = cubes = {
 
             var pgsql_options = {
                 dbhost: 'postgis',
-                dbuser: process.env.SYSTEMAPIC_PGSQL_USERNAME || 'docker',
-                dbpass: process.env.SYSTEMAPIC_PGSQL_PASSWORD || 'docker'
+                dbuser: MAPIC_PGSQL_USERNAME,
+                dbpass: MAPIC_PGSQL_PASSWORD
             };
 
             // default settings
@@ -1135,8 +1138,8 @@ module.exports = cubes = {
             var query_num = options.query_num;
 
             // set postgis options
-            var pg_username = process.env.SYSTEMAPIC_PGSQL_USERNAME;
-            var pg_password = process.env.SYSTEMAPIC_PGSQL_PASSWORD;
+            var pg_username = MAPIC_PGSQL_USERNAME;
+            var pg_password = MAPIC_PGSQL_PASSWORD;
             var pg_database = dataset.database_name;
 
             // set connection string
@@ -1248,8 +1251,8 @@ module.exports = cubes = {
             var pg_geojson = cubes._retriveGeoJSON(geojson);
 
             // set postgis options
-            var pg_username = process.env.SYSTEMAPIC_PGSQL_USERNAME;
-            var pg_password = process.env.SYSTEMAPIC_PGSQL_PASSWORD;
+            var pg_username = MAPIC_PGSQL_USERNAME;
+            var pg_password = MAPIC_PGSQL_PASSWORD;
             var pg_database = dataset.database_name;
 
             // set connection string
