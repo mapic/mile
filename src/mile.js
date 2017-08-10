@@ -152,6 +152,8 @@ module.exports = mile = {
                         stack : err.stack
                     });
 
+                    console.log('err:', err);
+
                     // return png for raster-tile requests
                     if (type == 'png') return mile.serveEmptyTile(res);
                     
@@ -1305,11 +1307,14 @@ if (cluster.isMaster) {
 
         // render
         mile._renderRasterTile(params, function (err) {
-            if (err) console.error({
-                err_id : 9,
-                err_msg : 'Error rendering raster tile',
-                error : err
-            });
+            if (err) {
+                console.error({
+                    err_id : 9,
+                    err_msg : 'Error rendering raster tile',
+                    error : err
+                });
+                console.log('render err:', err);
+            }
             done(err);
         });
     });
