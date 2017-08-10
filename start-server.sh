@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# source config
-source /mapic/config/env.sh || exit 1
+# # source config
+# source /mapic/config/env.sh || exit 1
 
-# TODO: find a better way ?
-export SYSTEMAPIC_PGSQL_USERNAME \
-       SYSTEMAPIC_PGSQL_PASSWORD \
-       SYSTEMAPIC_PGSQL_DBNAME
+# # TODO: find a better way ?
+# export SYSTEMAPIC_PGSQL_USERNAME \
+#        SYSTEMAPIC_PGSQL_PASSWORD \
+#        SYSTEMAPIC_PGSQL_DBNAME
 
 # ensure log folder
 mkdir -p /mapic/mile/log
