@@ -21,6 +21,8 @@ var sanitize = require("sanitize-filename");
 var mercator = require('./sphericalmercator');
 var geojsonArea = require('geojson-area');
 
+var KUE_DB = 1;
+
 // modules
 // global.config = require('../config.js');
 var server = require('./server');
@@ -1241,7 +1243,7 @@ var redisConfig = {
     port : 6379,
     host : 'redistemp',
     auth : MAPIC_REDIS_AUTH,
-    db : 3
+    db : KUE_DB
 }
 var jobs = kue.createQueue({
     redis : redisConfig,
