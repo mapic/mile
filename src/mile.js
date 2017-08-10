@@ -41,15 +41,10 @@ var GRIDPATH     = '/data/grid_tiles/';
 var PROXYPATH    = '/data/proxy_tiles/';
 
 
-
-var MAPIC_PGSQL_USERNAME = 'systemapic';
-var MAPIC_PGSQL_PASSWORD = 'docker';
-
-
 var pgsql_options = {
     dbhost: 'postgis',
-    dbuser: MAPIC_PGSQL_USERNAME,
-    dbpass: MAPIC_PGSQL_PASSWORD
+    dbuser: process.env.SYSTEMAPIC_PGSQL_USERNAME || 'docker',
+    dbpass: process.env.SYSTEMAPIC_PGSQL_PASSWORD || 'docker'
 };
 
 module.exports = mile = { 
@@ -151,8 +146,6 @@ module.exports = mile = {
                         error : err,
                         stack : err.stack
                     });
-
-                    console.log('err:', err);
 
                     // return png for raster-tile requests
                     if (type == 'png') return mile.serveEmptyTile(res);
@@ -1151,7 +1144,7 @@ module.exports = mile = {
         store._readRasterTile(params, function (err, data) {
 
             // return data
-            // if (data) return done(null, data); // debug, turned off to create every time
+            if (data) return done(null, data); // debug, turned off to create every time
             
             // create
             mile.createRasterTile(params, storedLayer, done);
@@ -1248,7 +1241,7 @@ var redisConfig = {
     port : 6379,
     host : 'redistemp',
     auth : MAPIC_REDIS_AUTH,
-    db : 1
+    db : 3
 }
 var jobs = kue.createQueue({
     redis : redisConfig,
@@ -1307,14 +1300,11 @@ if (cluster.isMaster) {
 
         // render
         mile._renderRasterTile(params, function (err) {
-            if (err) {
-                console.error({
-                    err_id : 9,
-                    err_msg : 'Error rendering raster tile',
-                    error : err
-                });
-                console.log('render err:', err);
-            }
+            if (err) console.error({
+                err_id : 9,
+                err_msg : 'Error rendering raster tile',
+                error : err
+            });
             done(err);
         });
     });
