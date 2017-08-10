@@ -20,9 +20,6 @@ var VECTORPATH   = '/data/vector_tiles/';
 var RASTERPATH   = '/data/raster_tiles/';
 var GRIDPATH     = '/data/grid_tiles/';
 
-// config
-var config = global.config;
-
 var mile_settings = {
     store : 'disk' // or redis
 }
@@ -35,23 +32,15 @@ var MAPIC_REDIS_AUTH = process.env.MAPIC_REDIS_AUTH;
 var MAPIC_REDIS_PORT = process.env.MAPIC_REDIS_PORT || 6379;
 var MAPIC_REDIS_DB   = process.env.MAPIC_REDIS_DB || 1;
 
-console.log('store.js!');
-
 var redis_instances = {};
 _.each(['redisLayers', 'redisStats', 'redisTemp'], function (i) {
 
-    console.log('Attempting to connect to i:', i);
-    
     // connect redis
-    // var redis_connect_string = _.toLower(i) + '.docker';
-    // var redis_connect_string = 'mapic_mapic.' + _.toLower(i);
     var redis_connect_string = _.toLower(i);
-    console.log('redis_connect_string', redis_connect_string);
     redis_instances[i] = redis.createClient(MAPIC_REDIS_PORT, redis_connect_string, {detect_buffers : true});
 
     // auth redis
     async.retry({times: 100, interval: 2000}, connectRedis.bind(this, i), function (err, results) {
-        console.log('async retry: err, results', err, results);
         redis_instances[i].on('error', silentLog);
         redis_instances[i].select(MAPIC_REDIS_DB, silentLog)
         console.log('Connected to', i);
@@ -60,7 +49,6 @@ _.each(['redisLayers', 'redisStats', 'redisTemp'], function (i) {
 function connectRedis (i, callback) {
     try {
         redis_instances[i].auth(MAPIC_REDIS_AUTH, function (err) {
-            console.log('connectRedis:', err);
             callback(err);
         });
     } catch (e) {
@@ -154,6 +142,9 @@ module.exports = store = {
         });
     },
     _readRasterTileDisk : function (params, done) {
+        // debug, turn off cache
+        return done(null);
+
         var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
         var path = RASTERPATH + keyString;
         fs.readFile(path, function (err, buffer) {
