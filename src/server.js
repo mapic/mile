@@ -14,7 +14,7 @@ var winston 	= require('winston');
 // #########################################
 // ###  Server, routes                   ###	// runs on 1 cpu
 // #########################################
-module.exports = function (pile) {
+module.exports = function (mile) {
 
 	// configure server
 	var app = express();
@@ -23,115 +23,115 @@ module.exports = function (pile) {
 	app.use(express.static(path.join(__dirname, 'public'))); 	// not secured
 
 	// create layer
-	app.post('/v2/tiles/create', pile.checkAccess, function (req, res) {
-		pile.createLayer(req, res);
+	app.post('/v2/tiles/create', mile.checkAccess, function (req, res) {
+		mile.createLayer(req, res);
 	});
 
 	// create cube layer
-	app.post('/v2/cubes/create', pile.checkAccess, function (req, res) {
-		pile.cubes.create(req, res);
+	app.post('/v2/cubes/create', mile.checkAccess, function (req, res) {
+		mile.cubes.create(req, res);
 	});
 
 	// add dataset to cube
-	app.post('/v2/cubes/add', pile.checkAccess, function (req, res) {
-		pile.cubes.add(req, res);
+	app.post('/v2/cubes/add', mile.checkAccess, function (req, res) {
+		mile.cubes.add(req, res);
 	});
 
 	// remove dataset from cube
-	app.post('/v2/cubes/remove', pile.checkAccess, function (req, res) {
-		pile.cubes.remove(req, res);
+	app.post('/v2/cubes/remove', mile.checkAccess, function (req, res) {
+		mile.cubes.remove(req, res);
 	});
 
 	// replace dataset
-	app.post('/v2/cubes/replace', pile.checkAccess, function (req, res) {
-		pile.cubes.replace(req, res);
+	app.post('/v2/cubes/replace', mile.checkAccess, function (req, res) {
+		mile.cubes.replace(req, res);
 	});
 
 	// update dataset
-	app.post('/v2/cubes/update', pile.checkAccess, function (req, res) {
-		pile.cubes.update(req, res);
+	app.post('/v2/cubes/update', mile.checkAccess, function (req, res) {
+		mile.cubes.update(req, res);
 	});
 
 	// add mask
-	app.post('/v2/cubes/mask', pile.checkAccess, function (req, res) {
-		pile.cubes.mask(req, res);
+	app.post('/v2/cubes/mask', mile.checkAccess, function (req, res) {
+		mile.cubes.mask(req, res);
 	});
 
 	// remove mask
-	app.post('/v2/cubes/unmask', pile.checkAccess, function (req, res) {
-		pile.cubes.unmask(req, res);
+	app.post('/v2/cubes/unmask', mile.checkAccess, function (req, res) {
+		mile.cubes.unmask(req, res);
 	});
 
 	// request cube tiles
-	app.get('/v2/cubes/get', pile.checkAccess, function (req, res) {
-		pile.cubes.get(req, res);
+	app.get('/v2/cubes/get', mile.checkAccess, function (req, res) {
+		mile.cubes.get(req, res);
 	});
 
 	// create cube layer
-	app.get('/v2/cubes/*', pile.checkAccess, function (req, res) {
-		pile.cubes.tile(req, res);
+	app.get('/v2/cubes/*', mile.checkAccess, function (req, res) {
+		mile.cubes.tile(req, res);
 	});
 
 	// vectorize layer
-	app.post('/v2/tiles/vectorize', pile.checkAccess, function (req, res) {
-		pile.vectorizeDataset(req, res);
+	app.post('/v2/tiles/vectorize', mile.checkAccess, function (req, res) {
+		mile.vectorizeDataset(req, res);
 	});
 
 	// // update layer
-	// app.post('/v2/tiles/update', pile.checkAccess, function (req, res) {
-	// 	pile.updateLayer(req, res);
+	// app.post('/v2/tiles/update', mile.checkAccess, function (req, res) {
+	// 	mile.updateLayer(req, res);
 	// });
 
 	// get layer
-	app.get('/v2/tiles/layer', pile.checkAccess, function (req, res) {
-		pile.getLayer(req, res);
+	app.get('/v2/tiles/layer', mile.checkAccess, function (req, res) {
+		mile.getLayer(req, res);
 	});
 
 	// get tiles
-	app.get('/v2/tiles/*', pile.checkAccess, function (req, res) {
-		pile.getTileEntryPoint(req, res);
+	app.get('/v2/tiles/*', mile.checkAccess, function (req, res) {
+		mile.getTileEntryPoint(req, res);
 	});
 
 	// get data from point
-	app.post('/v2/query/point', pile.checkAccess, function (req, res) {
-		pile.fetchData(req, res);
+	app.post('/v2/query/point', mile.checkAccess, function (req, res) {
+		mile.fetchData(req, res);
 	});
 
 	// get data from area
-	app.post('/v2/query/polygon', pile.checkAccess, function (req, res) {
-		pile.fetchDataArea(req, res);
+	app.post('/v2/query/polygon', mile.checkAccess, function (req, res) {
+		mile.fetchDataArea(req, res);
 	});
 
 	// get data from area
-	app.post('/v2/query/defo', pile.checkAccess, function (req, res) {
-		pile.fetchRasterDeformation(req, res);
+	app.post('/v2/query/defo', mile.checkAccess, function (req, res) {
+		mile.fetchRasterDeformation(req, res);
 	});
 
 	// get data from area
-	app.post('/v2/query/raster/point', pile.checkAccess, function (req, res) {
-		pile.queryRasterPoint(req, res);
+	app.post('/v2/query/raster/point', mile.checkAccess, function (req, res) {
+		mile.queryRasterPoint(req, res);
 	});
 
 	// get data from area for cube
-	app.post('/v2/cubes/query', pile.checkAccess, function (req, res) {
-		pile.cubes.query(req, res);
+	app.post('/v2/cubes/query', mile.checkAccess, function (req, res) {
+		mile.cubes.query(req, res);
 	});
 
 	// get histogram from column
-	app.post('/v2/query/histogram', pile.checkAccess, function (req, res) {
-		pile.fetchHistogram(req, res);
+	app.post('/v2/query/histogram', mile.checkAccess, function (req, res) {
+		mile.fetchHistogram(req, res);
 	});
 
 	// get histogram from column
-	app.post('/v2/query/getVectorPoints', pile.checkAccess, function (req, res) {
-		pile.getVectorPoints(req, res);
+	app.post('/v2/query/getVectorPoints', mile.checkAccess, function (req, res) {
+		mile.getVectorPoints(req, res);
 	});
 
 	// start server
-	app.listen(pile.config.port);
+	app.listen(3003);
 
 	// debug
-	console.log('PostGIS tileserver is up @ ' + pile.config.port);
+	console.log('PostGIS tileserver is up @ ' + 3003);
 }
 
 

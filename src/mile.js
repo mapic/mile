@@ -22,7 +22,7 @@ var mercator = require('./sphericalmercator');
 var geojsonArea = require('geojson-area');
 
 // modules
-global.config = require('../config.js');
+// global.config = require('../config.js');
 var server = require('./server');
 var store  = require('./store');
 var proxy = require('./proxy');
@@ -47,9 +47,9 @@ var pgsql_options = {
     dbpass: process.env.SYSTEMAPIC_PGSQL_PASSWORD || 'docker'
 };
 
-module.exports = pile = { 
+module.exports = mile = { 
 
-    config : global.config,
+    // config : global.config,
     cubes : cubes,
 
     // todo: move to routes, or share with wu somehow (get routes by querying wu API?)
@@ -84,8 +84,8 @@ module.exports = pile = {
     getTileEntryPoint : function (req, res) {
 
         // pipe to postgis or proxy
-        if (tools.tileIsProxy(req))   return pile.serveProxyTile(req, res);
-        if (tools.tileIsPostgis(req)) return pile.serveTile(req, res);
+        if (tools.tileIsProxy(req))   return mile.serveProxyTile(req, res);
+        if (tools.tileIsPostgis(req)) return mile.serveTile(req, res);
 
         // tile is neither proxy or postgis formatted
         // todo: error handling
@@ -116,23 +116,23 @@ module.exports = pile = {
 
         // get stored layer from redis
         store.layers.get(params.layerUuid, function (err, storedLayerJSON) {    
-            if (err) return pile.tileError(res, err);
-            if (!storedLayerJSON) return pile.tileError(res, 'No stored layer.');
+            if (err) return mile.tileError(res, err);
+            if (!storedLayerJSON) return mile.tileError(res, 'No stored layer.');
 
             // parse layer JSON
             var storedLayer = tools.safeParse(storedLayerJSON);
 
             // get tiles
             if (type == 'pbf') ops.push(function (callback) {
-                pile.getVectorTile(params, storedLayer, callback);
+                mile.getVectorTile(params, storedLayer, callback);
             });
 
             if (type == 'png') ops.push(function (callback) {
-                pile.getRasterTile(params, storedLayer, callback);
+                mile.getRasterTile(params, storedLayer, callback);
             });
 
             if (type == 'grid') ops.push(function (callback) {
-                pile.getGridTile(params, storedLayer, callback);
+                mile.getGridTile(params, storedLayer, callback);
             });
 
 
@@ -148,7 +148,7 @@ module.exports = pile = {
                     });
 
                     // return png for raster-tile requests
-                    if (type == 'png') return pile.serveEmptyTile(res);
+                    if (type == 'png') return mile.serveEmptyTile(res);
                     
                     // return empty
                     return res.json({});
@@ -169,7 +169,7 @@ module.exports = pile = {
                 // return vector tiles gzipped
                 if (type == 'pbf') {
                     res.writeHead(200, {
-                        'Content-Type': pile.headers[type], 
+                        'Content-Type': mile.headers[type], 
                         'Content-Encoding': 'gzip',
                         'Cache-Control' : 'private, max-age=3600'
                     });
@@ -177,7 +177,7 @@ module.exports = pile = {
                 }
 
                 // return tile to client
-                res.writeHead(200, {'Content-Type': pile.headers[type]});
+                res.writeHead(200, {'Content-Type': mile.headers[type]});
                 res.end(data[0]);
             });
         });
@@ -233,13 +233,13 @@ module.exports = pile = {
         });
 
         // verify query
-        if (!file_id) return pile.error.missingInformation(res, 'Please provide a file_id.')
+        if (!file_id) return mile.error.missingInformation(res, 'Please provide a file_id.')
 
         // get upload status
         ops.push(function (callback) {
 
             // get upload status object from wu
-            pile.getUploadStatus({
+            mile.getUploadStatus({
                 file_id : file_id,
                 access_token : access_token
             }, callback);
@@ -266,7 +266,7 @@ module.exports = pile = {
         // create tileserver layer
         ops.push(function (upload_status, callback) {
 
-            pile._createPostGISLayer({
+            mile._createPostGISLayer({
                 upload_status : upload_status,
                 requested_layer : options
             }, callback);
@@ -311,7 +311,7 @@ module.exports = pile = {
         var ops = [];
 
         ops.push(function (callback) {
-            pile.getUploadStatus({
+            mile.getUploadStatus({
                 file_id : file_id,
                 access_token : access_token
             }, callback);
@@ -330,7 +330,7 @@ module.exports = pile = {
             vector_upload_status.timestamp = new Date().getTime();
             vector_upload_status.processing_success = false; // reset
 
-            pile.setUploadStatus({
+            mile.setUploadStatus({
                 access_token : access_token,
                 upload_status : vector_upload_status
             }, function (err) {
@@ -342,14 +342,14 @@ module.exports = pile = {
         ops.push(function (callback) {
 
             // vectorize raster
-            pile.vectorizeRaster({
+            mile.vectorizeRaster({
                 raster_upload_status : raster_upload_status,
                 vector_upload_status : vector_upload_status,
                 access_token : access_token
             }, callback);
         });
 
-        async.waterfall(ops, pile.asyncDone);
+        async.waterfall(ops, mile.asyncDone);
 
     },
 
@@ -459,14 +459,14 @@ module.exports = pile = {
             upload_status.processing_took_ms = (new Date().getTime() - upload_status.timestamp);
             upload_status.metadata = JSON.stringify(temp_meta);
             upload_status.sql = '(SELECT * FROM ' + vectorized_raster_file_id + ') as sub';
-            upload_status.debug_2 = 'pile vectorizeRaster';
+            upload_status.debug_2 = 'mile vectorizeRaster';
 
             var options = {
                 access_token : access_token,
                 upload_status : upload_status
             }
 
-            pile.setUploadStatus(options, callback);
+            mile.setUploadStatus(options, callback);
         };
         
         async.series(ops, function (err, results) {
@@ -681,7 +681,7 @@ module.exports = pile = {
 
         // get layerUuid
         var layerUuid = req.body.layerUuid || req.query.layerUuid;
-        if (!layerUuid) return pile.error.missingInformation(res, 'Please provide layerUuid.');
+        if (!layerUuid) return mile.error.missingInformation(res, 'Please provide layerUuid.');
 
         // retrieve layer and return it to client
         store.layers.get(layerUuid, function (err, layer) {
@@ -903,12 +903,12 @@ module.exports = pile = {
 
     _renderRasterTile : function (params, done) {
 
-        pile._prepareTile(params, function (err, map) {
+        mile._prepareTile(params, function (err, map) {
             if (err) return done(err);
             if (!map) return done(new Error('no map 7474'));
 
             // debug write xml
-            if (0) pile._debugXML(params.layerUuid, map.toXML());
+            if (0) mile._debugXML(params.layerUuid, map.toXML());
 
             // map options
             var map_options = {
@@ -941,7 +941,7 @@ module.exports = pile = {
 
     _renderGridTile : function (params, done) {
 
-        pile._prepareTile(params, function (err, map) {
+        mile._prepareTile(params, function (err, map) {
             if (err || !map)  {
                 console.error({
                     err_id : 61,
@@ -1080,7 +1080,7 @@ module.exports = pile = {
             map.add_layer(layer);
 
             // parse xml from cartocss
-            pile.cartoRenderer(storedLayer, layer, callback);
+            mile.cartoRenderer(storedLayer, layer, callback);
 
         });
 
@@ -1108,7 +1108,7 @@ module.exports = pile = {
             // srid 3857
             // NOTE: map srs should be already set at this point,
             // and hard-coding it is not a good idea, see
-            // https://github.com/systemapic/pile/issues/35
+            // https://github.com/systemapic/mile/issues/35
             // "srs": mercator.proj4,
 
             "Stylesheet": [{
@@ -1147,7 +1147,7 @@ module.exports = pile = {
             if (data) return done(null, data); // debug, turned off to create every time
             
             // create
-            pile.createRasterTile(params, storedLayer, done);
+            mile.createRasterTile(params, storedLayer, done);
         });
     },
 
@@ -1161,7 +1161,7 @@ module.exports = pile = {
             if (data) return done(null, data);   // debug, turned off to create every time
 
             // create
-            pile.createVectorTile(params, storedLayer, done);
+            mile.createVectorTile(params, storedLayer, done);
         });
     },
 
@@ -1175,19 +1175,19 @@ module.exports = pile = {
             if (data) return done(null, data);
 
             // not found, create
-            pile.createGridTile(params, storedLayer, done);
+            mile.createGridTile(params, storedLayer, done);
         });
     },
 
     getUploadStatus : function (options, done) {
-        pile.GET(pile.routes.base + pile.routes.upload_status, options, function (err, json) {
+        mile.GET(mile.routes.base + mile.routes.upload_status, options, function (err, json) {
             var result = tools.safeParse(json);
             done(err, result);
         });
     },
 
     setUploadStatus : function (options, done) {
-        pile.POST(pile.routes.base + pile.routes.upload_status, options, function (err, json) {
+        mile.POST(mile.routes.base + mile.routes.upload_status, options, function (err, json) {
             done(err, json);
         });
     },
@@ -1259,7 +1259,7 @@ jobs.watchStuckJobs();
 if (cluster.isMaster) { 
 
     // start server
-    server(pile);
+    server(mile);
 
     console.log('Clusters: ' + numCPUs);
     for (var i = 0; i < numCPUs - 1; i++) {  
@@ -1284,7 +1284,7 @@ if (cluster.isMaster) {
     // render vector job
     jobs.process('render_vector_tile', 1, function (job, done) {
         var params = job.data.params;
-        pile._renderVectorTile(params, function (err) {
+        mile._renderVectorTile(params, function (err) {
             if (err) console.error({
                 err_id : 8,
                 err_msg : 'render vector tile',
@@ -1299,7 +1299,7 @@ if (cluster.isMaster) {
         var params = job.data.params;
 
         // render
-        pile._renderRasterTile(params, function (err) {
+        mile._renderRasterTile(params, function (err) {
             if (err) console.error({
                 err_id : 9,
                 err_msg : 'Error rendering raster tile',
@@ -1312,7 +1312,7 @@ if (cluster.isMaster) {
     // render grid job
     jobs.process('render_grid_tile', 1, function (job, done) {
         var params = job.data.params;
-        pile._renderGridTile(params, function (err) {
+        mile._renderGridTile(params, function (err) {
             if (err) console.error({
                 err_id : 10,
                 err_msg : 'Error rendering grid tile',
