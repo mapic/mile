@@ -137,5 +137,5 @@ module.exports = function (mile) {
 
 // tile render logging
 console.tile = function (tile) {
-	if (tile.render_time) console.info('rendered tile in ', tile.render_time, 'ms');
+	// if (tile.render_time) console.info('rendered tile in ', tile.render_time, 'ms');
 };
