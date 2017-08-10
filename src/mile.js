@@ -21,7 +21,7 @@ var sanitize = require("sanitize-filename");
 var mercator = require('./sphericalmercator');
 var geojsonArea = require('geojson-area');
 
-var KUE_DB = 1;
+var KUE_DB = 3;
 
 // modules
 // global.config = require('../config.js');
@@ -1240,17 +1240,26 @@ module.exports = mile = {
 // ###  Initialize Kue                   ###
 // #########################################
 // init kue
-var MAPIC_REDIS_AUTH = process.env.MAPIC_REDIS_AUTH;
-var redisConfig = {
-    port : 6379,
-    host : 'redistemp',
-    auth : MAPIC_REDIS_AUTH,
-    db : KUE_DB
+var jobs;
+function init_kue () {
+    var MAPIC_REDIS_AUTH = process.env.MAPIC_REDIS_AUTH;
+    var redisConfig = {
+        port : 6379,
+        host : 'redistemp',
+        auth : MAPIC_REDIS_AUTH,
+        db : KUE_DB
+    }
+    jobs = kue.createQueue({
+        redis : redisConfig,
+        prefix : '_kue4'
+    });
 }
-var jobs = kue.createQueue({
-    redis : redisConfig,
-    prefix : '_kue4'
-});
+try {
+    init_kue();
+} catch (e) {
+    setTimeout(init_kue.bind(this), 2000)
+}
+
 
 // clear kue
 jobs.watchStuckJobs();
