@@ -50,7 +50,7 @@ _.each(['redisLayers', 'redisStats', 'redisTemp'], function (i) {
     redis_instances[i] = redis.createClient(MAPIC_REDIS_PORT, redis_connect_string, {detect_buffers : true});
 
     // auth redis
-    async.retry({times: 10, interval: 2000}, connectRedis.bind(this, i), function (err, results) {
+    async.retry({times: 100, interval: 2000}, connectRedis.bind(this, i), function (err, results) {
         console.log('async retry: err, results', err, results);
         redis_instances[i].on('error', silentLog);
         redis_instances[i].select(MAPIC_REDIS_DB, silentLog)
@@ -58,10 +58,14 @@ _.each(['redisLayers', 'redisStats', 'redisTemp'], function (i) {
     });
 });
 function connectRedis (i, callback) {
-    redis_instances[i].auth(MAPIC_REDIS_AUTH, function (err) {
-        console.log('connectRedis:', err);
-        callback(err);
-    })
+    try {
+        redis_instances[i].auth(MAPIC_REDIS_AUTH, function (err) {
+            console.log('connectRedis:', err);
+            callback(err);
+        });
+    } catch (e) {
+        callback(e);
+    }
 }
 
 

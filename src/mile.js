@@ -43,7 +43,7 @@ var PROXYPATH    = '/data/proxy_tiles/';
 
 var pgsql_options = {
     dbhost: 'postgis',
-    dbuser: process.env.SYSTEMAPIC_PGSQL_USERNAME || 'docker',
+    dbuser: process.env.SYSTEMAPIC_PGSQL_USERNAME || 'systemapic',
     dbpass: process.env.SYSTEMAPIC_PGSQL_PASSWORD || 'docker'
 };
 
