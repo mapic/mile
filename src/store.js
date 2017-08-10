@@ -142,9 +142,6 @@ module.exports = store = {
         });
     },
     _readRasterTileDisk : function (params, done) {
-        // debug, turn off cache
-        return done(null);
-
         var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
         var path = RASTERPATH + keyString;
         fs.readFile(path, function (err, buffer) {
