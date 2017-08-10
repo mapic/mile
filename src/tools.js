@@ -22,7 +22,7 @@ module.exports = tools = {
 	tileIsProxy : function (req) {
 		var params = req.params[0].split('/');
 		var provider = params[0];
-		var isProxy = _.includes(pile.proxyProviders, provider);
+		var isProxy = _.includes(mile.proxyProviders, provider);
 		return isProxy;
 	},
 
@@ -147,7 +147,7 @@ module.exports = tools = {
 			parseFloat(extentString.split(',')[1].split(' ')[0]),
 			parseFloat(extentString.split(',')[1].split(' ')[1]),
 		]
-		return pile._intersects(bbox, extent);
+		return mile._intersects(bbox, extent);
 	},
 
 	_intersects : function (box1, box2) {
