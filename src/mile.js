@@ -20,6 +20,7 @@ var gm = require('gm');
 var sanitize = require("sanitize-filename");
 var mercator = require('./sphericalmercator');
 var geojsonArea = require('geojson-area');
+var crypto = require('crypto');
 
 var KUE_DB = 3;
 
@@ -1241,28 +1242,25 @@ module.exports = mile = {
 // #########################################
 // init kue
 var jobs;
-function init_kue () {
-    var MAPIC_REDIS_AUTH = process.env.MAPIC_REDIS_AUTH;
-    var redisConfig = {
-        port : 6379,
-        host : 'redistemp',
-        auth : MAPIC_REDIS_AUTH,
-        db : KUE_DB
-    }
-    jobs = kue.createQueue({
-        redis : redisConfig,
-        prefix : '_kue4'
-    });
+var MAPIC_REDIS_AUTH = process.env.MAPIC_REDIS_AUTH;
+var redisConfig = {
+    port : 6379,
+    host : 'redistemp',
+    auth : MAPIC_REDIS_AUTH,
+    db : KUE_DB
 }
-try {
-    init_kue();
-} catch (e) {
-    setTimeout(init_kue.bind(this), 2000)
-}
-
-
+var prefix = crypto.randomBytes(4).toString('hex');
+jobs = kue.createQueue({
+    redis : redisConfig,
+    prefix : prefix
+});
 // clear kue
 jobs.watchStuckJobs();
+
+
+
+
+
 
 // #########################################
 // ###  Clusters                         ###
