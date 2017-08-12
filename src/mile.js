@@ -22,8 +22,6 @@ var mercator = require('./sphericalmercator');
 var geojsonArea = require('geojson-area');
 var crypto = require('crypto');
 
-var KUE_DB = 3;
-
 // modules
 // global.config = require('../config.js');
 var server = require('./server');
@@ -1242,138 +1240,150 @@ module.exports = mile = {
 // #########################################
 // init kue
 var jobs;
-var MAPIC_REDIS_AUTH = process.env.MAPIC_REDIS_AUTH;
-var redisConfig = {
-    port : 6379,
-    host : 'redistemp',
-    auth : MAPIC_REDIS_AUTH,
-    db : KUE_DB
-}
-var prefix = crypto.randomBytes(4).toString('hex');
-jobs = kue.createQueue({
-    redis : redisConfig,
-    prefix : prefix
-});
-// clear kue
-jobs.watchStuckJobs();
 
+function connect_to_kue() {
 
-
-
-
-
-// #########################################
-// ###  Clusters                         ###
-// #########################################
-
-// master cluster:
-if (cluster.isMaster) { 
-
-    // start server
-    server(mile);
-
-    console.log('Clusters: ' + numCPUs);
-    for (var i = 0; i < numCPUs - 1; i++) {  
-        // fork workers
-        cluster.fork(); 
-    } 
-
-    // listen to exit, keep alive
-    cluster.on('exit', function(worker, code, signal) { 
-        console.error({
-            err_id : 7,
-            err_msg : 'cluster died',
-        });
-        cluster.fork(); 
+    var MAPIC_REDIS_AUTH = process.env.MAPIC_REDIS_AUTH;
+    var redisConfig = {
+        port : 6379,
+        host : 'redistemp',
+        auth : MAPIC_REDIS_AUTH,
+        db : 1
+    }
+    var prefix = crypto.randomBytes(4).toString('hex');
+    jobs = kue.createQueue({
+        redis : redisConfig,
+        prefix : prefix
     });
+    // clear kue
+    jobs.watchStuckJobs();
 
-// worker clusters
-} else {
 
-    console.log('...clustering!');
 
-    // render vector job
-    jobs.process('render_vector_tile', 1, function (job, done) {
-        var params = job.data.params;
-        mile._renderVectorTile(params, function (err) {
-            if (err) console.error({
-                err_id : 8,
-                err_msg : 'render vector tile',
-                error : err
+
+
+
+    // #########################################
+    // ###  Clusters                         ###
+    // #########################################
+
+    // master cluster:
+    if (cluster.isMaster) { 
+
+        // start server
+        server(mile);
+
+        console.log('Clusters: ' + numCPUs);
+        for (var i = 0; i < numCPUs - 1; i++) {  
+            // fork workers
+            cluster.fork(); 
+        } 
+
+        // listen to exit, keep alive
+        cluster.on('exit', function(worker, code, signal) { 
+            console.error({
+                err_id : 7,
+                err_msg : 'cluster died',
             });
-            done(err);
+            cluster.fork(); 
         });
-    });
 
-    // render raster job
-    jobs.process('render_raster_tile', 1, function (job, done) {
-        var params = job.data.params;
+    // worker clusters
+    } else {
 
-        // render
-        mile._renderRasterTile(params, function (err) {
-            if (err) console.error({
-                err_id : 9,
-                err_msg : 'Error rendering raster tile',
-                error : err
-            });
-            done(err);
-        });
-    });
+        console.log('...clustering!');
 
-    // render grid job
-    jobs.process('render_grid_tile', 1, function (job, done) {
-        var params = job.data.params;
-        mile._renderGridTile(params, function (err) {
-            if (err) console.error({
-                err_id : 10,
-                err_msg : 'Error rendering grid tile',
-                error : err
-            });
-            done(err);
-        });
-    });
-
-
-    // proxy tiles
-    jobs.process('proxy_tile', 10, function (job, done) {
-        var options = job.data.options;
-        proxy._serveTile(options, function (err) {
-            if (err) console.error({
-                err_id : 11,
-                err_msg : 'proxy tile job',
-                error : err
-            });
-            done();
-        });
-    });
-
-    // cube tiles
-    jobs.process('cube_tile', 1, function (job, done) {
-        var options = job.data.options;
-        cubes.createTile(options, function (err) {
-            if (err) console.error({
-                err_id : 12,
-                err_msg : 'cube tile job',
-                error : err
-            });
-            done();
-        });
-    });
-
-    // remove stale jobs
-    jobs.on('job complete', function (id) {
-        kue.Job.get(id, function (err, job) {
-            if (err) return;
+        // render vector job
+        jobs.process('render_vector_tile', 1, function (job, done) {
             var params = job.data.params;
-            var job_id = job.id;
-            job.remove(function (err) {
+            mile._renderVectorTile(params, function (err) {
                 if (err) console.error({
-                    err_id : 13,
-                    err_msg : 'job remove',
+                    err_id : 8,
+                    err_msg : 'render vector tile',
                     error : err
+                });
+                done(err);
+            });
+        });
+
+        // render raster job
+        jobs.process('render_raster_tile', 1, function (job, done) {
+            var params = job.data.params;
+
+            // render
+            mile._renderRasterTile(params, function (err) {
+                if (err) console.error({
+                    err_id : 9,
+                    err_msg : 'Error rendering raster tile',
+                    error : err
+                });
+                done(err);
+            });
+        });
+
+        // render grid job
+        jobs.process('render_grid_tile', 1, function (job, done) {
+            var params = job.data.params;
+            mile._renderGridTile(params, function (err) {
+                if (err) console.error({
+                    err_id : 10,
+                    err_msg : 'Error rendering grid tile',
+                    error : err
+                });
+                done(err);
+            });
+        });
+
+
+        // proxy tiles
+        jobs.process('proxy_tile', 10, function (job, done) {
+            var options = job.data.options;
+            proxy._serveTile(options, function (err) {
+                if (err) console.error({
+                    err_id : 11,
+                    err_msg : 'proxy tile job',
+                    error : err
+                });
+                done();
+            });
+        });
+
+        // cube tiles
+        jobs.process('cube_tile', 1, function (job, done) {
+            var options = job.data.options;
+            cubes.createTile(options, function (err) {
+                if (err) console.error({
+                    err_id : 12,
+                    err_msg : 'cube tile job',
+                    error : err
+                });
+                done();
+            });
+        });
+
+        // remove stale jobs
+        jobs.on('job complete', function (id) {
+            kue.Job.get(id, function (err, job) {
+                if (err) return;
+                var params = job.data.params;
+                var job_id = job.id;
+                job.remove(function (err) {
+                    if (err) console.error({
+                        err_id : 13,
+                        err_msg : 'job remove',
+                        error : err
+                    });
                 });
             });
         });
-    });
 
+    }
 }
+
+try {
+    // needed because redis is not always ready first time
+    connect_to_kue();
+} catch (e) {
+    setTimeout(connect_to_kue, 1000);
+}
+
