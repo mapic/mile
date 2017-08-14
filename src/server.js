@@ -131,11 +131,11 @@ module.exports = function (mile) {
 	app.listen(3003);
 
 	// debug
-	console.log('PostGIS tileserver is up @ ' + 3003);
+	console.log('   Mile is up @ ' + 3003);
 }
 
 
 // tile render logging
 console.tile = function (tile) {
-	// if (tile.render_time) console.info('rendered tile in ', tile.render_time, 'ms');
+	if (tile.render_time) console.info('rendered tile in ', tile.render_time, 'ms');
 };

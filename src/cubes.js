@@ -693,17 +693,28 @@ module.exports = cubes = {
 
     _createTileRenderJob : function (options, res) {
 
-        // create tile job
-        var job = pile.jobs().create('cube_tile', { 
-            options : options,
-        }).priority('low').attempts(5).save();
-
-        // cubes tile job done
-        job.on('complete', function (result) {
-
-            // serve cube tile
+         cubes.createTile(options, function (err) {
+            // if (err) console.error({
+            //     err_id : 12,
+            //     err_msg : 'cube tile job',
+            //     error : err
+            // });
+            // done();
             cubes.serveTile(res, options.tilePath);
+            
         });
+
+        // // create tile job
+        // var job = pile.jobs().create('cube_tile', { 
+        //     options : options,
+        // }).priority('low').attempts(5).save();
+
+        // // cubes tile job done
+        // job.on('complete', function (result) {
+
+        //     // serve cube tile
+        //     cubes.serveTile(res, options.tilePath);
+        // });
     },
 
     serveTile : function (res, tilePath) {

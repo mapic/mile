@@ -26,5 +26,6 @@ cd /mapic/mile
 # 	echo 'Mile Debug mode (with 8GB memory)'
 # 	nodemon --max-old-space-size=8192 -i node_modules/ -i test/ src/mile.js
 # fi
-
+echo "forever + nodemon"
 forever -c nodemon --exitcrash --max-old-space-size=8192 -i node_modules/ -i test/ src/mile.js
+# forever -w src/mile.js

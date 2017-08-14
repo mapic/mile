@@ -125,6 +125,8 @@ module.exports = mile = {
             // parse layer JSON
             var storedLayer = tools.safeParse(storedLayerJSON);
 
+            console.log('tile request', _.size(storedLayer));
+
             // get tiles
             if (type == 'pbf') ops.push(function (callback) {
                 mile.getVectorTile(params, storedLayer, callback);
@@ -193,23 +195,16 @@ module.exports = mile = {
         var options = {
             provider : params[0],
             type     : params[1],
-            z    : params[2],
-            x    : params[3],
-            y    : params[4].split('.')[0],
+            z        : params[2],
+            x        : params[3],
+            y        : params[4].split('.')[0],
             format   : params[4].split('.')[1]
         }
 
-        // create proxy tile job
-        var job = jobs.create('proxy_tile', { 
-            options : options,
-        }).priority('high').attempts(5).save();
-
-        // proxy tile job done
-        job.on('complete', function (result) {
-
-            // serve proxy tile
+        proxy._serveTile(options, function (err) {
             proxy.serveTile(res, options);
         });
+
     },
 
     // this layer is only a postgis layer. a Wu Layer Model must be created by client after receiving this postgis layer
@@ -709,60 +704,26 @@ module.exports = mile = {
 
     // create vector tile from postgis
     createVectorTile : function (params, storedLayer, done) {
-
-        // KUE: create raster tile
-        var job = jobs.create('render_vector_tile', { // todo: cluster up with other machines, pluggable clusters
-            params : params,
-            storedLayer : storedLayer
-        }).priority('high').attempts(5).save();
-
-        // KUE DONE: raster created
-        job.on('complete', function (result) {
-
-            // get tile
+        mile._renderVectorTile(params, function (err) {
+            if (err) return done(err);
             store._readVectorTile(params, done);
         });
-
     },
 
     // create raster tile from postgis
     createRasterTile : function (params, storedLayer, done) {
-
-        // KUE: create raster tile
-        var job = jobs.create('render_raster_tile', { // todo: cluster up with other machines, pluggable clusters
-            params : params,
-            storedLayer : storedLayer
-        }).priority('high').removeOnComplete(true).attempts(5).save();
-
-        // KUE DONE: raster created
-        job.on('complete', function (result) {
-
-            // get tile
+         mile._renderRasterTile(params, function (err) {
+            if (err) return done(err);
             store._readRasterTile(params, done);
         });
-
-        job.on('failed', done);
-
     },
 
     // create grid tile from postgis
     createGridTile : function (params, storedLayer, done) {
-
-        // KUE: create raster tile
-        var job = jobs.create('render_grid_tile', { // todo: cluster up with other machines, pluggable clusters
-            params : params,
-            storedLayer : storedLayer
-        }).priority('high').attempts(5).save();
-
-
-        // KUE DONE: raster created
-        job.on('complete', function (result) {
-
-            // get tile
+         mile._renderGridTile(params, function (err) {
+            if (err) return done(err);
             store.getGridTile(params, done);
         });
-
-        job.on('failed', done);
     },
 
     serveErrorTile : function (res) {
@@ -1147,8 +1108,8 @@ module.exports = mile = {
         store._readRasterTile(params, function (err, data) {
 
             // return data
-            if (data) return done(null, data); // debug, turned off to create every time
-            
+            // if (data) return done(null, data); // debug, turned off to create every time
+            console.log('read raster tiles', _.size(data));
             // create
             mile.createRasterTile(params, storedLayer, done);
         });
@@ -1235,155 +1196,10 @@ module.exports = mile = {
     checkAccess : tools.checkAccess,
 }
 
-// #########################################
-// ###  Initialize Kue                   ###
-// #########################################
-// init kue
-var jobs;
-
-function connect_to_kue() {
-
-    var MAPIC_REDIS_AUTH = process.env.MAPIC_REDIS_AUTH;
-    var redisConfig = {
-        port : 6379,
-        host : 'redistemp',
-        auth : MAPIC_REDIS_AUTH,
-        db : 1
-    }
-    var prefix = crypto.randomBytes(4).toString('hex');
-    jobs = kue.createQueue({
-        redis : redisConfig,
-        prefix : prefix
-    });
-    // clear kue
-    jobs.watchStuckJobs();
+// start server
+// todo: move around
+server(mile);
 
 
 
-
-
-
-    // #########################################
-    // ###  Clusters                         ###
-    // #########################################
-
-    // master cluster:
-    if (cluster.isMaster) { 
-
-        // start server
-        server(mile);
-
-        console.log('Clusters: ' + numCPUs);
-        for (var i = 0; i < numCPUs - 1; i++) {  
-            // fork workers
-            cluster.fork(); 
-        } 
-
-        // listen to exit, keep alive
-        cluster.on('exit', function(worker, code, signal) { 
-            console.error({
-                err_id : 7,
-                err_msg : 'cluster died',
-            });
-            cluster.fork(); 
-        });
-
-    // worker clusters
-    } else {
-
-        console.log('...clustering!');
-
-        // render vector job
-        jobs.process('render_vector_tile', 1, function (job, done) {
-            var params = job.data.params;
-            mile._renderVectorTile(params, function (err) {
-                if (err) console.error({
-                    err_id : 8,
-                    err_msg : 'render vector tile',
-                    error : err
-                });
-                done(err);
-            });
-        });
-
-        // render raster job
-        jobs.process('render_raster_tile', 1, function (job, done) {
-            var params = job.data.params;
-
-            // render
-            mile._renderRasterTile(params, function (err) {
-                if (err) console.error({
-                    err_id : 9,
-                    err_msg : 'Error rendering raster tile',
-                    error : err
-                });
-                done(err);
-            });
-        });
-
-        // render grid job
-        jobs.process('render_grid_tile', 1, function (job, done) {
-            var params = job.data.params;
-            mile._renderGridTile(params, function (err) {
-                if (err) console.error({
-                    err_id : 10,
-                    err_msg : 'Error rendering grid tile',
-                    error : err
-                });
-                done(err);
-            });
-        });
-
-
-        // proxy tiles
-        jobs.process('proxy_tile', 10, function (job, done) {
-            var options = job.data.options;
-            proxy._serveTile(options, function (err) {
-                if (err) console.error({
-                    err_id : 11,
-                    err_msg : 'proxy tile job',
-                    error : err
-                });
-                done();
-            });
-        });
-
-        // cube tiles
-        jobs.process('cube_tile', 1, function (job, done) {
-            var options = job.data.options;
-            cubes.createTile(options, function (err) {
-                if (err) console.error({
-                    err_id : 12,
-                    err_msg : 'cube tile job',
-                    error : err
-                });
-                done();
-            });
-        });
-
-        // remove stale jobs
-        jobs.on('job complete', function (id) {
-            kue.Job.get(id, function (err, job) {
-                if (err) return;
-                var params = job.data.params;
-                var job_id = job.id;
-                job.remove(function (err) {
-                    if (err) console.error({
-                        err_id : 13,
-                        err_msg : 'job remove',
-                        error : err
-                    });
-                });
-            });
-        });
-
-    }
-}
-
-try {
-    // needed because redis is not always ready first time
-    connect_to_kue();
-} catch (e) {
-    setTimeout(connect_to_kue, 1000);
-}
 

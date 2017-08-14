@@ -33,42 +33,25 @@ var MAPIC_REDIS_PORT = process.env.MAPIC_REDIS_PORT || 6379;
 var MAPIC_REDIS_DB   = process.env.MAPIC_REDIS_DB || 1;
 
 var redis_instances = {};
-_.each(['redisLayers', 'redisStats', 'redisTemp'], function (i) {
-
-    // connect redis
-    // var redis_connect_string = _.toLower(i);
-    // redis_instances[i] = redis.createClient(MAPIC_REDIS_PORT, redis_connect_string, {detect_buffers : true});
-
-    // auth redis
-    console.log('0 redis')
+// _.each(['redisLayers', 'redisStats', 'redisTemp'], function (i) {
+_.each(['redisLayers', 'redisStats'], function (i) {
     async.retry({times: 100, interval: 2000}, connectRedis.bind(this, i), function (err, results) {
-        console.log('5 - redis');
         redis_instances[i].on('error', silentLog);
         redis_instances[i].select(MAPIC_REDIS_DB, silentLog)
         console.log('Connected to', i);
     });
 });
 function connectRedis (i, callback) {
-    try {
-        var redis_connect_string = _.toLower(i);
-        console.log('1 - redu', redis_connect_string);
-        redis_instances[i] = redis.createClient(MAPIC_REDIS_PORT, redis_connect_string, {detect_buffers : true});
-        console.log('2 - redis')
-        redis_instances[i].auth(MAPIC_REDIS_AUTH, function (err) {
-        console.log('3 - redis')
-            callback(err);
-        });
-    } catch (e) {
-        console.log('4 - redis')
-        callback(e);
-    }
+    var redis_connect_string = _.toLower(i);
+    redis_instances[i] = redis.createClient(MAPIC_REDIS_PORT, redis_connect_string, {detect_buffers : true});
+    redis_instances[i].auth(MAPIC_REDIS_AUTH, callback);
 }
 
 
 module.exports = store = { 
 
     layers : redis_instances['redisLayers'],
-    temp : redis_instances['redisTemp'],
+    // temp : redis_instances['redisTemp'],
     stats : redis_instances['redisStats'],
 
     // save tiles generically
