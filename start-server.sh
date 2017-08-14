@@ -19,10 +19,12 @@ yarn install
 cd /mapic/mile
 
 # spin server
-if $MAPIC_PRODMODE; then
-	echo 'Mile | PostGIS Tile Server | Production mode'
-	forever src/mile.js production >> log/mile.log
-else
-	echo 'Mile Debug mode (with 8GB memory)'
-	nodemon --max-old-space-size=8192 -i node_modules/ -i test/ src/mile.js
-fi
+# if $MAPIC_PRODMODE; then
+# 	echo 'Mile | PostGIS Tile Server | Production mode'
+# 	forever src/mile.js production >> log/mile.log
+# else
+# 	echo 'Mile Debug mode (with 8GB memory)'
+# 	nodemon --max-old-space-size=8192 -i node_modules/ -i test/ src/mile.js
+# fi
+
+forever -c nodemon --exitcrash --max-old-space-size=8192 -i node_modules/ -i test/ src/mile.js
