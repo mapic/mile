@@ -27,5 +27,5 @@ cd /mapic/mile
 # 	nodemon --max-old-space-size=8192 -i node_modules/ -i test/ src/mile.js
 # fi
 echo "forever + nodemon"
-forever -c nodemon --exitcrash --max-old-space-size=8192 -i node_modules/ -i test/ src/mile.js
-# forever -w src/mile.js
+# forever -c nodemon --exitcrash --max-old-space-size=8192 -i node_modules/ -i test/ src/mile.js
+forever -f -w --watchDirectory src/ src/mile.js
