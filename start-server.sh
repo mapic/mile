@@ -10,5 +10,8 @@ yarn install
 # go to folder
 cd /mapic/mile
 
+# clean up forever
+rm -rf /root/.forever
+
 # spin server
 forever -f -v -w --watchDirectory src/ src/mile.js
