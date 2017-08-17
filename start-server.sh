@@ -11,4 +11,4 @@ yarn install
 cd /mapic/mile
 
 # spin server
-forever -f -w --watchDirectory src/ src/mile.js
+forever -f -v -w --watchDirectory src/ src/mile.js
