@@ -1,15 +1,14 @@
 #!/bin/bash
 
-# get code
-MILE_BRANCH=${MAPIC_MILE_BRANCH:-master}
-echo "MILE_BRANCH: $MILE_BRANCH"
-mkdir -p /mapic && cd /mapic
-git clone https://github.com/mapic/mile.git
+# go to folder
 cd /mapic/mile
-git checkout MILE_BRANCH
 
 # ensure log folder
 mkdir -p /mapic/mile/log
+
+# get latest
+git pull origin master
+git checkout ${MAPIC_MILE_BRANCH:-master}
 
 # yarn
 yarn config set cache-folder /mapic/mile/.yarn
