@@ -3,12 +3,8 @@
 # go to folder
 cd /mapic/mile
 
-ls -la
-
-# get latest
-ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
-git pull origin master
-git checkout ${MAPIC_MILE_BRANCH:-master}
+# pull latest code
+bash scripts/pull-latest-code.sh
 
 # ensure log folder
 mkdir -p /mapic/mile/log
