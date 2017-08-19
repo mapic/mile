@@ -33,10 +33,6 @@ var MAPIC_REDIS_PORT = process.env.MAPIC_REDIS_PORT || 6379;
 var MAPIC_REDIS_DB   = process.env.MAPIC_REDIS_DB || 1;
 
 var redis_instances = {};
-// _.each(['redisLayers', 'redisStats', 'redisTemp'], function (i) {
-
-    console.log('NEW REDIS!!');
-    
 _.each(['redis'], function (i) {
     async.retry({times: 100, interval: 2000}, connectRedis.bind(this, i), function (err, results) {
         redis_instances[i].on('error', silentLog);
@@ -57,7 +53,6 @@ function connectRedis (i, callback) {
 module.exports = store = { 
 
     layers : redis_instances['redis'],
-    // temp : redis_instances['redisTemp'],
     stats : redis_instances['redis'],
 
     // save tiles generically
