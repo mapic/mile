@@ -3,12 +3,15 @@
 # go to folder
 cd /mapic/mile
 
-# ensure log folder
-mkdir -p /mapic/mile/log
+ls -la
 
 # get latest
+ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 git pull origin master
 git checkout ${MAPIC_MILE_BRANCH:-master}
+
+# ensure log folder
+mkdir -p /mapic/mile/log
 
 # yarn
 yarn config set cache-folder /mapic/mile/.yarn
