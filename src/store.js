@@ -34,7 +34,7 @@ var MAPIC_REDIS_DB   = process.env.MAPIC_REDIS_DB || 1;
 
 var redis_instances = {};
 // _.each(['redisLayers', 'redisStats', 'redisTemp'], function (i) {
-_.each(['redisLayers', 'redisStats'], function (i) {
+_.each(['redis'], function (i) {
     async.retry({times: 100, interval: 2000}, connectRedis.bind(this, i), function (err, results) {
         redis_instances[i].on('error', silentLog);
         redis_instances[i].select(MAPIC_REDIS_DB, silentLog)
@@ -48,11 +48,14 @@ function connectRedis (i, callback) {
 }
 
 
+
+
+
 module.exports = store = { 
 
-    layers : redis_instances['redisLayers'],
+    layers : redis_instances['redis'],
     // temp : redis_instances['redisTemp'],
-    stats : redis_instances['redisStats'],
+    stats : redis_instances['redis'],
 
     // save tiles generically
     _saveVectorTile : function (tile, params, done) {
