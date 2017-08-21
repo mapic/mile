@@ -52,7 +52,7 @@ module.exports = proxy = {
 			if (err) return proxy.serveErrorTile(res);
 
 			// send tile to client
-			res.writeHead(200, {'Content-Type': pile.headers[options.format]}); 
+			res.writeHead(200, {'Content-Type': mile.headers[options.format]}); 
 			res.end(buffer);
 		});
 

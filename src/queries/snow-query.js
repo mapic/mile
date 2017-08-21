@@ -123,7 +123,7 @@ module.exports = snow_query = {
                 });
 
                 // get details on all datasets
-                pile.POST(pile.routes.base + pile.routes.get_datasets, {
+                mile.POST(mile.routes.base + mile.routes.get_datasets, {
                     datasets : withinRange,
                     access_token : access_token,
                 }, function (err, dataset_details){

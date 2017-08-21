@@ -23,8 +23,8 @@ var helpers = require(__dirname + '/utils/helpers');
 var token = helpers.token;
 
 // config
-var config = require('/mapic/config/engine.config.js').clientConfig;
-
+// var config = require('/mapic/config/engine.config.js').clientConfig;
+// return;
 var tmp = {};
 
 // var debugMode = process.env.SYSTEMAPIC_DEBUG;
@@ -38,13 +38,18 @@ if (debugMode) {
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 function base_tiles_url() {
-    var subdomain = config.servers.tiles.uri;
+    // var subdomain = config.servers.tiles.uri;
+    var subdomain = process.env.MAPIC_ENGINE_TILES_URL;
 
     // override for localhost
     if (_.includes(subdomain, 'localhost')) {
         subdomain = domain + subdomain.split('https://localhost')[1];
     }
-    var tiles_url = subdomain.replace('{s}', config.servers.tiles.subdomains[0]);
+    var sub = process.env.MAPIC_ENGINE_TILES_SUBDOMAINS.replace('"', '').split(',');
+    console.log('raster sub: ', sub);
+    var tiles_url = subdomain.replace('{s}', sub);
+    // var tiles_url = subdomain.replace('{s}', config.servers.tiles.subdomains[0]);
+    console.log('raster tiles_url: ', tiles_url);
     return tiles_url;
 }
 

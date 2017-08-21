@@ -187,7 +187,7 @@ module.exports = queries = {
         var ops = [];
 
         // error handling
-        if (!geojson) return pile.error.missingInformation(res, 'Please provide an area.')
+        if (!geojson) return mile.error.missingInformation(res, 'Please provide an area.')
 
         ops.push(function (callback) {
             // retrieve layer and return it to client

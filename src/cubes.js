@@ -602,11 +602,11 @@ module.exports = cubes = {
         var ops = {};
 
         // return if erroneus request
-        if (!cube_request) return pile.serveErrorTile(res);
+        if (!cube_request) return mile.serveErrorTile(res);
 
         // find dataset
         ops.dataset = function (callback) {
-            pile.getUploadStatus({
+            mile.getUploadStatus({
                 file_id : cube_request.dataset,
                 access_token : access_token
             }, callback);
@@ -626,7 +626,7 @@ module.exports = cubes = {
             var dataset = results.dataset;
 
             // return on error
-            if (!cube || !dataset || dataset.error) return pile.serveErrorTile(res);
+            if (!cube || !dataset || dataset.error) return mile.serveErrorTile(res);
 
             // serve tile
             cubes._serveTile({
@@ -649,12 +649,12 @@ module.exports = cubes = {
         // check if tile is outside bounds if dataset
         // todo: add mask bounds also
         var outside_extent = cubes._isOutsideExtent(options);
-        if (outside_extent) return pile.serveEmptyTile(res);
+        if (outside_extent) return mile.serveEmptyTile(res);
 
         // check if outside mask extent
         var outside_mask_extent = cubes._isOutsideMaskExtent(options);
         if (outside_mask_extent) {
-            return pile.serveEmptyTile(res);
+            return mile.serveEmptyTile(res);
         }
         // create unique hash for style
         var style_hash = forge.md.md5.create().update(cube.style + cube.timestamp).digest().toHex();
@@ -669,7 +669,7 @@ module.exports = cubes = {
 
                 // return cached tile
                 console.log('Serving cached tile');
-                res.writeHead(200, {'Content-Type': pile.headers['png']});
+                res.writeHead(200, {'Content-Type': mile.headers['png']});
                 res.end(tile_buffer);
 
             } else {
@@ -705,7 +705,7 @@ module.exports = cubes = {
         });
 
         // // create tile job
-        // var job = pile.jobs().create('cube_tile', { 
+        // var job = mile.jobs().create('cube_tile', { 
         //     options : options,
         // }).priority('low').attempts(5).save();
 
@@ -720,7 +720,7 @@ module.exports = cubes = {
     serveTile : function (res, tilePath) {
         // read from disk
         fs.readFile(tilePath, function (err, tile_buffer) {
-            res.writeHead(200, {'Content-Type': pile.headers['png']});
+            res.writeHead(200, {'Content-Type': mile.headers['png']});
             res.end(tile_buffer);
         });
     },
@@ -870,7 +870,7 @@ module.exports = cubes = {
         ops.push(function (map, callback) {
 
             // debug write xml
-            if (0) pile._debugXML(cube.cube_id, map.toXML());
+            if (0) mile._debugXML(cube.cube_id, map.toXML());
 
             // map options
             var map_options = {
@@ -1054,7 +1054,7 @@ module.exports = cubes = {
                 });
 
                 // get details on all datasets
-                pile.POST(pile.routes.base + pile.routes.get_datasets, {
+                mile.POST(mile.routes.base + mile.routes.get_datasets, {
                     datasets : range,
                     access_token : access_token,
                 }, callback);
@@ -1361,7 +1361,7 @@ module.exports = cubes = {
                 });
 
                 // get details on all datasets
-                pile.POST(pile.routes.base + pile.routes.get_datasets, {
+                mile.POST(mile.routes.base + mile.routes.get_datasets, {
                     datasets : datasets_in_range,
                     access_token : access_token,
                 }, function (err, dataset_details){
@@ -1629,7 +1629,7 @@ module.exports = cubes = {
                 });
 
                 // get details on all datasets
-                pile.POST(pile.routes.base + pile.routes.get_datasets, {
+                mile.POST(mile.routes.base + mile.routes.get_datasets, {
                     datasets : withinRange,
                     access_token : access_token,
                 }, function (err, dataset_details){

@@ -24,7 +24,7 @@ var helpers = require(__dirname + '/utils/helpers');
 var token = helpers.token;
 
 // config
-var config = require('/mapic/config/engine.config.js').clientConfig;
+// var config = require('/mapic/config/engine.config.js').clientConfig;
 
 // logs
 var debugMode = false; // override
@@ -37,8 +37,17 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 
 // helper fn for tile url
 function base_cubes_url() {
-    var subdomain = (process.env.MAPIC_DOMAIN == 'localhost') ? 'https://172.17.0.1/v2/cubes/' : config.servers.cubes.uri;
-    var tiles_url = subdomain.replace('{s}', config.servers.cubes.subdomains[0]);
+    
+    // console.log('process.env', process.env);
+
+    var cubes_uri = 'https://' + process.env.MAPIC_ENGINE_TILES_URL + '/v2/cubes/';
+    var subdomains_uri = process.env.MAPIC_ENGINE_TILES_SUBDOMAINS.replace('"', '').split(',')
+    console.log('cube subdomains_uri:', subdomains_uri), subdomains_uri[0];
+    // var subdomain = (process.env.MAPIC_DOMAIN == 'localhost') ? 'https://172.17.0.1/v2/cubes/' : config.servers.cubes.uri;
+    var subdomain = (process.env.MAPIC_DOMAIN == 'localhost') ? 'https://172.17.0.1/v2/cubes/' : cubes_uri;
+    // var tiles_url = subdomain.replace('{s}', config.servers.cubes.subdomains[0]);
+    var tiles_url = subdomain.replace('{s}', subdomains_uri[0]);
+    console.log('cube tiles_url', tiles_url);
     return tiles_url;
 }
 
