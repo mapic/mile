@@ -95,12 +95,6 @@ describe('Raster', function () {
                     if (err) return done(err);
 
                     var result = helpers.parse(res.text);
-                    if (debugMode) {
-                        console.log('\n\n\n');
-                        console.log('Upload status: GET', endpoints.import.status, '[wu]:');
-                        console.log('------------------------------------------')
-                        console.log(result);
-                    }
 
                     expect(result.file_id).to.exist;
                     expect(result.user_id).to.exist;
