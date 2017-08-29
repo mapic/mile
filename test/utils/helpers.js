@@ -8,11 +8,14 @@ var forge = require('node-forge');
 var supertest = require('supertest');
 var endpoints = require('./endpoints.js');
 var testData = require('./helpers.json');
-var access = (process.env.MAPIC_DOMAIN == 'localhost') ? require('./access.localhost.json') : require('./access.ignore.json');
+// var access = (process.env.MAPIC_DOMAIN == 'localhost') ? require('./access.localhost.json') : require('./access.ignore.json');
+var access = require('./access.localhost.json');
 
 // api
 var domain = (process.env.MAPIC_DOMAIN == 'localhost') ? 'https://172.17.0.1' : 'https://' + process.env.MAPIC_DOMAIN;
 var api = supertest(domain);
+
+console.log('domain: ', domain);
 
 // Avoids DEPTH_ZERO_SELF_SIGNED_CERT error for self-signed certs
 // See https://github.com/systemapic/pile/issues/38

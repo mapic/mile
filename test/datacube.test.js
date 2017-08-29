@@ -34,11 +34,9 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 
 // helper fn for tile url
 function base_cubes_url() {
-    var cubes_uri = 'https://' + process.env.MAPIC_ENGINE_TILES_URL + '/v2/cubes/';
-    var subdomains_uri = process.env.MAPIC_ENGINE_TILES_SUBDOMAINS.replace('"', '').split(',')
-    debugMode && console.log('cube subdomains_uri:', subdomains_uri), subdomains_uri[0];
-    var subdomain = (process.env.MAPIC_DOMAIN == 'localhost') ? 'https://172.17.0.1/v2/cubes/' : cubes_uri;
-    var tiles_url = subdomain.replace('{s}', subdomains_uri[0]);
+    // use only one domain for testing
+    var tiles_url = 'https://tiles-a-' + process.env.MAPIC_DOMAIN + '/v2/cubes/';
+    var subdomain = (process.env.MAPIC_DOMAIN == 'localhost') ? 'https://172.17.0.1/v2/cubes/' : tiles_url;
     debugMode && console.log('cube tiles_url', tiles_url);
     return tiles_url;
 }
@@ -466,6 +464,7 @@ describe('Cubes', function () {
                     var expected = __dirname + '/open-data/expected-cube-tile-1.png';
                     var actual = __dirname + '/tmp/cube-tile-1.png'
 
+                    console.log('tiles_url', tiles_url);
                     http.get({
                         url : tiles_url,
                         noSslVerifier : true
