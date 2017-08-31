@@ -1106,8 +1106,10 @@ module.exports = mile = {
         store._readRasterTile(params, function (err, data) {
 
             // return data
-            // if (data) return done(null, data); // debug, turned off to create every time
+            if (data) return done(null, data); // debug, turned off to create every time
+            
             console.log('read raster tiles', _.size(data));
+           
             // create
             mile.createRasterTile(params, storedLayer, done);
         });
