@@ -125,8 +125,6 @@ module.exports = mile = {
             // parse layer JSON
             var storedLayer = tools.safeParse(storedLayerJSON);
 
-            console.log('tile request', _.size(storedLayer));
-
             // get tiles
             if (type == 'pbf') ops.push(function (callback) {
                 mile.getVectorTile(params, storedLayer, callback);
@@ -183,8 +181,6 @@ module.exports = mile = {
 
                 // return tile to client
                 res.writeHead(200, {'Content-Type': mile.headers[type]});
-                console.log('_.size(data)', _.size(data), _.size(data[0]));
-                console.log('data', data);
                 res.end(data[0]);
             });
         });
