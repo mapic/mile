@@ -183,6 +183,8 @@ module.exports = mile = {
 
                 // return tile to client
                 res.writeHead(200, {'Content-Type': mile.headers[type]});
+                console.log('_.size(data)', _.size(data), _.size(data[0]));
+                console.log('data', data);
                 res.end(data[0]);
             });
         });
@@ -946,7 +948,7 @@ module.exports = mile = {
                     
                     // save grid to redis
                     var keyString = 'grid_tile:'  + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
-                    store.layers.set(keyString, JSON.stringify(utf), done);
+                    store.saveGridTile(keyString, JSON.stringify(utf), done);
                 });
             });
         });

@@ -12,7 +12,6 @@ var mapnik = require('mapnik');
 var colors = require('colors');
 var cluster = require('cluster');
 var numCPUs = require('os').cpus().length;
-// var mongoose = require('mongoose');
 var request = require('request');
 
 // global paths
@@ -21,7 +20,8 @@ var RASTERPATH   = '/data/raster_tiles/';
 var GRIDPATH     = '/data/grid_tiles/';
 
 var mile_settings = {
-    store : 'disk' // or redis
+    // store : 'disk' // or redis or s3
+    store : 's3' // or redis or s3
 }
 
 var silentLog = function (err) {
@@ -31,6 +31,38 @@ var silentLog = function (err) {
 var MAPIC_REDIS_AUTH = process.env.MAPIC_REDIS_AUTH;
 var MAPIC_REDIS_PORT = process.env.MAPIC_REDIS_PORT || 6379;
 var MAPIC_REDIS_DB   = process.env.MAPIC_REDIS_DB || 1;
+
+// aws access keys (used automatically from ENV)
+process.env.AWS_ACCESS_KEY_ID = process.env.MAPIC_AWS_S3_ACCESSKEYID
+process.env.AWS_SECRET_ACCESS_KEY = process.env.MAPIC_AWS_S3_SECRETACCESSKEY
+
+var AWS = require('aws-sdk');
+// var s3 = new AWS.S3({apiVersion: '2006-03-01'});
+var s3 = new AWS.S3({region: 'eu-central-1'});
+var bucketName = 'mapic-s3.' + process.env.MAPIC_DOMAIN;
+
+// Call S3 to list current buckets
+s3.listBuckets(function(err, data) {
+    if (err) return console.log("Error", err);
+    
+    // look for bucket
+    var bucketFound = _.find(data.Buckets, function (b) {
+        return b.Name == bucketName;
+    });
+
+    // check for bucket
+    if (!_.isUndefined(bucketFound)) return console.log('Bucket found!', bucketFound);
+
+    // create bucket
+    s3.createBucket({
+        Bucket : bucketName,
+        // Region : 'eu-central-1'
+    }, function(err, data) {
+        if (err) return console.log("Error", err);
+        console.log("Success", data.Location);
+    });
+});
+
 
 var redis_instances = {};
 _.each(['redis'], function (i) {
@@ -55,6 +87,55 @@ module.exports = store = {
     layers : redis_instances['redis'],
     stats : redis_instances['redis'],
 
+    // AWS S3
+    _saveRasterTileS3 : function (tile, params, done) {
+        var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
+
+        // encode tile
+        tile.encode('png8', function (err, buffer) {
+
+            // upload
+            s3.putObject({
+                Bucket: bucketName,
+                Key: keyString,
+                Body: buffer
+            }, function (err, response) {
+                done(null);
+            });
+        });
+
+    },
+    _readRasterTileS3 : function (params, done) {
+        var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
+        var params = {Bucket: bucketName, Key: keyString};
+        s3.getObject(params, function(err, data) {
+            if (err || !data) {
+                return done(null);
+            } else {                
+                // success
+                done(null, data.Body);
+            }
+        });
+    },
+    _saveGridTileS3 : function (key, data, done) {
+        s3.putObject({
+            Bucket: bucketName,
+            Key: key,
+            Body: data
+        }, function (err, response) {
+            done(null);
+        });
+    },
+    _getGridTileS3 : function (params, done) {
+        var keyString = 'grid_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
+        var params = {Bucket: bucketName, Key: keyString};
+        s3.getObject(params, function(err, data) {
+            if (err || !data) return done(null);
+            done(null, data.Body);
+        });
+    },
+
+
     // save tiles generically
     _saveVectorTile : function (tile, params, done) {
         if (mile_settings.store == 'redis') return store._saveVectorTileRedis(tile, params, done);
@@ -69,17 +150,24 @@ module.exports = store = {
     _saveRasterTile : function (tile, params, done) {
         if (mile_settings.store == 'redis') return store._saveRasterTileRedis(tile, params, done);
         if (mile_settings.store == 'disk')  return store._saveRasterTileDisk(tile, params, done);
+        if (mile_settings.store == 's3')    return store._saveRasterTileS3(tile, params, done);
         return done('mile_settings.store not set!');
     },
     _readRasterTile : function (params, done) {
         if (mile_settings.store == 'redis') return store._readRasterTileRedis(params, done);
         if (mile_settings.store == 'disk')  return store._readRasterTileDisk(params, done);
+        if (mile_settings.store == 's3')    return store._readRasterTileS3(params, done);
         return done('mile_settings.store not set!');
     },
+    saveGridTile : function (key, data, done) {
+        if (mile_settings.store == 's3') return store._saveGridTileS3(key, data, done);
+        store._saveGridTileRedis(key, data, done); // old default
+    },
 
-
-
-
+    getGridTile : function (params, done) {
+        if (mile_settings.store == 's3') return store._getGridTileS3(params, done);
+        store._getGridTileRedis(params, done); // old default
+    },
 
 
     // read/write to redis
@@ -105,8 +193,13 @@ module.exports = store = {
         var key = new Buffer(keyString);
         store.layers.get(key, done);
     },
-
-    
+    _saveGridTileRedis : function (key, data, done) {
+        store.layers.set(key, data, done);
+    },
+    _getGridTileRedis : function (params, done) {
+        var keyString = 'grid_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
+        store.layers.get(keyString, done);
+    },
 
 
 
@@ -143,13 +236,10 @@ module.exports = store = {
         });
     },
 
-
-    // get grid tiles from redis
-    getGridTile : function (params, done) {
-        var keyString = 'grid_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
-        store.layers.get(keyString, done);
-    },
+    
+    
 
 
+   
 
 }
