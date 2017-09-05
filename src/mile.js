@@ -21,6 +21,7 @@ var sanitize = require("sanitize-filename");
 var mercator = require('./sphericalmercator');
 var geojsonArea = require('geojson-area');
 var crypto = require('crypto');
+var https = require('https');
 
 // modules
 // global.config = require('../config.js');
@@ -1056,6 +1057,123 @@ module.exports = mile = {
 
     },
 
+    preRender : function (req, res) {
+
+        var layer_id = req.body.layer_id;
+
+        if (!layer_id) return res.send({error: 'Missing argument: layer_id'});
+
+        // get layer
+        store.layers.get(layer_id, function (err, storedLayerJSON) {    
+            if (err || !storedLayerJSON) return res.send({error: 'Missing layer_id'});
+
+            var layer = tools.safeParse(storedLayerJSON);
+
+            var metadata = tools.safeParse(layer.options.metadata);
+            var extent = metadata.extent;
+
+            var tiles = mile._getPreRenderTiles(extent, layer_id);
+
+            console.log('tiles:', tiles);
+
+            var debug_tiles = _.slice(tiles, 0, 10);
+
+            mile.requestPrerender({
+                tiles : tiles, 
+                access_token : req.body.access_token,
+                layer_id : layer_id
+            })
+
+        });
+
+        res.send({
+            error : null, 
+            estimated_time : 1000
+        });
+
+    },
+
+    requestPrerender : function (options) {
+        var tiles = options.tiles;
+        var access_token = options.access_token;
+        var layer_id = options.layer_id;
+
+        _.each(tiles, function (tile) {
+            var url = 'https://tiles-a-' + process.env.MAPIC_DOMAIN + '/v2/tiles/' + layer_id + '/' + tile.z + '/' + tile.x + '/' + tile.y + '.png?access_token=' + access_token;
+
+            // will query whole swarm
+            https.get(url, function (res) {
+                console.log('fetched url', url);
+            });
+        });
+    },
+
+    _getPreRenderTiles : function (extent, layer_id) {
+        var tiles = [];
+        _.times(18, function (z) {
+            z++;
+            tiles.push(mile._getPreRenderTilesAtZoom(extent, layer_id, z));
+        });
+        return _.flatten(tiles);
+    },
+
+    _getPreRenderTilesAtZoom : function (extent, layer_id, zoom) {
+
+        // latitude
+        var north = parseFloat(extent[1]);
+        var south = parseFloat(extent[3]);
+
+        // longitutde
+        var west = parseFloat(extent[0]);
+        var east = parseFloat(extent[2]);
+
+        var minLng = west;
+        var maxLng = east;
+        var minLat = south;
+        var maxLat = north;
+
+        var minTileX = mile.lon_to_tile_x(minLng, zoom);
+        var maxTileX = mile.lon_to_tile_x(maxLng, zoom);
+
+        var minTileY = mile.lat_to_tile_y(minLat, zoom);
+        var maxTileY = mile.lat_to_tile_y(maxLat, zoom);
+
+        var x = minTileX;
+        var z = zoom;
+        var tiles = [];
+        while (x <= maxTileX) {
+            var y = minTileY;
+            while (y <= maxTileY) {
+                y++;
+                var tile = layer_id + '/' + z + '/' + y + '/' + x
+                var tile = {
+                    layer_id : layer_id, 
+                    layerUuid : layer_id,
+                    z : z, 
+                    x : x, 
+                    y : y,
+                    type : 'png',
+
+                }
+                tiles.push(tile);
+            }
+            x++;
+        }
+
+        return tiles;
+
+    },
+
+    deg_to_rad : function (deg) {
+        return deg * Math.PI / 180;
+    },
+    lon_to_tile_x : function (lon, zoom) {
+        return parseInt(Math.floor( (lon + 180) / 360 * (1<<zoom) ));
+    },
+    lat_to_tile_y : function (lat, zoom) {
+        return Math.floor((1 - Math.log(Math.tan(mile.deg_to_rad(lat)) + 1 / Math.cos(mile.deg_to_rad(lat))) / Math.PI) / 2 * Math.pow(2, zoom));
+    },
+
     // convert CartoCSS to Mapnik XML
     cartoRenderer : function (storedLayer, layer, callback) {
 
@@ -1101,6 +1219,8 @@ module.exports = mile = {
 
     // return tiles from disk or create
     getRasterTile : function (params, storedLayer, done) {
+
+        // console.log('getRasterTile params', params, storedLayer);
 
         // check cache
         store._readRasterTile(params, function (err, data) {

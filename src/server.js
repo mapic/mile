@@ -27,6 +27,11 @@ module.exports = function (mile) {
 		mile.createLayer(req, res);
 	});
 
+	// pre-render layer
+	app.post('/v2/tiles/render', mile.checkAccess, function (req, res) {
+		mile.preRender(req,res);
+	});
+
 	// create cube layer
 	app.post('/v2/cubes/create', mile.checkAccess, function (req, res) {
 		mile.cubes.create(req, res);
@@ -77,11 +82,6 @@ module.exports = function (mile) {
 		mile.vectorizeDataset(req, res);
 	});
 
-	// // update layer
-	// app.post('/v2/tiles/update', mile.checkAccess, function (req, res) {
-	// 	mile.updateLayer(req, res);
-	// });
-
 	// get layer
 	app.get('/v2/tiles/layer', mile.checkAccess, function (req, res) {
 		mile.getLayer(req, res);
@@ -131,7 +131,7 @@ module.exports = function (mile) {
 	app.listen(3003);
 
 	// debug
-	console.log('   Mile is up @ ' + 3003);
+	console.log('Mile is up @ ' + 3003);
 }
 
 
