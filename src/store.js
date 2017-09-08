@@ -22,6 +22,7 @@ var GRIDPATH     = '/data/grid_tiles/';
 var mile_settings = {
     // store : 'disk' // or redis or s3
     store : 's3' // or redis or s3
+    // store : 'cache' // or redis or s3
 }
 
 var silentLog = function (err) {
@@ -101,12 +102,14 @@ module.exports = store = {
         if (mile_settings.store == 'redis') return store._saveRasterTileRedis(tile, params, done);
         if (mile_settings.store == 'disk')  return store._saveRasterTileDisk(tile, params, done);
         if (mile_settings.store == 's3')    return store._saveRasterTileS3(tile, params, done);
+        if (mile_settings.store == 'cache') return store._saveRasterTileCache(tile, params, done);
         return done('mile_settings.store not set!');
     },
     _readRasterTile : function (params, done) {
         if (mile_settings.store == 'redis') return store._readRasterTileRedis(params, done);
         if (mile_settings.store == 'disk')  return store._readRasterTileDisk(params, done);
         if (mile_settings.store == 's3')    return store._readRasterTileS3(params, done);
+        if (mile_settings.store == 'cache') return store._readRasterTileCache(params, done);
         return done('mile_settings.store not set!');
     },
     saveGridTile : function (key, data, done) {
@@ -118,6 +121,102 @@ module.exports = store = {
         store._getGridTileRedis(params, done); // old default
     },
 
+
+    // read/write to docker cache
+    _saveRasterTileCache : function (tile, params, done) {
+
+        // todo: use SYNC instead!
+        // https://hub.docker.com/r/mickaelperrin/lsyncd/
+
+
+        // tile.encode('png8', function (err, buffer) {
+
+
+        //     var url = 'https://' + process.env.MAPIC_DOMAIN + '/v2/cache';
+        //     url += '?layer_id=' + params.layerUuid + '&z=' + params.z + '&y=' + params.y + '&x=' + params.x;
+
+        //     var req = request.post(url, function (err, resp, body) {});
+
+        //     var file = {
+        //         data : buffer, 
+        //         name:  'cached_tile',
+        //         type : 'image/png'
+        //     }
+
+        //     // console.log('file:', file);
+
+        //     var form = req.form();
+        //     form.append('file', file.data, {
+        //         filename: file.name,
+        //         contentType: 'application/octet-stream',
+        //     });
+
+        //     done();
+        // });
+
+    },
+
+    _readRasterTileCache : function (params, done) {
+
+        // todo: use SYNC instead!
+        // https://hub.docker.com/r/mickaelperrin/lsyncd/
+
+
+
+        
+        // // GET to DOMAIN/v2/cache
+        // console.log('_readRasterTileCache params', params);
+
+        // var url = 'https://' + process.env.MAPIC_DOMAIN + '/v2/cache';
+        // url += '?layer_id=' + params.layerUuid + '&z=' + params.z + '&y=' + params.y + '&x=' + params.x;
+
+        // console.log('url:', url);
+
+        // request(url, function (error, response, body) {
+        //     console.log('_readRasterTileCache request DONE!');
+            
+        //     // console.log('error:', error); // Print the error if one occurred
+        //     // response && console.log('statusCode:', response.statusCode); // Print the response status code if a response was received
+        //     // console.log('size body:', _.size(body)); // Print the HTML for the Google homepage.
+        //     // console.log('typeof body', typeof body);
+        //     // if (typeof body == 'string') console.log('body: ', body);
+        //     // if (_.size(body)) console.log('respone:', response);
+
+        //     if (!body) return done('No tile');
+
+        //     console.log('body:', body);
+
+        //     var package = store.safeParse(body);
+
+        //     if (!package.tile) return done('No tile');
+
+        //     console.log('package:', package);
+
+        //     console.log('typeof package:', typeof package);
+        //     console.log('typeof package.tile:', typeof package.tile);
+        //     console.log('typeof package.tile.data:', typeof package.tile.data);
+
+        //     var buffer_tile = new Buffer.from(package.tile.data);
+
+        //     console.log('typeof buffer_tile', typeof buffer_tile);
+        //     console.log('size buffer_tile', _.size(buffer_tile));
+
+        //     console.log('ACTUAL BUFFER TILE:', buffer_tile);
+
+        //     done(null, buffer_tile);
+        // });
+
+    },
+
+    safeParse : function (string) {
+        try {
+            var obj = JSON.parse(string);
+            return obj;
+        } catch (e) {
+            console.log('safeParse failed!', string);
+            return false;
+        }
+    },
 
     // read/write to AWS S3
     _saveRasterTileS3 : function (tile, params, done) {
@@ -219,6 +318,10 @@ module.exports = store = {
         var path = RASTERPATH + keyString;
         fs.readFile(path, function (err, buffer) {
             if (err) return done(null);
+            console.log('$$$$$$$$$$$$$$ DISK DISK DISK ');
+            console.log('typeof buffer', typeof buffer)
+            console.log('size buffer', _.size(buffer));
+            console.log('actual buffer', buffer);
             done(null, buffer);
         });
     },

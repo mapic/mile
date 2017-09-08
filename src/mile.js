@@ -1224,7 +1224,8 @@ module.exports = mile = {
 
         // check cache
         store._readRasterTile(params, function (err, data) {
-
+            if (err) console.log('getRasterTile err: ', err);
+            
             // return data
             if (data) return done(null, data); // debug, turned off to create every time
             
