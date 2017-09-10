@@ -115,6 +115,10 @@ module.exports = mile = {
         var start_time = new Date().getTime();
         var ops = [];
 
+        console.log('querystring:', querystring);
+
+        params.force_render = req.query.force_render || false;
+
         // add access token to params
         params.access_token = req.query.access_token || req.body.access_token;
 
@@ -1227,7 +1231,7 @@ module.exports = mile = {
             if (err) console.log('getRasterTile err: ', err);
             
             // return data
-            if (data) return done(null, data); // debug, turned off to create every time
+            if (!params.force_render && data) return done(null, data); // debug, turned off to create every time
             
             console.log('read raster tiles', _.size(data));
            
