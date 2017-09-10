@@ -115,6 +115,7 @@ module.exports = mile = {
         var start_time = new Date().getTime();
         var ops = [];
 
+        // force render flag
         params.force_render = req.query.force_render || false;
 
         // add access token to params
@@ -1229,9 +1230,14 @@ module.exports = mile = {
             if (err) console.log('getRasterTile err: ', err);
             
             // return data
-            if (!params.force_render && data) return done(null, data); // debug, turned off to create every time
+            if (!params.force_render && data) {
+                console.log('using cached tile (params.force_render =', params.force_render,')');
+                return done(null, data); // debug, turned off to create every time
+            }
             
             console.log('read raster tiles', _.size(data));
+
+            console.log('rendering tile...')
            
             // create
             mile.createRasterTile(params, storedLayer, done);
