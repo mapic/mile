@@ -115,8 +115,6 @@ module.exports = mile = {
         var start_time = new Date().getTime();
         var ops = [];
 
-        console.log('querystring:', querystring);
-
         params.force_render = req.query.force_render || false;
 
         // add access token to params
