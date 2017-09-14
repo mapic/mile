@@ -1078,9 +1078,7 @@ module.exports = mile = {
 
             var tiles = mile._getPreRenderTiles(extent, layer_id);
 
-            console.log('tiles:', tiles);
-
-            var debug_tiles = _.slice(tiles, 0, 10);
+            // var debug_tiles = _.slice(tiles, 0, 10);
 
             mile.requestPrerender({
                 tiles : tiles, 
@@ -1101,14 +1099,26 @@ module.exports = mile = {
         var tiles = options.tiles;
         var access_token = options.access_token;
         var layer_id = options.layer_id;
+        var req_ops = [];
 
+        console.log('Pre-rendering', _.size(tiles), 'tiles')
+        var timeStart = Date.now();
+
+        // create array of tile requests
         _.each(tiles, function (tile) {
-            var url = 'https://tiles-a-' + process.env.MAPIC_DOMAIN + '/v2/tiles/' + layer_id + '/' + tile.z + '/' + tile.x + '/' + tile.y + '.png?access_token=' + access_token;
-
-            // will query whole swarm
-            https.get(url, function (res) {
-                console.log('fetched url', url);
+            req_ops.push(function(done) {
+                var url = 'https://tiles-a-' + process.env.MAPIC_DOMAIN + '/v2/tiles/' + layer_id + '/' + tile.z + '/' + tile.x + '/' + tile.y + '.png?access_token=' + access_token;
+                https.get(url, function (err) {
+                    done();
+                });
             });
+        });
+
+        // request only 100 tiles at a time
+        async.parallelLimit(req_ops, 100, function (err, results) {
+            var timeEnd = Date.now();
+            var benched = (timeEnd - timeStart) / 1000;
+            console.log('Pre-rendering done! That took', benched, 'seconds.');
         });
     },
 
@@ -1163,9 +1173,7 @@ module.exports = mile = {
             }
             x++;
         }
-
         return tiles;
-
     },
 
     deg_to_rad : function (deg) {
