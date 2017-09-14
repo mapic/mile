@@ -22,6 +22,7 @@ var mercator = require('./sphericalmercator');
 var geojsonArea = require('geojson-area');
 var crypto = require('crypto');
 var https = require('https');
+var geojsonExtent = require('geojson-extent');
 
 // modules
 // global.config = require('../config.js');
@@ -1220,10 +1221,100 @@ module.exports = mile = {
         });
     },
 
+    _isOutsideExtent : function (options) {
+
+        // debug
+        return false;
+
+        // not sure what effect this has
+        // implemented for cubes, but not vectors
+        // todo: fix so that it at least works...
+
+
+        var params = options.params;
+        var layer = options.layer;
+
+        console.log('_isOutsideExtent: ');
+        console.log('params:', params);
+        // console.log('layer: ', layer);
+        
+        try {
+
+        // get options
+        // var dataset = options.dataset;
+        // get extents
+        var coords = params;
+        var metadata = tools.safeParse(layer.options.metadata);
+        var extent_geojson = metadata.extent_geojson;
+
+        console.log('extent_geojson:', extent_geojson);
+        var bounding_box = mercator.xyz_to_envelope(parseInt(coords.x), parseInt(coords.y), parseInt(coords.z), false);
+        var data_extent_latlng = geojsonExtent(extent_geojson);
+        var south_west_corner = Conv.ll2m(data_extent_latlng[0], data_extent_latlng[1]);
+        var north_east_corner = Conv.ll2m(data_extent_latlng[2], data_extent_latlng[3]);
+
+
+        // tile is outside raster bounds if:
+        // - - - - - - - - - - - - - - - - - 
+        // tile-north is south of raster-south  (tile_north < raster_south)
+        // OR
+        // tile-east is west of raster-west     (tile-east  < raster-west)
+        // OR
+        // tile-south is north of raster-north  (tile-south > raster-north)
+        // OR
+        // tile-west is east of raster-east,    (tile-west  > raster-east)
+        
+        var data_bounds = {
+            west    : south_west_corner.x,
+            south   : south_west_corner.y,
+            east    : north_east_corner.x,
+            north   : north_east_corner.y
+        };
+
+        var tile_bounds = {
+            west    : bounding_box[0],
+            south   : bounding_box[1],
+            east    : bounding_box[2],
+            north   : bounding_box[3]
+        };
+
+        // check if outside extent
+        var outside = false;
+        if (tile_bounds.north < data_bounds.south)    {
+            console.log('outside 1: ', tile_bounds.north, data_bounds.south);
+            outside = true;
+        }
+        if (tile_bounds.east  < data_bounds.west)     {
+            console.log('outside 2: ', tile_bounds.east, data_bounds.west);
+            outside = true;
+        }
+        if (tile_bounds.south > data_bounds.north)    {
+            console.log('outside 3: ', tile_bounds.south, data_bounds.north);
+            outside = true;
+        }
+        if (tile_bounds.west > data_bounds.east)     {
+            console.log('outside 4: ', tile_bounds.west, data_bounds.east);
+            outside = true;
+        }
+
+        } catch (e) {
+            console.log('e:', e);
+            var outside = false;    
+        }
+
+        return outside;
+    },
+
     // return tiles from disk or create
     getRasterTile : function (params, storedLayer, done) {
 
         // console.log('getRasterTile params', params, storedLayer);
+        var outside_extent = mile._isOutsideExtent({
+            params : params, 
+            layer : storedLayer
+        });
+        if (outside_extent) return done('outside extent');
+
 
         // check cache
         store._readRasterTile(params, function (err, data) {
@@ -1324,6 +1415,67 @@ module.exports = mile = {
 
     checkAccess : tools.checkAccess,
 }
+
+
+// http://wiki.openstreetmap.org/wiki/Mercator#JavaScript
+var Conv=({
+    r_major : 6378137.0,//Equatorial Radius, WGS84
+    r_minor : 6356752.314245179,//defined as constant
+    f : 298.257223563,//1/f=(a-b)/a , a=r_major, b=r_minor
+    deg2rad : function(d) {
+        var r=d*(Math.PI/180.0);
+        return r;
+    },
+    rad2deg : function(r) {
+        var d=r/(Math.PI/180.0);
+        return d;
+    },
+    ll2m : function(lon,lat) { //lat lon to mercator
+    
+        //lat, lon in rad
+        var x=this.r_major * this.deg2rad(lon);
+        if (lat > 89.5) lat = 89.5;
+        if (lat < -89.5) lat = -89.5;
+        var temp = this.r_minor / this.r_major;
+        var es = 1.0 - (temp * temp);
+        var eccent = Math.sqrt(es);
+        var phi = this.deg2rad(lat);
+        var sinphi = Math.sin(phi);
+        var con = eccent * sinphi;
+        var com = .5 * eccent;
+        var con2 = Math.pow((1.0-con)/(1.0+con), com);
+        var ts = Math.tan(.5 * (Math.PI*0.5 - phi))/con2;
+        var y = 0 - this.r_major * Math.log(ts);
+        var ret={'x':x,'y':y};
+        return ret;
+    },
+    m2ll : function(x,y) {//mercator to lat lon
+        var lon=this.rad2deg((x/this.r_major));
+        var temp = this.r_minor / this.r_major;
+        var e = Math.sqrt(1.0 - (temp * temp));
+        var lat=this.rad2deg(this.pj_phi2( Math.exp( 0-(y/this.r_major)), e));
+        var ret={'lon':lon,'lat':lat};
+        return ret;
+    },
+    pj_phi2 : function(ts, e) {
+        var N_ITER=15;
+        var HALFPI=Math.PI/2;
+        var TOL=0.0000000001;
+        var eccnth, Phi, con, dphi;
+        var i;
+        var eccnth = .5 * e;
+        Phi = HALFPI - 2. * Math.atan (ts);
+        i = N_ITER;
+        do 
+        {
+            con = e * Math.sin (Phi);
+            dphi = HALFPI - 2. * Math.atan (ts * Math.pow((1. - con) / (1. + con), eccnth)) - Phi;
+            Phi += dphi;
+        } 
+        while ( Math.abs(dphi)>TOL && --i);
+        return Phi;
+    }
+});
 
 // start server
 // todo: move around
