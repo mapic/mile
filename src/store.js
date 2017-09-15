@@ -34,8 +34,8 @@ var MAPIC_REDIS_PORT = process.env.MAPIC_REDIS_PORT || 6379;
 var MAPIC_REDIS_DB   = process.env.MAPIC_REDIS_DB || 1;
 
 // aws access keys (used automatically from ENV)
-process.env.AWS_ACCESS_KEY_ID = process.env.MAPIC_AWS_S3_ACCESSKEYID
-process.env.AWS_SECRET_ACCESS_KEY = process.env.MAPIC_AWS_S3_SECRETACCESSKEY
+process.env.AWS_ACCESS_KEY_ID = process.env.MAPIC_AWS_S3_ACCESSKEYID || process.env.MAPIC_AWS_ACCESSKEYID;
+process.env.AWS_SECRET_ACCESS_KEY = process.env.MAPIC_AWS_S3_SECRETACCESSKEY || process.env.MAPIC_AWS_SECRETACCESSKEY;
 
 var AWS = require('aws-sdk');
 var s3 = new AWS.S3({region: 'eu-central-1'});
