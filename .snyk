@@ -12,3 +12,10 @@ patch:
         patched: '2017-07-03T10:58:34.474Z'
     - mocha > debug > ms:
         patched: '2017-07-03T10:58:34.474Z'
+  'npm:debug:20170905':
+    - gm > debug:
+        patched: '2017-10-02T03:35:11.521Z'
+    - grainstore > debug:
+        patched: '2017-10-02T03:35:11.521Z'
+    - mocha > debug:
+        patched: '2017-10-02T03:35:11.521Z'
