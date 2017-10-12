@@ -870,6 +870,8 @@ module.exports = mile = {
 
     _renderRasterTile : function (params, done) {
 
+        var startTime = Date.now();
+
         mile._prepareTile(params, function (err, map) {
             if (err) return done(err);
             if (!map) return done(new Error('no map 7474'));
@@ -899,6 +901,9 @@ module.exports = mile = {
                     return done(err);
                 }
 
+                var endTime = Date.now() - startTime;
+
+                console.log('rendered raster in', endTime, 'ms');
                 // save png to redis
                 store._saveRasterTile(tile, params, done);
             });
@@ -1101,21 +1106,32 @@ module.exports = mile = {
         var layer_id = options.layer_id;
         var req_ops = [];
 
-        console.log('Pre-rendering', _.size(tiles), 'tiles')
+        console.log('Pre-rendering', (_.size(tiles) * 2), 'tiles')
         var timeStart = Date.now();
 
         // create array of tile requests
         _.each(tiles, function (tile) {
+            
+            // raster tiles
             req_ops.push(function(done) {
                 var url = 'https://tiles-a-' + process.env.MAPIC_DOMAIN + '/v2/tiles/' + layer_id + '/' + tile.z + '/' + tile.x + '/' + tile.y + '.png?access_token=' + access_token;
                 https.get(url, function (err) {
                     done();
                 });
             });
+
+            // grid tiles
+            req_ops.push(function(done) {
+                var url = 'https://grid-a-' + process.env.MAPIC_DOMAIN + '/v2/tiles/' + layer_id + '/' + tile.z + '/' + tile.x + '/' + tile.y + '.grid?access_token=' + access_token;
+                https.get(url, function (err) {
+                    done();
+                });
+            });
         });
 
-        // request only 100 tiles at a time
-        async.parallelLimit(req_ops, 100, function (err, results) {
+        // request only n tiles at a time
+        var nt = 25;
+        async.parallelLimit(req_ops, nt, function (err, results) {
             var timeEnd = Date.now();
             var benched = (timeEnd - timeStart) / 1000;
             console.log('Pre-rendering done! That took', benched, 'seconds.');
