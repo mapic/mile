@@ -1321,7 +1321,8 @@ module.exports = mile = {
             var outside = false;    
         }
 
-        return outside;
+        // return outside;
+        return false;
     },
 
     // _isOutsideExtent : function (options) {
