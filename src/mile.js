@@ -1267,7 +1267,7 @@ module.exports = mile = {
     _isOutsideExtent : function (options) {
 
         // debug
-        return false;
+        // return false;
 
         // not sure what effect this has
         // implemented for cubes, but not vectors
@@ -1357,8 +1357,10 @@ module.exports = mile = {
             layer : storedLayer
         });
         if (outside_extent) {
-            console.log('outside extent - raster');
+            console.log('outside extent (raster):', outside_extent);
             return done('outside extent');
+        } else {
+            console.log('outside_extent (raster):', outside_extent)
         }
 
         // check cache
