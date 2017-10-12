@@ -1104,38 +1104,57 @@ module.exports = mile = {
         var tiles = options.tiles;
         var access_token = options.access_token;
         var layer_id = options.layer_id;
-        var req_ops = [];
+        var raster_ops = [];
+        var grid_ops = [];
+        var nt = 100; // parallel tile requests
 
         console.log('Pre-rendering', (_.size(tiles) * 2), 'tiles')
-        var timeStart = Date.now();
+        var timeStartRaster = Date.now();
 
         // create array of tile requests
         _.each(tiles, function (tile) {
             
             // raster tiles
-            req_ops.push(function(done) {
+            raster_ops.push(function(done) {
                 var url = 'https://tiles-a-' + process.env.MAPIC_DOMAIN + '/v2/tiles/' + layer_id + '/' + tile.z + '/' + tile.x + '/' + tile.y + '.png?access_token=' + access_token;
                 https.get(url, function (err) {
                     done();
                 });
             });
 
-            // grid tiles
-            req_ops.push(function(done) {
-                var url = 'https://grid-a-' + process.env.MAPIC_DOMAIN + '/v2/tiles/' + layer_id + '/' + tile.z + '/' + tile.x + '/' + tile.y + '.grid?access_token=' + access_token;
-                https.get(url, function (err) {
-                    done();
-                });
-            });
         });
 
         // request only n tiles at a time
-        var nt = 25;
-        async.parallelLimit(req_ops, nt, function (err, results) {
+        async.parallelLimit(raster_ops, nt, function (err, results) {
             var timeEnd = Date.now();
-            var benched = (timeEnd - timeStart) / 1000;
-            console.log('Pre-rendering done! That took', benched, 'seconds.');
+            var benched = (timeEnd - timeStartRaster) / 1000;
+            console.log('Pre-rendering of raster tiles done! That took', benched, 'seconds.');
+
+
+            var timeStartGrid = Date.now();
+
+              // create array of tile requests
+            _.each(tiles, function (tile) {
+
+                // grid tiles
+                grid_ops.push(function(done) {
+                    var url = 'https://grid-a-' + process.env.MAPIC_DOMAIN + '/v2/tiles/' + layer_id + '/' + tile.z + '/' + tile.x + '/' + tile.y + '.grid?access_token=' + access_token;
+                    https.get(url, function (err) {
+                        done();
+                    });
+                });
+            });
+
+            // request only n tiles at a time
+            async.parallelLimit(raster_ops, nt, function (err, results) {
+                var timeEnd = Date.now();
+                var benched = (timeEnd - timeStartGrid) / 1000;
+                console.log('Pre-rendering of grid tiles done! That took', benched, 'seconds.');
+            });
+
         });
+
+
     },
 
     _getPreRenderTiles : function (extent, layer_id) {
@@ -1337,8 +1356,10 @@ module.exports = mile = {
             params : params, 
             layer : storedLayer
         });
-        if (outside_extent) return done('outside extent');
-
+        if (outside_extent) {
+            console.log('outside extent - raster');
+            return done('outside extent');
+        }
 
         // check cache
         store._readRasterTile(params, function (err, data) {
@@ -1372,6 +1393,15 @@ module.exports = mile = {
     // return tiles from disk or create
     getGridTile : function (params, storedLayer, done) {
 
+        // console.log('getRasterTile params', params, storedLayer);
+        var outside_extent = mile._isOutsideExtent({
+            params : params, 
+            layer : storedLayer
+        });
+        if (outside_extent) {
+            console.log('outside extent - grid');
+            return done('outside extent');
+        }
         // check cache
         store.getGridTile(params, function (err, data) {
 
