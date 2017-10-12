@@ -1344,16 +1344,12 @@ module.exports = mile = {
         store._readRasterTile(params, function (err, data) {
             if (err) console.log('getRasterTile err: ', err);
             
-            // return data
+            // return data if any (and not forced render)
             if (!params.force_render && data) {
                 console.log('using cached tile (params.force_render =', params.force_render,')');
                 return done(null, data); // debug, turned off to create every time
             }
             
-            console.log('read raster tiles', _.size(data));
-
-            console.log('rendering tile...')
-           
             // create
             mile.createRasterTile(params, storedLayer, done);
         });
