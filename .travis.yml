@@ -1,40 +1,27 @@
-language: nodejs
-
-services:
-  - docker
-
-node_js:
-  - 6
-
-sudo: required
-dist: trusty
-group: edge
+language: bash
 
 notifications:
-  email:
-    recipients:
-      - knutole@mapic.io
-    on_success: change
-    on_failure: change
   slack:
     rooms:
       - mapic-io:NKaii0z3tRkeDyXaDbRauRFp
-    on_success: change
-    on_failure: change
-    
-branches:
-  only:
-    - master
+
+dist: trusty
+sudo: required
 
 install:
-  - curl -sSL https://get.mapic.io  | sh
-  - cd mapic
-  - mapic domain localhost
-  - mapic install travis
-  - mapic start
-  - mapic logs &
-  - sleep 240
+  - cd /home/travis/build
+  - mkdir get && cd get
+  - curl -sSL https://get.mapic.io | sh
+  - sudo rm -rf /home/travis/build/get/mapic/mile
+  - sudo cp -r /home/travis/build/mapic/mile /home/travis/build/get/mapic/mile
+  - cd /home/travis/build/get/mapic/cli
+  - sudo bash mapic-cli.sh
+  - sudo mapic version
+  - sudo mapic config set MAPIC_USER_EMAIL travis@mapic.io
+  - sudo mapic config set MAPIC_DOMAIN localhost
+  - sudo mapic ssl create
+  - sudo mapic travis stack
 
 script:
-  - mapic test mile
-
+  - sudo mapic travis start
+  - sudo mapic test mile
