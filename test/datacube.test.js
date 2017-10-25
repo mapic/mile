@@ -34,10 +34,16 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 
 // helper fn for tile url
 function base_cubes_url() {
+
+    if (process.env.MAPIC_DOMAIN == 'localhost') {
+        var tiles_url = 'https://tiles-a-' + process.env.MAPIC_DOMAIN + '/v2/cubes/';
+    } else {
+        var tiles_url = 'https://localhost/v2/cubes/'
+    }
+
     // use only one domain for testing
-    var tiles_url = 'https://tiles-a-' + process.env.MAPIC_DOMAIN + '/v2/cubes/';
-    var subdomain = (process.env.MAPIC_DOMAIN == 'localhost') ? 'https://172.17.0.1/v2/cubes/' : tiles_url;
-    debugMode && console.log('cube tiles_url', tiles_url);
+    // var subdomain = (process.env.MAPIC_DOMAIN == 'localhost') ? 'https://172.17.0.1/v2/cubes/' : tiles_url;
+    // debugMode && console.log('cube tiles_url', tiles_url);
     return tiles_url;
 }
 
