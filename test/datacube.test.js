@@ -36,9 +36,9 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
 function base_cubes_url() {
 
     if (process.env.MAPIC_DOMAIN == 'localhost') {
-        var tiles_url = 'https://tiles-a-' + process.env.MAPIC_DOMAIN + '/v2/cubes/';
-    } else {
         var tiles_url = 'https://localhost/v2/cubes/'
+    } else {
+        var tiles_url = 'https://tiles-a-' + process.env.MAPIC_DOMAIN + '/v2/cubes/';
     }
 
     // use only one domain for testing
