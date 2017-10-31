@@ -49,7 +49,7 @@ if (!process.env.TRAVIS) {
         var AWS = require('aws-sdk');
         var s3 = new AWS.S3({region: 'eu-central-1'});
         var bucketName = 'mapic-s3.' + process.env.MAPIC_DOMAIN;
-    catch (e) {
+    } catch (e) {
         console.log('AWS error: ', e);
     };
 
