@@ -25,6 +25,10 @@ var mile_settings = {
     // store : 'cache' // or redis or s3
 }
 
+if (process.env.TRAVIS) {
+    mile_settings.store = 'disk';
+}
+
 var silentLog = function (err) {
     if (err) console.log(err);
 }
@@ -37,32 +41,35 @@ var MAPIC_REDIS_DB   = process.env.MAPIC_REDIS_DB || 1;
 process.env.AWS_ACCESS_KEY_ID = process.env.MAPIC_AWS_S3_ACCESSKEYID || process.env.MAPIC_AWS_ACCESSKEYID;
 process.env.AWS_SECRET_ACCESS_KEY = process.env.MAPIC_AWS_S3_SECRETACCESSKEY || process.env.MAPIC_AWS_SECRETACCESSKEY;
 
-var AWS = require('aws-sdk');
-var s3 = new AWS.S3({region: 'eu-central-1'});
-var bucketName = 'mapic-s3.' + process.env.MAPIC_DOMAIN;
+if (!process.env.TRAVIS) {
+        
+    var AWS = require('aws-sdk');
+    var s3 = new AWS.S3({region: 'eu-central-1'});
+    var bucketName = 'mapic-s3.' + process.env.MAPIC_DOMAIN;
 
-// Call S3 to list current buckets
-s3.listBuckets(function(err, data) {
-    if (err) return console.log("Error", err);
-    
-    // look for bucket
-    var bucketFound = _.find(data.Buckets, function (b) {
-        return b.Name == bucketName;
-    });
-
-    // check for bucket
-    if (!_.isUndefined(bucketFound)) return console.log('Bucket found!', bucketFound);
-
-    // create bucket
-    s3.createBucket({
-        Bucket : bucketName,
-        // Region : 'eu-central-1'
-    }, function(err, data) {
+    // Call S3 to list current buckets
+    s3.listBuckets(function(err, data) {
         if (err) return console.log("Error", err);
-        console.log("Created S3 bucket: ", data.Location);
-    });
-});
+        
+        // look for bucket
+        var bucketFound = _.find(data.Buckets, function (b) {
+            return b.Name == bucketName;
+        });
 
+        // check for bucket
+        if (!_.isUndefined(bucketFound)) return console.log('Bucket found!', bucketFound);
+
+        // create bucket
+        s3.createBucket({
+            Bucket : bucketName,
+            // Region : 'eu-central-1'
+        }, function(err, data) {
+            if (err) return console.log("Error", err);
+            console.log("Created S3 bucket: ", data.Location);
+        });
+    });
+
+}
 
 var redis_instances = {};
 _.each(['redis'], function (i) {
