@@ -42,10 +42,16 @@ process.env.AWS_ACCESS_KEY_ID = process.env.MAPIC_AWS_S3_ACCESSKEYID || process.
 process.env.AWS_SECRET_ACCESS_KEY = process.env.MAPIC_AWS_S3_SECRETACCESSKEY || process.env.MAPIC_AWS_SECRETACCESSKEY;
 
 if (!process.env.TRAVIS) {
-        
-    var AWS = require('aws-sdk');
-    var s3 = new AWS.S3({region: 'eu-central-1'});
-    var bucketName = 'mapic-s3.' + process.env.MAPIC_DOMAIN;
+
+    console.log('NOT TRAVIS', process.env.TRAVIS);
+    
+    try {
+        var AWS = require('aws-sdk');
+        var s3 = new AWS.S3({region: 'eu-central-1'});
+        var bucketName = 'mapic-s3.' + process.env.MAPIC_DOMAIN;
+    catch (e) {
+        console.log('AWS error: ', e);
+    };
 
     // Call S3 to list current buckets
     s3.listBuckets(function(err, data) {
@@ -325,10 +331,6 @@ module.exports = store = {
         var path = RASTERPATH + keyString;
         fs.readFile(path, function (err, buffer) {
             if (err) return done(null);
-            console.log('$$$$$$$$$$$$$$ DISK DISK DISK ');
-            console.log('typeof buffer', typeof buffer)
-            console.log('size buffer', _.size(buffer));
-            console.log('actual buffer', buffer);
             done(null, buffer);
         });
     },
