@@ -29,7 +29,7 @@
     "mapnik": "3.x",
     "mapnik-omnivore": "^8.1.0",
     "mmmagic": "^0.4.1",
-    "mocha": "^3.0.0",
+    "mocha": "^4.0.0",
     "moment": "^2.13.0",
     "mongoose": "^4.0.8",
     "mongoose-times": "^0.1.0",
@@ -46,9 +46,9 @@
     "redis": "^2.6.2",
     "request": "^2.58.0",
     "sanitize-filename": "^1.5.3",
-    "snyk": "^1.36.2",
+    "snyk": "^1.48.1",
     "sphericalmercator": "^1.0.5",
-    "supertest": "^2.0.1",
+    "supertest": "^3.0.0",
     "topojson": "^1.6.24",
     "usage": "^0.7.0",
     "uuid": "^2.0.1",
@@ -60,7 +60,9 @@
   },
   "scripts": {
     "test": "mocha test/*test.js --recursive",
-    "start": "node server.js"
+    "start": "node server.js",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
