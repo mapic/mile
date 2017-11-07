@@ -33,6 +33,12 @@ var silentLog = function (err) {
     if (err) console.log(err);
 }
 
+console.log('$$$$$$$$$$$$$$$$');
+console.log('$$$$$$$$$$$$$$$$');
+console.log('$$$$$$$$$$$4$$$$$');
+console.log('mile env:');
+console.log(process.env);
+
 var MAPIC_REDIS_AUTH = process.env.MAPIC_REDIS_AUTH;
 var MAPIC_REDIS_PORT = process.env.MAPIC_REDIS_PORT || 6379;
 var MAPIC_REDIS_DB   = process.env.MAPIC_REDIS_DB || 1;
