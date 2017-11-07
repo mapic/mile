@@ -10,6 +10,8 @@ bash scripts/pull-latest-code.sh
 mkdir -p /mapic/mile/log
 
 # yarn
+sudo npm install -g yarn
+yarn version
 yarn config set cache-folder /mapic/mile/.yarn
 yarn install
 
