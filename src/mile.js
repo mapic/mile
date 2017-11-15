@@ -1015,8 +1015,10 @@ module.exports = mile = {
             postgis_settings.extent = storedLayer.options.extent;
             postgis_settings.geometry_field = storedLayer.options.geom_column;
             postgis_settings.srid = storedLayer.options.srid;
-            postgis_settings.asynchronous_request = true;
-            postgis_settings.max_async_connection = 10;
+            postgis_settings.asynchronous_request = false;
+            // postgis_settings.max_async_connection = 10;
+
+
 
             if ( storedLayer.options.data_type == 'raster' ) {
 
