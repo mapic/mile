@@ -108,6 +108,8 @@ module.exports = mile = {
 
     serveTile : function (req, res) {
 
+        console.log('req:', req._parsedUrl);
+
         // parse url into layerUuid, zxy, type
         var parsed = req._parsedUrl.pathname.split('/');
         var params = {
