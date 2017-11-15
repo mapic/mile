@@ -4,6 +4,8 @@
   "description": "Mapic Mile",
   "main": "start-server.sh",
   "dependencies": {
+    "@turf/projection": "^5.0.4",
+    "@turf/turf": "^5.0.4",
     "async": "^2.1.2",
     "aws-sdk": "^2.106.0",
     "bars": "jstrace/bars",
@@ -50,6 +52,7 @@
     "sphericalmercator": "^1.0.5",
     "supertest": "^3.0.0",
     "topojson": "^3.0.2",
+    "turf": "^3.0.14",
     "usage": "^0.7.0",
     "uuid": "^3.1.0",
     "vector-tile": "^1.2.0",

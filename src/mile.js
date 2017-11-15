@@ -23,6 +23,14 @@ var geojsonArea = require('geojson-area');
 var crypto = require('crypto');
 var https = require('https');
 var geojsonExtent = require('geojson-extent');
+var turf = {};
+turf.booleanOverlap = require('@turf/boolean-overlap');
+turf.bboxPolygon = require('@turf/bbox-polygon');
+turf.projection = require('@turf/projection');
+turf.intersect = require('@turf/intersect');
+turf.difference = require('@turf/difference');
+turf.booleanWithin = require('@turf/boolean-within');
+
 
 // modules
 // global.config = require('../config.js');
@@ -1268,9 +1276,6 @@ module.exports = mile = {
 
     _isOutsideExtent : function (options) {
         
-        try {
-
-
         var params = options.params;
         var layer = options.layer;   
 
@@ -1279,137 +1284,19 @@ module.exports = mile = {
         var coords = options.params;
         var metadata = tools.safeParse(layer.options.metadata);
 
-        // get extents
+        // get bboxes
+        var tile_bounding_box = mercator.xyz_to_envelope(parseInt(coords.x), parseInt(coords.y), parseInt(coords.z), false);
         var extent_geojson = metadata.extent_geojson;
-        var bounding_box = mercator.xyz_to_envelope(parseInt(coords.x), parseInt(coords.y), parseInt(coords.z), false);
         var raster_extent_latlng = geojsonExtent(extent_geojson);
-        var south_west_corner = Conv.ll2m(raster_extent_latlng[0], raster_extent_latlng[1]);
-        var north_east_corner = Conv.ll2m(raster_extent_latlng[2], raster_extent_latlng[3]);
-
-
-        // tile is outside raster bounds if:
-        // - - - - - - - - - - - - - - - - - 
-        // tile-north is south of raster-south  (tile_north < raster_south)
-        // OR
-        // tile-east is west of raster-west     (tile-east  < raster-west)
-        // OR
-        // tile-south is north of raster-north  (tile-south > raster-north)
-        // OR
-        // tile-west is east of raster-east,    (tile-west  > raster-east)
+        var poly1 = turf.bboxPolygon(tile_bounding_box);
+        var poly1 = turf.projection.toWgs84(poly1);
+        var poly2 = turf.bboxPolygon(raster_extent_latlng);
         
-        var raster_bounds = {
-            west    : south_west_corner.x,
-            south   : south_west_corner.y,
-            east    : north_east_corner.x,
-            north   : north_east_corner.y
-        };
+        // check for overlap
+        var intersection = turf.intersect(poly1, poly2);
 
-        var tile_bounds = {
-            west    : bounding_box[0],
-            south   : bounding_box[1],
-            east    : bounding_box[2],
-            north   : bounding_box[3]
-        };
-
-        // check if outside extent
-        var outside = false;
-        if (tile_bounds.north < raster_bounds.south)    outside = true;
-        if (tile_bounds.east  < raster_bounds.west)     outside = true;
-        if (tile_bounds.south > raster_bounds.north)    outside = true;
-        if (tile_bounds.west  > raster_bounds.east)     outside = true;
-
-        } catch (e) {
-            console.log('e:', e);
-            var outside = false;    
-        }
-
-        // return outside;
-        return false;
+        return _.isNull(intersection);
     },
-
-    // _isOutsideExtent : function (options) {
-
-    //     // debug
-    //     // return false;
-
-    //     // not sure what effect this has
-    //     // implemented for cubes, but not vectors
-    //     // todo: fix so that it at least works...
-
-
-    //     var params = options.params;
-    //     var layer = options.layer;
-
-    //     console.log('_isOutsideExtent: ');
-    //     console.log('params:', params);
-    //     // console.log('layer: ', layer);
-        
-    //     try {
-
-    //     // get options
-    //     // var dataset = options.dataset;
-    //     // get extents
-    //     var coords = params;
-    //     var metadata = tools.safeParse(layer.options.metadata);
-    //     var extent_geojson = metadata.extent_geojson;
-
-    //     console.log('extent_geojson:', extent_geojson);
-    //     var bounding_box = mercator.xyz_to_envelope(parseInt(coords.x), parseInt(coords.y), parseInt(coords.z), false);
-    //     var data_extent_latlng = geojsonExtent(extent_geojson);
-    //     var south_west_corner = Conv.ll2m(data_extent_latlng[0], data_extent_latlng[1]);
-    //     var north_east_corner = Conv.ll2m(data_extent_latlng[2], data_extent_latlng[3]);
-
-
-    //     // tile is outside raster bounds if:
-    //     // - - - - - - - - - - - - - - - - - 
-    //     // tile-north is south of raster-south  (tile_north < raster_south)
-    //     // OR
-    //     // tile-east is west of raster-west     (tile-east  < raster-west)
-    //     // OR
-    //     // tile-south is north of raster-north  (tile-south > raster-north)
-    //     // OR
-    //     // tile-west is east of raster-east,    (tile-west  > raster-east)
-        
-    //     var data_bounds = {
-    //         west    : south_west_corner.x,
-    //         south   : south_west_corner.y,
-    //         east    : north_east_corner.x,
-    //         north   : north_east_corner.y
-    //     };
-
-    //     var tile_bounds = {
-    //         west    : bounding_box[0],
-    //         south   : bounding_box[1],
-    //         east    : bounding_box[2],
-    //         north   : bounding_box[3]
-    //     };
-
-    //     // check if outside extent
-    //     var outside = false;
-    //     if (tile_bounds.north < data_bounds.south)    {
-    //         console.log('outside 1: ', tile_bounds.north, data_bounds.south);
-    //         outside = true;
-    //     }
-    //     if (tile_bounds.east  < data_bounds.west)     {
-    //         console.log('outside 2: ', tile_bounds.east, data_bounds.west);
-    //         outside = true;
-    //     }
-    //     if (tile_bounds.south > data_bounds.north)    {
-    //         console.log('outside 3: ', tile_bounds.south, data_bounds.north);
-    //         outside = true;
-    //     }
-    //     if (tile_bounds.west > data_bounds.east)     {
-    //         console.log('outside 4: ', tile_bounds.west, data_bounds.east);
-    //         outside = true;
-    //     }
-
-    //     } catch (e) {
-    //         console.log('e:', e);
-    //         var outside = false;    
-    //     }
-
-    //     return outside;
-    // },
 
     // return tiles from disk or create
     getRasterTile : function (params, storedLayer, done) {
@@ -1420,10 +1307,10 @@ module.exports = mile = {
             layer : storedLayer
         });
         if (outside_extent) {
-            console.log('outside extent (raster):', outside_extent);
+            // console.log('outside extent (raster):', outside_extent);
             return done('outside extent');
         } else {
-            console.log('outside_extent (raster):', outside_extent)
+            // console.log('outside_extent (raster):', outside_extent)
         }
 
         // check cache
@@ -1464,7 +1351,7 @@ module.exports = mile = {
             layer : storedLayer
         });
         if (outside_extent) {
-            console.log('outside extent - grid');
+            // console.log('outside extent - grid');
             return done('outside extent');
         }
         // check cache
