@@ -1016,7 +1016,7 @@ module.exports = mile = {
             postgis_settings.geometry_field = storedLayer.options.geom_column;
             postgis_settings.srid = storedLayer.options.srid;
             postgis_settings.asynchronous_request = true;
-            postgis_settings.max_async_connection = 2;
+            postgis_settings.max_async_connection = 10;
 
             if ( storedLayer.options.data_type == 'raster' ) {
 
@@ -1031,9 +1031,11 @@ module.exports = mile = {
                 postgis_settings.band = 1;
 
              } else {
+                console.log('postgis!');
+                console.log('SQL:', storedLayer.options.sql);
                 postgis_settings.type = 'postgis';
                 postgis_settings.geometry_field = 'the_geom_3857';
-                postgis_settings.table  = storedLayer.options.sql;
+                postgis_settings.table = storedLayer.options.sql;
             }
 
             // everything in spherical mercator (3857)!
@@ -1049,7 +1051,7 @@ module.exports = mile = {
             map.bufferSize = 128;
 
             // set extent
-            console.log('bbox:', bbox);
+            // console.log('bbox:', bbox);
             map.extent = bbox; // must have extent!
 
             // set datasource
@@ -1062,13 +1064,11 @@ module.exports = mile = {
             map.add_layer(layer);
 
             // parse xml from cartocss
-            console.time('cartoRenderer');
             mile.cartoRenderer(storedLayer, layer, callback);
         });
 
         // load xml to map
         ops.push(function (xml, callback) {
-            console.timeEnd('cartoRenderer');
             map.fromString(xml, {strict : true}, callback);
         });
 
