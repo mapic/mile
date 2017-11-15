@@ -108,8 +108,6 @@ module.exports = mile = {
 
     serveTile : function (req, res) {
 
-        console.log('req:', req._parsedUrl);
-
         // parse url into layerUuid, zxy, type
         var parsed = req._parsedUrl.pathname.split('/');
         var params = {
@@ -1014,7 +1012,7 @@ module.exports = mile = {
             // insert layer settings 
             var postgis_settings = default_postgis_settings;
             postgis_settings.dbname = storedLayer.options.database_name;
-            // postgis_settings.extent = storedLayer.options.extent;
+            postgis_settings.extent = storedLayer.options.extent;
             postgis_settings.geometry_field = storedLayer.options.geom_column;
             postgis_settings.srid = storedLayer.options.srid;
             postgis_settings.asynchronous_request = false;
