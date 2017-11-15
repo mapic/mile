@@ -700,6 +700,8 @@ module.exports = mile = {
                 err_msg : 'get layer error',
                 error : err
             });
+
+                console.log('getLayer', layerUuid, layer, err);
             res.end(layer);
         });
     },
