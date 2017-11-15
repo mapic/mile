@@ -1012,13 +1012,14 @@ module.exports = mile = {
             // insert layer settings 
             var postgis_settings = default_postgis_settings;
             postgis_settings.dbname = storedLayer.options.database_name;
-            postgis_settings.extent = storedLayer.options.extent;
+            // postgis_settings.extent = storedLayer.options.extent;
             postgis_settings.geometry_field = storedLayer.options.geom_column;
             postgis_settings.srid = storedLayer.options.srid;
             postgis_settings.asynchronous_request = false;
             // postgis_settings.max_async_connection = 10;
 
 
+            console.log('postgis_settings', postgis_settings);
 
             if ( storedLayer.options.data_type == 'raster' ) {
 
