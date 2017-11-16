@@ -31,7 +31,7 @@ turf.projection = require('@turf/projection');
 turf.intersect = require('@turf/intersect');
 turf.difference = require('@turf/difference');
 turf.booleanWithin = require('@turf/boolean-within');
-
+turf.transformScale = require('@turf/transform-scale');
 
 // modules
 // global.config = require('../config.js');
@@ -1011,11 +1011,19 @@ module.exports = mile = {
             // set bounding box of tile
             bbox = mercator.xyz_to_envelope(parseInt(params.x), parseInt(params.y), parseInt(params.z), false);
 
+            console.log('bbox', bbox);
+
+            var bbox_polygon = turf.bboxPolygon(bbox);
+            var buffered_bbox = turf.transformScale(bbox_polygon, 1.1);
+
+            console.log('bbox_polygon', JSON.stringify(bbox_polygon));
+            console.log('buffered_bbox', JSON.stringify(buffered_bbox));
+
             // insert layer settings 
             var postgis_settings = default_postgis_settings;
             postgis_settings.dbname = storedLayer.options.database_name;
             // postgis_settings.extent = storedLayer.options.extent;
-            postgis_settings.extent = bbox;
+            postgis_settings.extent = buffered_bbox;
             postgis_settings.geometry_field = storedLayer.options.geom_column;
             postgis_settings.srid = storedLayer.options.srid;
             postgis_settings.asynchronous_request = false;
