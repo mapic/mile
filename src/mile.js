@@ -1014,9 +1014,9 @@ module.exports = mile = {
             console.log('bbox', bbox);
 
             var bbox_polygon = turf.bboxPolygon(bbox);
-            var buffered_bbox = turf.transformScale(bbox_polygon, 1.1);
 
             console.log('bbox_polygon', JSON.stringify(bbox_polygon));
+            var buffered_bbox = turf.transformScale(bbox_polygon, 1.1);
             console.log('buffered_bbox', JSON.stringify(buffered_bbox));
 
             // insert layer settings 
