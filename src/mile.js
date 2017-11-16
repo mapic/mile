@@ -1012,12 +1012,21 @@ module.exports = mile = {
             bbox = mercator.xyz_to_envelope(parseInt(params.x), parseInt(params.y), parseInt(params.z), false);
 
             console.log('bbox', bbox);
+            console.log('typeof bbox', typeof bbox);
 
-            var bbox_polygon = turf.bboxPolygon(bbox);
+            var buffered_bbox = [];
+            _.each(bbox, function (b) {
+                var buf = b * 1.01;
+                buffered_bbox.push(buf);
+            })
 
-            console.log('bbox_polygon', JSON.stringify(bbox_polygon));
-            var buffered_bbox = turf.transformScale(bbox_polygon, 1.1);
-            console.log('buffered_bbox', JSON.stringify(buffered_bbox));
+            // var bbox_polygon = turf.bboxPolygon(bbox);
+
+
+
+            // console.log('bbox_polygon', JSON.stringify(bbox_polygon));
+            // var buffered_bbox = turf.transformScale(bbox_polygon, 1.1);
+            // console.log('buffered_bbox', JSON.stringify(buffered_bbox));
 
             // insert layer settings 
             var postgis_settings = default_postgis_settings;
