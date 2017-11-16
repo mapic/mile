@@ -1012,18 +1012,30 @@ module.exports = mile = {
             bbox = mercator.xyz_to_envelope(parseInt(params.x), parseInt(params.y), parseInt(params.z), false);
 
             console.log('bbox', bbox);
-            console.log('typeof bbox', typeof bbox);
 
             var buffered_bbox = [];
-            _.each(bbox, function (b) {
-                var buf = b * 1.01;
-                buffered_bbox.push(buf);
-            })
+            // _.each(bbox, function (b, a, c) {
+
+            //     var buf = parseFloat(b) + 300;
+            //     buffered_bbox.push(buf);
+            // });
+
+            // BOX(west south, east north)
+            
+            // buffered_bbox.push(parseFloat(bbox[0]) * 0.99);
+            // buffered_bbox.push(parseFloat(bbox[1]) * 0.99);
+            // buffered_bbox.push(parseFloat(bbox[2]) * 1.01);
+            // buffered_bbox.push(parseFloat(bbox[3]) * 1.01);
+
+            // 
+            buffered_bbox.push(parseFloat(bbox[0]) * 1);    // todo: fix clipped boundaries...
+            buffered_bbox.push(parseFloat(bbox[1]) * 1);
+            buffered_bbox.push(parseFloat(bbox[2]) * 1);
+            buffered_bbox.push(parseFloat(bbox[3]) * 1);
+
+            // console.log('buffered_bbox', buffered_bbox);
 
             // var bbox_polygon = turf.bboxPolygon(bbox);
-
-
-
             // console.log('bbox_polygon', JSON.stringify(bbox_polygon));
             // var buffered_bbox = turf.transformScale(bbox_polygon, 1.1);
             // console.log('buffered_bbox', JSON.stringify(buffered_bbox));
@@ -1033,12 +1045,13 @@ module.exports = mile = {
             postgis_settings.dbname = storedLayer.options.database_name;
             // postgis_settings.extent = storedLayer.options.extent;
             postgis_settings.extent = buffered_bbox;
+            // postgis_settings.extent = bbox;
             postgis_settings.geometry_field = storedLayer.options.geom_column;
             postgis_settings.srid = storedLayer.options.srid;
             postgis_settings.asynchronous_request = false;
             // postgis_settings.max_async_connection = 10;
 
-            // console.log('postgis_settings', postgis_settings);
+            console.log('postgis_settings', postgis_settings);
 
             if ( storedLayer.options.data_type == 'raster' ) {
 
@@ -1058,6 +1071,7 @@ module.exports = mile = {
                 postgis_settings.type = 'postgis';
                 postgis_settings.geometry_field = 'the_geom_3857';
                 postgis_settings.table = storedLayer.options.sql;
+
             }
 
             // everything in spherical mercator (3857)!
@@ -1071,10 +1085,12 @@ module.exports = mile = {
 
             // set buffer
             map.bufferSize = 128;
+            // map.bufferSize = 64;
 
             // set extent
             // console.log('bbox:', bbox);
-            map.extent = bbox; // must have extent!
+            // map.extent = bbox; // must have extent!
+            map.extent = buffered_bbox; // must have extent!
 
             // set datasource
             layer.datasource = postgis;
