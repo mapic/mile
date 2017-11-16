@@ -701,7 +701,7 @@ module.exports = mile = {
                 error : err
             });
 
-                console.log('getLayer', layerUuid, layer, err);
+            console.log('getLayer', layerUuid, layer, err);
             res.end(layer);
         });
     },
@@ -1008,20 +1008,20 @@ module.exports = mile = {
                 srid     : '3857'
             }
 
-            // set bounding box
+            // set bounding box of tile
             bbox = mercator.xyz_to_envelope(parseInt(params.x), parseInt(params.y), parseInt(params.z), false);
 
             // insert layer settings 
             var postgis_settings = default_postgis_settings;
             postgis_settings.dbname = storedLayer.options.database_name;
-            postgis_settings.extent = storedLayer.options.extent;
+            // postgis_settings.extent = storedLayer.options.extent;
+            postgis_settings.extent = bbox;
             postgis_settings.geometry_field = storedLayer.options.geom_column;
             postgis_settings.srid = storedLayer.options.srid;
             postgis_settings.asynchronous_request = false;
             // postgis_settings.max_async_connection = 10;
 
-
-            console.log('postgis_settings', postgis_settings);
+            // console.log('postgis_settings', postgis_settings);
 
             if ( storedLayer.options.data_type == 'raster' ) {
 
@@ -1036,8 +1036,8 @@ module.exports = mile = {
                 postgis_settings.band = 1;
 
              } else {
-                console.log('postgis!');
-                console.log('SQL:', storedLayer.options.sql);
+                // console.log('postgis!');
+                // console.log('SQL:', storedLayer.options.sql); // todo: try ST_Intersects etc...? or ask strk...
                 postgis_settings.type = 'postgis';
                 postgis_settings.geometry_field = 'the_geom_3857';
                 postgis_settings.table = storedLayer.options.sql;
