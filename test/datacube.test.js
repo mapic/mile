@@ -539,7 +539,7 @@ describe('Cubes', function () {
                 });
             });
 
-            it('should create CubeLayer on Wu API', function (done) {
+            it('should create CubeLayer on Mapic API', function (done) {
                 token(function (err, access_token) {
 
                     var layer = {
@@ -574,8 +574,6 @@ describe('Cubes', function () {
         });
 
         context('Masks', function () {
-
-
 
             it('should create empty cube @ ' + endpoints.cube.create, function (done) {
                 token(function (err, access_token) {
