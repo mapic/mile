@@ -1154,10 +1154,18 @@ module.exports = cubes = {
             var pg_database = dataset.database_name;
 
             // set connection string
-            var conString = 'postgres://' + pg_username + ':' + pg_password + '@postgis/' + pg_database;
+            // var conString = 'postgres://' + pg_username + ':' + pg_password + '@postgis/' + pg_database;
+
+            var pool = new pg.Pool({
+                user : pg_username, 
+                password : pg_password,
+                database : pg_database,
+                host : 'postgis'
+            });
 
             // initialize a connection pool
-            pg.connect(conString, function(err, client, pg_done) {
+            // pg.connect(conString, function(err, client, pg_done) {
+            pool.connect(function(err, client, pg_done) {
                 if (err) return done(err);
 
                 // var query = 'select row_to_json(t) from (SELECT A.rid, pvc FROM ' + dataset.table_name + ' A JOIN ' + mask_dataset_id+ ' B ON ST_Intersects(A.rast, B.rast), ST_ValueCount(A.rast,1) AS pvc) as t;'
@@ -1178,6 +1186,8 @@ module.exports = cubes = {
                     done(err, pg_result);
                 });
             });
+            pool.end();
+
         },
 
 
@@ -1267,10 +1277,17 @@ module.exports = cubes = {
             var pg_database = dataset.database_name;
 
             // set connection string
-            var conString = 'postgres://' + pg_username + ':' + pg_password + '@postgis/' + pg_database;
+            // var conString = 'postgres://' + pg_username + ':' + pg_password + '@postgis/' + pg_database;
+            var pool = new pg.Pool({
+                user : pg_username, 
+                password : pg_password,
+                database : pg_database,
+                host : 'postgis'
+            });
 
             // initialize a connection pool
-            pg.connect(conString, function(err, client, pg_done) {
+            // pg.connect(conString, function(err, client, pg_done) {
+            pool.connect(function(err, client, pg_done) {
                 if (err) return console.error('error fetching client from pool', err);
 
                 // create query with geojson mask
@@ -1295,6 +1312,8 @@ module.exports = cubes = {
                     done(err, pg_result);
                 });
             });
+
+            pool.end();
         },
 
 
