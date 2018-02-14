@@ -383,36 +383,6 @@ module.exports = cubes = {
                 callback(null, prepared_mask);
             }
 
-            // // convert geojson to topojson
-            // ops.mask = function (callback) {
-
-            //     // parse geojson string
-            //     var collection = tools.safeParse(mask.geometry);
-
-            //     // throw on failed parsing
-            //     if (!collection) return callback({error : 'Invalid GeoJSON', error_code : 3});
-
-            //     // convert
-            //     var topology = topojson.topology({collection: collection}, {
-            //         verbose : true,
-            //         id : function (d) {
-            //             return d.properties.ID; // hardcoded for snow! todo: add to options
-            //         },
-            //         'property-transform': function (feature) {
-            //             return feature.properties;
-            //         }
-            //     });
-
-            //     // mask to save
-            //     var prepared_mask = {
-            //         type : 'topojson',
-            //         geometry : topology
-            //     }
-
-            //     // return topojson
-            //     callback(null, prepared_mask);
-            // };
-           
 
         // topojson string
         } else if (mask.type == 'topojson') {
@@ -573,7 +543,6 @@ module.exports = cubes = {
         cubes.find(cube_id, function (err, cube) {
 
             // delete mask
-            // delete cube.mask;
             _.remove(cube.mask, {
                 cube_id : cube_id
             });
@@ -590,6 +559,76 @@ module.exports = cubes = {
             });
         });
 
+    },
+
+    getMask : function (req, res) {
+
+        // get options
+        var options = cubes.getBody(req);
+        if (!options) return res.status(400).send({error : 'Please provide an options object', error_code : 2});
+
+        // get mask
+        if (!options.mask_id) return res.status(400).send({error : 'Please provide a mask_id', error_code : 2});
+
+        // get cube_id
+        if (!options.cube_id) return res.status(400).send({error : 'Please provide a cube_id', error_code : 2});
+
+        // get access token
+        var access_token = options.access_token;
+
+        // find cube
+        cubes.find(options.cube_id, function (err, cube) {
+
+            // find mask
+            var mask = _.find(cube.masks, function (m) {
+                return m.id == options.mask_id;
+            });
+
+            // return mask
+            res.send(mask);
+
+        });
+
+    },
+
+    updateMask : function (req, res) {
+
+        // get options
+        var options = cubes.getBody(req);
+        if (!options) return res.status(400).send({error : 'Please provide an options object', error_code : 2});
+
+        // get mask
+        if (!options.mask) return res.status(400).send({error : 'Please provide a mask', error_code : 2});
+
+        // get cube_id
+        if (!options.cube_id) return res.status(400).send({error : 'Please provide a dataset id', error_code : 2});
+
+        // get access token
+        var access_token = options.access_token;
+
+        // find cube
+        cubes.find(options.cube_id, function (err, cube) {
+
+            // find mask
+            var maskIndex = _.findIndex(cube.masks, function (m) {
+                return m.id = options.mask.id;
+            });
+
+            // return if not found
+            if (maskIndex < 0) return res.status(400).send({error : 'No such mask_id', error_code : 2});
+
+            // replace mask
+            cube.masks[maskIndex] = options.mask;
+
+            // return all masks
+            res.send(cube.masks);
+            
+        });
+
+    },
+
+    updateDatasetMask : function (req, res) {
+        
     },
 
     // cube tile requests

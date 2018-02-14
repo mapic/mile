@@ -67,6 +67,21 @@ module.exports = function (mile) {
 		mile.cubes.unmask(req, res);
 	});
 
+	// get mask
+	app.post('/v2/cubes/getMask', mile.checkAccess, function (req, res) {
+		mile.cubes.getMask(req, res);
+	});
+
+	// update mask
+	app.post('/v2/cubes/updateMask', mile.checkAccess, function (req, res) {
+		mile.cubes.updateMask(req, res);
+	});
+
+	// update mask
+	app.post('/v2/cubes/updateDatasetMask', mile.checkAccess, function (req, res) {
+		mile.cubes.updateMask(req, res);
+	});
+
 	// request cube tiles
 	app.get('/v2/cubes/get', mile.checkAccess, function (req, res) {
 		mile.cubes.get(req, res);

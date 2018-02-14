@@ -13,6 +13,7 @@ var expect = chai.expect;
 var http = require('http-request');
 var assert = require('assert');
 var moment = require('moment');
+var _ = require('lodash');
 
 // api
 var domain = (process.env.MAPIC_DOMAIN == 'localhost') ? 'https://172.17.0.1' : 'https://' + process.env.MAPIC_DOMAIN;
@@ -573,7 +574,7 @@ describe('Cubes', function () {
 
         });
 
-        context('Masks', function () {
+        context.only('Masks', function () {
 
             it('should create empty cube @ ' + endpoints.cube.create, function (done) {
                 token(function (err, access_token) {
@@ -606,7 +607,6 @@ describe('Cubes', function () {
                         cube_id : tmp.created_empty.cube_id,
                         mask : {
                             type : 'geojson',
-                            // mask : '{"type":"FeatureCollection","features":[{"type":"Feature","properties":{},"geometry":{"type":"Polygon","coordinates":[[[9.2230224609375,58.91031927906605],[9.2230224609375,59.6705145897832],[10.6182861328125,59.6705145897832],[10.6182861328125,58.91031927906605],[9.2230224609375,58.91031927906605]]]}}]}',
                             geometry : '{"type":"FeatureCollection","features":[{"type":"Feature","properties":{},"geometry":{"type":"Polygon","coordinates":[[[9.2230224609375,58.91031927906605],[9.2230224609375,59.6705145897832],[10.6182861328125,59.6705145897832],[10.6182861328125,58.91031927906605],[9.2230224609375,58.91031927906605]]]}}]}',
                         }
                     }
@@ -640,7 +640,6 @@ describe('Cubes', function () {
                         cube_id : tmp.created_empty.cube_id,
                         mask : {
                             type : 'topojson',
-                            // mask : '{"type":"Topology","objects":{"collection":{"type":"GeometryCollection","geometries":[{"type":"Polygon","arcs":[[0]]}]}},"arcs":[[[0,0],[0,9999],[9999,0],[0,-9999],[-9999,0]]],"transform":{"scale":[0.00013954032121962193,0.00007602713378509362],"translate":[9.2230224609375,58.91031927906605]},"bbox":[9.2230224609375,58.91031927906605,10.6182861328125,59.6705145897832]}'
                             geometry : '{"type":"Topology","objects":{"collection":{"type":"GeometryCollection","geometries":[{"type":"Polygon","arcs":[[0]]}]}},"arcs":[[[0,0],[0,9999],[9999,0],[0,-9999],[-9999,0]]],"transform":{"scale":[0.00013954032121962193,0.00007602713378509362],"translate":[9.2230224609375,58.91031927906605]},"bbox":[9.2230224609375,58.91031927906605,10.6182861328125,59.6705145897832]}'
                         }
                     }
@@ -707,11 +706,92 @@ describe('Cubes', function () {
                         expect(mask.id).to.exist;
                         expect(cube.createdBy).to.exist;
                         expect(cube.cube_id).to.equal(tmp.created_empty.cube_id);
+                        tmp.created_mask_id = mask.id;
+                        tmp.created_mask = mask;
                         done();
                     });
                 });
             });
 
+            it('should get mask @ ' + endpoints.cube.getMask, function (done) {
+                token(function (err, access_token) {
+
+                    // test data
+                    var data = {
+                        access_token : access_token,
+                        cube_id : tmp.created_empty.cube_id,
+                        mask_id : tmp.created_mask_id, // todo: remove all masks
+                    }
+
+                    api.post(endpoints.cube.getMask)
+                    .send(data)
+                    .expect(httpStatus.OK)
+                    .end(function (err, res) {
+                        if (err) return done(err);
+                        var mask = res.body;
+                        expect(mask.type).to.exist;
+                        expect(mask.geometry).to.exist;
+                        expect(mask.id).to.exist;
+                        expect(mask.meta).to.exist;
+
+                        tmp.mask = mask;
+                        done();
+                    });
+                });
+            });
+
+            it('should update mask @ ' + endpoints.cube.updateMask, function (done) {
+                token(function (err, access_token) {
+
+                    // test data
+                    var data = {
+                        access_token : access_token,
+                        cube_id : tmp.created_empty.cube_id,
+                        mask : tmp.mask
+                    }
+
+                    // replace data
+                    data.mask.meta.title = 'replaced';
+
+
+                    api.post(endpoints.cube.updateMask)
+                    .send(data)
+                    .expect(httpStatus.OK)
+                    .end(function (err, res) {
+                        if (err) return done(err);
+                        var masks = res.body;
+                        var replacedMask = _.find(masks, function (m) { return m.id == tmp.mask.id; });
+                        expect(replacedMask.meta.title).to.equal('replaced');
+                        done();
+                    });
+                });
+            });
+
+            it('should add dataset to mask @ ' + endpoints.cube.updateDatasetMask, function (done) {
+                token(function (err, access_token) {
+
+                    // test data
+                    var data = {
+                        access_token : access_token,
+                        cube_id : tmp.created_empty.cube_id,
+                        mask : tmp.mask
+                    }
+
+                    // replace data
+                    data.mask.meta.title = 'replaced';
+
+                    api.post(endpoints.cube.updateDatasetMask)
+                    .send(data)
+                    .expect(httpStatus.OK)
+                    .end(function (err, res) {
+                        if (err) return done(err);
+                        var masks = res.body;
+                        var replacedMask = _.find(masks, function (m) { return m.id == tmp.mask.id; });
+                        expect(replacedMask.meta.title).to.equal('replaced');
+                        done();
+                    });
+                });
+            });
 
             it('should upload cube-vector-mask.zip', function (done) {
                 token(function (err, access_token) {
