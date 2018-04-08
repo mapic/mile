@@ -767,31 +767,77 @@ describe('Cubes', function () {
                 });
             });
 
-            it('should add dataset to mask @ ' + endpoints.cube.updateDatasetMask, function (done) {
+            it('debug: should update mask for specific cube @ ' + endpoints.cube.updateMask, function (done) {
                 token(function (err, access_token) {
 
+                    // read mask from file
+                    var mask = JSON.parse(fs.readFileSync(__dirname + '/tmp/hallingdal.mask.json','utf8'));
+                    // console.log(mask);
+
+                    // read mask from file
+                    var scf_data = JSON.parse(fs.readFileSync(__dirname + '/tmp/hallingdal.scf.json','utf8'));
+                    // console.log(scf_data);
+
+                    // return done();
                     // test data
                     var data = {
                         access_token : access_token,
-                        cube_id : tmp.created_empty.cube_id,
-                        mask : tmp.mask
+                        // cube_id : tmp.created_empty.cube_id,
+                        cube_id : 'cube-fc2018d0-1430-46b5-8709-893a68bd1c0d',
+                        // cube_id : "cube-5d2c019d-7c05-4fb1-be47-7313e2ae825e",
+                        mask : mask
                     }
+                    data.mask.meta.title = 'hallingdal222';
+
+                    console.log('data.mask', data.mask, typeof data.mask);;
 
                     // replace data
-                    data.mask.meta.title = 'replaced';
+                    data.mask.data = scf_data;
 
-                    api.post(endpoints.cube.updateDatasetMask)
+                    console.log('_.size(data.mask.data)', _.size(data.mask.data), typeof data.mask.data);
+
+                    console.log('typeof scf_data', typeof scf_data);
+                    console.log('typeof mask', typeof mask);
+
+                    api.post(endpoints.cube.updateMask)
                     .send(data)
                     .expect(httpStatus.OK)
                     .end(function (err, res) {
+                        // console.log('err, body', err, res.body);
                         if (err) return done(err);
                         var masks = res.body;
-                        var replacedMask = _.find(masks, function (m) { return m.id == tmp.mask.id; });
-                        expect(replacedMask.meta.title).to.equal('replaced');
+                        var replacedMask = _.find(masks, function (m) { return m.id == mask.id; });
+                        expect(replacedMask.meta.title).to.equal('hallingdal222');
                         done();
                     });
                 });
             });
+
+            // it('should add dataset to mask @ ' + endpoints.cube.updateDatasetMask, function (done) {
+            //     token(function (err, access_token) {
+
+            //         // test data
+            //         var data = {
+            //             access_token : access_token,
+            //             cube_id : tmp.created_empty.cube_id,
+            //             mask : tmp.mask
+            //         }
+
+            //         // replace data
+            //         data.mask.meta.title = 'replaced';
+
+            //         api.post(endpoints.cube.updateDatasetMask)
+            //         .send(data)
+            //         .expect(httpStatus.OK)
+            //         .end(function (err, res) {
+            //             if (err) return done(err);
+            //             var masks = res.body;
+            //             var replacedMask = _.find(masks, function (m) { return m.id == tmp.mask.id; });
+            //             expect(replacedMask.meta.title).to.equal('replaced');
+            //             done();
+            //         });
+            //     });
+            // });
 
             it('should upload cube-vector-mask.zip', function (done) {
                 token(function (err, access_token) {

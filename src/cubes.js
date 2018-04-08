@@ -593,6 +593,7 @@ module.exports = cubes = {
 
     updateMask : function (req, res) {
 
+
         // get options
         var options = cubes.getBody(req);
         if (!options) return res.status(400).send({error : 'Please provide an options object', error_code : 2});
@@ -606,13 +607,22 @@ module.exports = cubes = {
         // get access token
         var access_token = options.access_token;
 
+        console.log('DEBUG!!!')
+        console.log('options.mask.meta.title', options.mask.meta.title);
+
         // find cube
         cubes.find(options.cube_id, function (err, cube) {
+            // console.log('finding cube', err, _.size(cube));
+
+            // console.log('options.mask', options.mask);
 
             // find mask
             var maskIndex = _.findIndex(cube.masks, function (m) {
+                console.log('m.id', m.id, options.mask.id);
                 return m.id = options.mask.id;
             });
+
+            console.log('maskIndex', maskIndex);
 
             // return if not found
             if (maskIndex < 0) return res.status(400).send({error : 'No such mask_id', error_code : 2});
@@ -620,8 +630,19 @@ module.exports = cubes = {
             // replace mask
             cube.masks[maskIndex] = options.mask;
 
+            // mark changed
+            cube.timestamp = moment().valueOf();
+ 
+            // save
+            cubes.save(cube, function (err, updated_cube) {
+                if (err) return res.status(400).send({error : 'Failed to save Cube. Error: ' + err.message, error_code : 5});
+
+                // return updated cube
+                res.send(updated_cube.masks);
+            });
+
             // return all masks
-            res.send(cube.masks);
+            // res.send(cube.masks);
             
         });
 
