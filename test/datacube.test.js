@@ -470,7 +470,7 @@ describe('Cubes', function () {
                     var dataset_uuid = tmp.uploaded_raster.file_id;
                     tiles_url += cube_id + '/' + dataset_uuid + '/' + tile[0] + '/' + tile[1] + '/' + tile[2] + '.' + type + '?access_token=' + access_token;
                     var expected = __dirname + '/open-data/expected-cube-tile-1.png';
-                    var actual = __dirname + '/tmp/cube-tile-1.png'
+                    var actual = __dirname + '/open-data/cube-tile-1.png'
 
                     console.log('tiles_url', tiles_url);
                     http.get({
@@ -496,7 +496,7 @@ describe('Cubes', function () {
                     var dataset_uuid = tmp.uploaded_raster_2.file_id;
                     tiles_url += cube_id + '/' + dataset_uuid + '/' + tile[0] + '/' + tile[1] + '/' + tile[2] + '.' + type + '?access_token=' + access_token;
                     var expected = __dirname + '/open-data/expected-cube-tile-2.png';
-                    var actual = __dirname + '/tmp/cube-tile-2.png'  
+                    var actual = __dirname + '/open-data/cube-tile-2.png'  
 
                     http.get({
                         url : tiles_url,
@@ -771,73 +771,35 @@ describe('Cubes', function () {
                 token(function (err, access_token) {
 
                     // read mask from file
-                    var mask = JSON.parse(fs.readFileSync(__dirname + '/tmp/hallingdal.mask.json','utf8'));
-                    // console.log(mask);
+                    var mask = JSON.parse(fs.readFileSync(__dirname + '/open-data/scf-mask.geojson','utf8'));
 
                     // read mask from file
-                    var scf_data = JSON.parse(fs.readFileSync(__dirname + '/tmp/hallingdal.scf.json','utf8'));
-                    // console.log(scf_data);
+                    var scf_data = JSON.parse(fs.readFileSync(__dirname + '/open-data/scf-updated.json','utf8'));
 
-                    // return done();
-                    // test data
                     var data = {
                         access_token : access_token,
-                        // cube_id : tmp.created_empty.cube_id,
-                        cube_id : 'cube-fc2018d0-1430-46b5-8709-893a68bd1c0d',
-                        // cube_id : "cube-5d2c019d-7c05-4fb1-be47-7313e2ae825e",
+                        cube_id : tmp.created_empty.cube_id,
                         mask : mask
                     }
                     data.mask.meta.title = 'hallingdal222';
 
-                    console.log('data.mask', data.mask, typeof data.mask);;
-
                     // replace data
                     data.mask.data = scf_data;
-
-                    console.log('_.size(data.mask.data)', _.size(data.mask.data), typeof data.mask.data);
-
-                    console.log('typeof scf_data', typeof scf_data);
-                    console.log('typeof mask', typeof mask);
 
                     api.post(endpoints.cube.updateMask)
                     .send(data)
                     .expect(httpStatus.OK)
                     .end(function (err, res) {
-                        // console.log('err, body', err, res.body);
                         if (err) return done(err);
                         var masks = res.body;
                         var replacedMask = _.find(masks, function (m) { return m.id == mask.id; });
                         expect(replacedMask.meta.title).to.equal('hallingdal222');
+                        expect(replacedMask.data[0].year).to.equal('1900');
                         done();
                     });
                 });
             });
 
-            // it('should add dataset to mask @ ' + endpoints.cube.updateDatasetMask, function (done) {
-            //     token(function (err, access_token) {
-
-            //         // test data
-            //         var data = {
-            //             access_token : access_token,
-            //             cube_id : tmp.created_empty.cube_id,
-            //             mask : tmp.mask
-            //         }
-
-            //         // replace data
-            //         data.mask.meta.title = 'replaced';
-
-            //         api.post(endpoints.cube.updateDatasetMask)
-            //         .send(data)
-            //         .expect(httpStatus.OK)
-            //         .end(function (err, res) {
-            //             if (err) return done(err);
-            //             var masks = res.body;
-            //             var replacedMask = _.find(masks, function (m) { return m.id == tmp.mask.id; });
-            //             expect(replacedMask.meta.title).to.equal('replaced');
-            //             done();
-            //         });
-            //     });
-            // });
 
             it('should upload cube-vector-mask.zip', function (done) {
                 token(function (err, access_token) {
@@ -1183,7 +1145,7 @@ describe('Cubes', function () {
                     var dataset_uuid = tmp.uploaded_raster.file_id;
                     tiles_url += cube_id + '/' + dataset_uuid + '/' + tile[0] + '/' + tile[1] + '/' + tile[2] + '.' + type + '?access_token=' + access_token;
                     var expected = __dirname + '/open-data/expected-cube-tile-1.png';
-                    var actual = __dirname + '/tmp/cube-tile-1.png'
+                    var actual = __dirname + '/open-data/cube-tile-1.png'
 
                     http.get({
                         url : tiles_url,
@@ -1244,7 +1206,7 @@ describe('Cubes', function () {
                     var dataset_uuid = tmp.uploaded_raster_2.file_id;
                     tiles_url += cube_id + '/' + dataset_uuid + '/' + tile[0] + '/' + tile[1] + '/' + tile[2] + '.' + type + '?access_token=' + access_token;
                     var expected = __dirname + '/open-data/expected-cube-tile-2.png';
-                    var actual = __dirname + '/tmp/cube-tile-2.png'  
+                    var actual = __dirname + '/open-data/cube-tile-2.png'  
 
                     http.get({
                         url : tiles_url,

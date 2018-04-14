@@ -146,7 +146,6 @@ module.exports = util = {
                 assert.ifError(err);
                 assert.equal(res.status, 200);
                 var project = util.parse(res.text).project;
-                console.log('created project', project.uuid)
                 assert.ok(project);
                 assert.ok(project.uuid);
                 assert.equal(project.name, project_name);
@@ -164,7 +163,6 @@ module.exports = util = {
                 access_token : access_token
             })
             .end(function (err, res) {
-                console.log('deleted project', util.test_project.uuid)
                 assert.ifError(err);
                 assert.equal(res.status, 200);
                 done();
