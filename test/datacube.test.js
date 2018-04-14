@@ -800,7 +800,6 @@ describe('Cubes', function () {
                 });
             });
 
-
             it('should upload cube-vector-mask.zip', function (done) {
                 token(function (err, access_token) {
                     api.post(endpoints.data.import)
