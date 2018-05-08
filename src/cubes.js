@@ -1939,7 +1939,10 @@ module.exports = cubes = {
                 mask_id : req.query.mask_id || null
             }
             return cube_request;
-        } catch (e) { return false; };
+        } catch (e) { 
+            console.log('getCubeRequest error', e);
+            return false; 
+        };
     },
 
     _isOutsideMaskExtent : function (options) {
