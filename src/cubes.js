@@ -657,6 +657,16 @@ module.exports = cubes = {
         // return if erroneus request
         if (!cube_request) return mile.serveErrorTile(res);
 
+        console.log('cube_request', cube_request);
+        // { 
+        //     cube_id: 'cube-4058a673-c0e0-4bad-a6ad-7e0039489540',
+        //     dataset: 'file_vcgfviwmkofxcckiqcku',
+        //     z: '9',
+        //     x: '268',
+        //     y: '148',
+        //     mask_id: 'mask-awokajoy' 
+        // }
+
         // find dataset
         ops.dataset = function (callback) {
             mile.getUploadStatus({
@@ -745,29 +755,9 @@ module.exports = cubes = {
     },
 
     _createTileRenderJob : function (options, res) {
-
          cubes.createTile(options, function (err) {
-            // if (err) console.error({
-            //     err_id : 12,
-            //     err_msg : 'cube tile job',
-            //     error : err
-            // });
-            // done();
             cubes.serveTile(res, options.tilePath);
-            
         });
-
-        // // create tile job
-        // var job = mile.jobs().create('cube_tile', { 
-        //     options : options,
-        // }).priority('low').attempts(5).save();
-
-        // // cubes tile job done
-        // job.on('complete', function (result) {
-
-        //     // serve cube tile
-        //     cubes.serveTile(res, options.tilePath);
-        // });
     },
 
     serveTile : function (res, tilePath) {
@@ -950,9 +940,7 @@ module.exports = cubes = {
         });
 
         // run ops
-        console.time('create cube tile');
         async.waterfall(ops, function (err, tilePath) {
-            console.timeEnd('create cube tile');
             done(err, tilePath);
         });
     },
@@ -967,7 +955,6 @@ module.exports = cubes = {
 
         // snow cover fraction (geojson mask)
         if (query_type == 'scf-geojson') return snow_query.vector.geojson(req, res);
-
 
         // return unsupported
         res.status(400).send({error : 'Query type not supported:' + query_type});

@@ -1115,9 +1115,57 @@ module.exports = mile = {
 
     },
 
+    preRenderCube : function (req, res) {
+
+        var tmp = {};
+
+        console.log('preRenderCube', req.body);
+
+        var cube_id = req.body.cube_id;
+        console.log('preRenderCube cube_id: ', cube_id);
+
+        if (!cube_id) return res.send({error: 'Missing argument: cube_id'});
+        // cube_request:
+        // { 
+        //     cube_id: 'cube-4058a673-c0e0-4bad-a6ad-7e0039489540',
+        //     dataset: 'file_vcgfviwmkofxcckiqcku',
+        //     z: '9',
+        //     x: '268',
+        //     y: '148',
+        //     mask_id: 'mask-awokajoy' 
+        // }
+
+
+        cubes.find(cube_id, function (err, cube) {
+
+            console.log('found cube: ', cube);
+            console.log('datasets:', cube.datasets);
+            console.log('typeof cube', typeof cube);
+
+            var datasets = cube.datasets;
+            var dataset_ids = [];
+            _.each(datasets, function (d) {
+                dataset_ids.push(d.id);
+            });
+
+            console.log('dataset_ids:', dataset_ids);
+
+
+            // todo: create tile requests for full depth of all datasets... (!)
+
+        });
+
+        res.send({
+            error : null, 
+            estimated_time : 1000
+        });
+    },
+
     preRender : function (req, res) {
 
         var layer_id = req.body.layer_id;
+
+        console.log('preRender: layer_id: ', layer_id);
 
         if (!layer_id) return res.send({error: 'Missing argument: layer_id'});
 
@@ -1126,13 +1174,11 @@ module.exports = mile = {
             if (err || !storedLayerJSON) return res.send({error: 'Missing layer_id'});
 
             var layer = tools.safeParse(storedLayerJSON);
-
             var metadata = tools.safeParse(layer.options.metadata);
             var extent = metadata.extent;
-
             var tiles = mile._getPreRenderTiles(extent, layer_id);
 
-            // var debug_tiles = _.slice(tiles, 0, 10);
+            console.log('preRender: layer: ', layer);
 
             mile.requestPrerender({
                 tiles : tiles, 

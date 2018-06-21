@@ -31,6 +31,10 @@ module.exports = function (mile) {
 	app.post('/v2/tiles/render', mile.checkAccess, function (req, res) {
 		mile.preRender(req,res);
 	});
+	// pre-render layer
+	app.post('/v2/tiles/renderCube', mile.checkAccess, function (req, res) {
+		mile.preRenderCube(req,res);
+	});
 
 	// create cube layer
 	app.post('/v2/cubes/create', mile.checkAccess, function (req, res) {
