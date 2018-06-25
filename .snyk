@@ -1,5 +1,5 @@
 # Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
-version: v1.8.0
+version: v1.12.0
 ignore: {}
 # patches apply the minimum changes required to fix a vulnerability
 patch:
@@ -17,3 +17,6 @@ patch:
   'npm:debug:20170905':
     - gm > debug:
         patched: '2017-11-07T10:51:55.768Z'
+  'npm:mime:20170907':
+    - grainstore > millstone > mime:
+        patched: '2018-06-25T23:43:37.085Z'
