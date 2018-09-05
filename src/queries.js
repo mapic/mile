@@ -149,6 +149,8 @@ module.exports = queries = {
                 row
             ].join(' ');
 
+            console.log('command:', command);
+
             // run query
             exec(command, {maxBuffer: 1024 * 1024 * 1000}, function (err, stdout, stdin) {
                 if (err) return callback(err);

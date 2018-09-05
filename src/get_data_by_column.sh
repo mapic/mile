@@ -19,7 +19,7 @@ if [ "$3" == "" ]; then
 	exit 1 # missing args
 fi
 
-if [ "$3" == "" ]; then
+if [ "$4" == "" ]; then
 	echo "Must provide value as third argument,"
 	echo ""
 	exit 1 # missing args
