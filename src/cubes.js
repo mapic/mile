@@ -521,7 +521,10 @@ module.exports = cubes = {
                 if (err) return res.status(400).send({error : 'Failed to save Cube. Error: ' + err.message, error_code : 5});
 
                 // return updated cube
-                res.send(updated_cube);
+                // res.send(updated_cube);
+                console.log('added mask:', mask);
+                console.log('cube:', cube);
+                res.send(finished_mask);
             });
 
         });

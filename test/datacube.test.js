@@ -598,6 +598,35 @@ describe('Cubes', function () {
                 });
             });
 
+            it('should add empty mask @ ' + endpoints.cube.mask, function (done) {
+
+                token(function (err, access_token) {
+
+                    // test data
+                    var data = {
+                        access_token : access_token,
+                        cube_id : tmp.created_empty.cube_id,
+                        mask : {
+                            type : 'geojson',
+                            geometry : null
+                        }
+                    }
+
+                    api.post(endpoints.cube.mask)
+                    .send(data)
+                    .expect(httpStatus.OK)
+                    .end(function (err, res) {
+                        if (err) return done(err);
+                        var mask = res.body;
+                        debugMode && console.log(mask);
+                        expect(mask.type).to.equal('geojson');
+                        expect(mask.id).to.exist;
+                        done();
+                    });
+                });
+
+            });
+
             it('should add geojson mask @ ' + endpoints.cube.mask, function (done) {
                 token(function (err, access_token) {
 
@@ -616,16 +645,16 @@ describe('Cubes', function () {
                     .expect(httpStatus.OK)
                     .end(function (err, res) {
                         if (err) return done(err);
-                        var cube = res.body;
-                        debugMode && console.log(cube);
-                        var mask = cube.masks[0]; // get first
+                        var mask = res.body;
+                        // var mask = cube.masks[0]; // get first
+                        debugMode && console.log(mask);
                         // expect(mask.type).to.equal('topojson');
                         expect(mask.type).to.equal('geojson');
-                        expect(cube.timestamp).to.exist;
+                        // expect(cube.timestamp).to.exist;
                         expect(mask.geometry).to.exist;
                         expect(mask.id).to.exist;
-                        expect(cube.createdBy).to.exist;
-                        expect(cube.cube_id).to.equal(tmp.created_empty.cube_id);
+                        // expect(cube.createdBy).to.exist;
+                        // expect(cube.cube_id).to.equal(tmp.created_empty.cube_id);
                         done();
                     });
                 });
@@ -649,16 +678,16 @@ describe('Cubes', function () {
                     .expect(httpStatus.OK)
                     .end(function (err, res) {
                         if (err) return done(err);
-                        var cube = res.body;
-                        debugMode && console.log(cube);
-                        expect(cube.masks).to.exist;
-                        var mask = cube.masks[1]; 
+                        var mask = res.body;
+                        debugMode && console.log(mask);
+                        // expect(cube.masks).to.exist;
+                        // var mask = cube.masks[1]; 
                         expect(mask.geometry).to.equal(data.mask.geometry);
                         expect(mask.type).to.equal('topojson');
-                        expect(cube.timestamp).to.exist;
+                        // expect(cube.timestamp).to.exist;
                         expect(mask.id).to.exist;
-                        expect(cube.createdBy).to.exist;
-                        expect(cube.cube_id).to.equal(tmp.created_empty.cube_id);
+                        // expect(cube.createdBy).to.exist;
+                        // expect(cube.cube_id).to.equal(tmp.created_empty.cube_id);
                         done();
                     });
                 });
@@ -692,20 +721,20 @@ describe('Cubes', function () {
                     .expect(httpStatus.OK)
                     .end(function (err, res) {
                         if (err) return done(err);
-                        var cube = res.body;
-                        debugMode && console.log(cube);
-                        var mask = cube.masks[2]; // get second
+                        var mask = res.body;
+                        debugMode && console.log(mask);
+                        // var mask = cube.masks[2]; // get second
                         expect(mask.data).to.exist;
                         expect(mask.meta).to.exist;
                         expect(mask.meta.title).to.equal('hallingdal');
                         expect(mask.meta['årlig tilsig']).to.equal('323 mm');
                         expect(mask.data).to.equal('string');
                         expect(mask.type).to.equal('geojson');
-                        expect(cube.timestamp).to.exist;
+                        // expect(cube.timestamp).to.exist;
                         expect(mask.geometry).to.exist;
                         expect(mask.id).to.exist;
-                        expect(cube.createdBy).to.exist;
-                        expect(cube.cube_id).to.equal(tmp.created_empty.cube_id);
+                        // expect(cube.createdBy).to.exist;
+                        // expect(cube.cube_id).to.equal(tmp.created_empty.cube_id);
                         tmp.created_mask_id = mask.id;
                         tmp.created_mask = mask;
                         done();
@@ -733,7 +762,6 @@ describe('Cubes', function () {
                         expect(mask.geometry).to.exist;
                         expect(mask.id).to.exist;
                         expect(mask.meta).to.exist;
-
                         tmp.mask = mask;
                         done();
                     });
@@ -753,7 +781,6 @@ describe('Cubes', function () {
                     // replace data
                     data.mask.meta.title = 'replaced';
 
-
                     api.post(endpoints.cube.updateMask)
                     .send(data)
                     .expect(httpStatus.OK)
@@ -767,7 +794,7 @@ describe('Cubes', function () {
                 });
             });
 
-            it('debug: should update mask for specific cube @ ' + endpoints.cube.updateMask, function (done) {
+            it.skip('debug: should update mask for specific cube @ ' + endpoints.cube.updateMask, function (done) {
                 token(function (err, access_token) {
 
                     // read mask from file
@@ -800,7 +827,7 @@ describe('Cubes', function () {
                 });
             });
 
-            it('should upload cube-vector-mask.zip', function (done) {
+            it.skip('should upload cube-vector-mask.zip', function (done) {
                 token(function (err, access_token) {
                     api.post(endpoints.data.import)
                     .type('form')
@@ -823,7 +850,7 @@ describe('Cubes', function () {
                 });
             });
 
-            it('should process', function (done) {       
+            it.skip('should process', function (done) {       
                 this.timeout(11000);     
                 this.slow(5000);
                 token(function (err, access_token) {
@@ -842,7 +869,7 @@ describe('Cubes', function () {
                 });
             });
 
-            it('should add vector mask from postgis @ ' + endpoints.cube.mask, function (done) {
+            it.skip('should add vector mask from postgis @ ' + endpoints.cube.mask, function (done) {
                 token(function (err, access_token) {
 
                     // test data
@@ -875,7 +902,7 @@ describe('Cubes', function () {
             });
 
 
-            it('should upload cube-raster-mask.tif', function (done) {
+            it.skip('should upload cube-raster-mask.tif', function (done) {
                 token(function (err, access_token) {
                     api.post(endpoints.data.import)
                     .type('form')
@@ -899,7 +926,7 @@ describe('Cubes', function () {
                 });
             });
 
-            it('should process', function (done) {       
+            it.skip('should process', function (done) {       
                 this.timeout(11000);     
                 this.slow(5000);
                 token(function (err, access_token) {
@@ -918,7 +945,7 @@ describe('Cubes', function () {
                 });
             });
 
-            it('should add raster mask from postgis @ ' + endpoints.cube.mask, function (done) {
+            it.skip('should add raster mask from postgis @ ' + endpoints.cube.mask, function (done) {
                 token(function (err, access_token) {
 
                     // test data

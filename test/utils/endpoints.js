@@ -83,18 +83,18 @@ module.exports = endpoint = {
     },
 
     cube : {
-        create      : '/v2/cubes/create',
-        get         : '/v2/cubes/get', // GET
-        add         : '/v2/cubes/add',
-        remove      : '/v2/cubes/remove',
-        update      : '/v2/cubes/update',
-        request     : '/v2/cubes/', // GET
-        replace     : '/v2/cubes/replace',
-        mask        : '/v2/cubes/mask',
-        unmask      : '/v2/cubes/unmask',
-        getMask     : '/v2/cubes/getMask',
-        updateMask  : '/v2/cubes/updateMask',
-        updateDatasetMask  : '/v2/cubes/updateDatasetMask',
+        create              : '/v2/cubes/create',
+        get                 : '/v2/cubes/get', // GET
+        add                 : '/v2/cubes/add',
+        remove              : '/v2/cubes/remove',
+        update              : '/v2/cubes/update',
+        request             : '/v2/cubes/', // GET
+        replace             : '/v2/cubes/replace',
+        mask                : '/v2/cubes/mask',
+        unmask              : '/v2/cubes/unmask',
+        getMask             : '/v2/cubes/getMask',
+        updateMask          : '/v2/cubes/updateMask',
+        updateDatasetMask   : '/v2/cubes/updateDatasetMask',
     }
 
 
