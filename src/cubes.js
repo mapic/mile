@@ -657,6 +657,8 @@ module.exports = cubes = {
         var cube_request = cubes.getCubeRequest(req);
         var ops = {};
 
+        console.log('tile 1');
+
         // return if erroneus request
         if (!cube_request) return mile.serveErrorTile(res);
 
@@ -691,8 +693,16 @@ module.exports = cubes = {
             var cube = results.cube;
             var dataset = results.dataset;
 
+            console.log('cube? ', _.size(cube));
+            console.log('dataset? ', _.size(dataset));
+            console.log('dataset.error? ', dataset.error);
+            console.log('dataset:', dataset);
+            
             // return on error
-            if (!cube || !dataset || dataset.error) return mile.serveErrorTile(res);
+            if (!cube || !dataset || dataset.error) {
+                console.log('def error!');
+                return mile.serveErrorTile(res);
+            }
 
             // serve tile
             cubes._serveTile({
