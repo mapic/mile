@@ -642,6 +642,9 @@ module.exports = cubes = {
 
         // find cube
         cubes.find(options.cube_id, function (err, cube) {
+            if (err || !cube) {
+                return res.status(400).send({error : 'Please provide a valid cube_id', error_code : 2});
+            }
 
             // find mask
             var maskIndex = _.findIndex(cube.masks, function (m) {
@@ -657,6 +660,7 @@ module.exports = cubes = {
 
             // update relevant keys
             _.forEach(newMask, function (value, key) {
+                console.log('Updating mask', key);
                 oldMask[key] = value;
             });
 
