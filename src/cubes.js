@@ -81,6 +81,29 @@ module.exports = cubes = {
         });
     },
 
+    deleteCube : function (req, res) {
+        var options = req.body;
+        if (!options) return res.status(400).send({error : 'Please provide a cube_id OR layer_id'});
+
+        var cube_id = options.cube_id || options.layer_id;
+        if (!cube_id) return res.status(400).send({error : 'Please provide a cube_id OR layer_id'})
+
+        // check if cube exists
+        cubes.find(cube_id, function (err, cube) {
+            if (err) return res.status(400).send({error : 'There is no such layer. Please provide a valid cube_id OR layer_id.'}) 
+            
+            // cube exists, so we can delete it
+            cubes.del(cube_id, function (err) {
+                if (err) return res.status(500).send({error : 'Something went wrong: ' + err});
+                res.send({
+                    deleteCube : cube_id,
+                    success : true,
+                    error : null
+                });
+            })
+        });
+    },
+
     get : function (req, res) {
         
         // get options
@@ -603,31 +626,34 @@ module.exports = cubes = {
         // get mask
         if (!options.mask) return res.status(400).send({error : 'Please provide a mask', error_code : 2});
 
+         // get mask
+        if (!options.mask.id) return res.status(400).send({error : 'Please provide a mask.id', error_code : 2});
+
         // get cube_id
-        if (!options.cube_id) return res.status(400).send({error : 'Please provide a dataset id', error_code : 2});
-
-        // get access token
-        var access_token = options.access_token;
-
-        console.log('DEBUG!!!')
-        console.log('options.mask.meta.title', options.mask.meta.title);
+        if (!options.cube_id) return res.status(400).send({error : 'Please provide a cube_id', error_code : 2});
 
         // find cube
         cubes.find(options.cube_id, function (err, cube) {
 
             // find mask
             var maskIndex = _.findIndex(cube.masks, function (m) {
-                console.log('m.id', m.id, options.mask.id);
                 return m.id == options.mask.id;
             });
 
-            console.log('maskIndex', maskIndex);
-
             // return if not found
-            if (maskIndex < 0) return res.status(400).send({error : 'No such mask_id', error_code : 2});
+            if (maskIndex < 0) return res.status(400).send({error : 'No such mask.id', error_code : 2});
 
             // replace mask
-            cube.masks[maskIndex] = options.mask;
+            var oldMask = cube.masks[maskIndex];
+            var newMask = options.mask;
+
+            // update relevant keys
+            _.forEach(newMask, function (value, key) {
+                oldMask[key] = value;
+            });
+
+            // set mask on cube
+            cube.masks[maskIndex] = oldMask;
 
             // mark changed
             cube.timestamp = moment().valueOf();
@@ -636,8 +662,8 @@ module.exports = cubes = {
             cubes.save(cube, function (err, updated_cube) {
                 if (err) return res.status(400).send({error : 'Failed to save Cube. Error: ' + err.message, error_code : 5});
 
-                // return updated cube
-                res.send(updated_cube.masks);
+                // return updated mask
+                res.send(updated_cube.masks[maskIndex]);
             });
 
         });
@@ -1911,6 +1937,14 @@ module.exports = cubes = {
             done(err, cube);
         });
     },      
+
+    del : function (cube_id, done) {
+        store.layers.del(cube_id, function (err) {
+            console.log('deleted cube layer, err, cube_id', err, cube_id);
+            done(err);
+        });
+    },
+
     // get cube from redis
     find : function (cube_id, done) {
         store.layers.get(cube_id, function (err, cubeJSON) {

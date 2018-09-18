@@ -68,7 +68,7 @@ function get_default_cartocss() {
 }
 
 
-describe('Cubes', function () {
+describe('Cubes2', function () {
     this.slow(400);
     this.timeout(40000);
 

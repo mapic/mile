@@ -84,6 +84,7 @@ module.exports = endpoint = {
 
     cube : {
         create              : '/v2/cubes/create',
+        deleteCube          : '/v2/cubes/deleteCube',
         get                 : '/v2/cubes/get', // GET
         add                 : '/v2/cubes/add',
         remove              : '/v2/cubes/remove',

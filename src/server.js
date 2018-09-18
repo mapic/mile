@@ -41,6 +41,11 @@ module.exports = function (mile) {
 		mile.cubes.create(req, res);
 	});
 
+	// remove cube layer
+	app.post('/v2/cubes/deleteCube', mile.checkAccess, function (req, res) {
+		mile.cubes.deleteCube(req, res);
+	});
+
 	// add dataset to cube
 	app.post('/v2/cubes/add', mile.checkAccess, function (req, res) {
 		mile.cubes.add(req, res);
