@@ -564,14 +564,22 @@ module.exports = cubes = {
         var cube_id = options.cube_id;
         if (!cube_id) return res.status(400).send({error : 'Please provide a dataset id', error_code : 2});
 
+        // get mask_id
+        var mask_id = options.mask_id;
+        if (!cube_id) return res.status(400).send({error : 'Please provide a dataset id', error_code : 2});
+
         var ops = {};
 
         cubes.find(cube_id, function (err, cube) {
 
+            console.log('cube.masks 1', cube.masks);
+
             // delete mask
-            _.remove(cube.mask, {
-                cube_id : cube_id
+            _.remove(cube.masks,function (m) {
+                return m.id == mask_id;
             });
+
+            console.log('cube.masks: ', cube.masks);
 
             // mark changed
             cube.timestamp = moment().valueOf();

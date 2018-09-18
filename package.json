@@ -1,8 +1,29 @@
 {
   "name": "mapic-mile",
-  "version": "17.11.07",
+  "version": "18.09.18",
+  "license": "AGPL-3.0",
   "description": "Mapic Mile",
   "main": "start-server.sh",
+   "scripts": {
+    "test": "mocha --recursive test/*.test.js",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mapic/mile.git"
+  },
+  "contributors": [
+    "knutole@mapic.io",
+    "jorgen@systemapic.com",
+    "strk@keybit.net",
+    "icygler@hwdtech.ru",
+    "mgdfot@gmail.com"
+  ],
+  "bugs": {
+    "url": "https://github.com/mapic/mile/issues"
+  },
+  "homepage": "https://github.com/mapic/mile",
+  "snyk": true,
   "dependencies": {
     "@turf/projection": "^5.0.4",
     "@turf/turf": "^5.0.4",
@@ -57,26 +78,5 @@
     "uuid": "^3.1.0",
     "vector-tile": "^1.2.0",
     "winston": "^2.2.0"
-  },
-  "scripts": {
-    "test": "mocha test/*test.js --recursive --exit",
-    "start": "node server.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/mapic/mile.git"
-  },
-  "contributors": [
-    "knutole@mapic.io",
-    "jorgen@systemapic.com",
-    "strk@keybit.net",
-    "icygler@hwdtech.ru",
-    "mgdfot@gmail.com"
-  ],
-  "bugs": {
-    "url": "https://github.com/mapic/mile/issues"
-  },
-  "homepage": "https://github.com/mapic/mile",
-  "license": "AGPL-3.0",
-  "snyk": true
+  }
 }
