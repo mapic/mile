@@ -33,7 +33,7 @@ module.exports = function (mile) {
 	});
 	// pre-render layer
 	app.post('/v2/tiles/renderCube', mile.checkAccess, function (req, res) {
-		mile.preRenderCube(req,res);
+		mile.cubes.preRenderCube(req,res);
 	});
 
 	// create cube layer

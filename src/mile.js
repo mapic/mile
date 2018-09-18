@@ -32,6 +32,7 @@ turf.intersect = require('@turf/intersect');
 turf.difference = require('@turf/difference');
 turf.booleanWithin = require('@turf/boolean-within');
 turf.transformScale = require('@turf/transform-scale');
+turf.bbox = require('@turf/bbox');
 
 // modules
 // global.config = require('../config.js');
@@ -1115,51 +1116,76 @@ module.exports = mile = {
 
     },
 
-    preRenderCube : function (req, res) {
+    // preRenderCube : function (req, res) {
 
-        var tmp = {};
+    //     var tmp = {};
 
-        console.log('preRenderCube', req.body);
+    //     console.log('preRenderCube', req.body);
 
-        var cube_id = req.body.cube_id;
-        console.log('preRenderCube cube_id: ', cube_id);
+    //     var cube_id = req.body.cube_id;
+    //     console.log('preRenderCube cube_id: ', cube_id);
 
-        if (!cube_id) return res.send({error: 'Missing argument: cube_id'});
-        // cube_request:
-        // { 
-        //     cube_id: 'cube-4058a673-c0e0-4bad-a6ad-7e0039489540',
-        //     dataset: 'file_vcgfviwmkofxcckiqcku',
-        //     z: '9',
-        //     x: '268',
-        //     y: '148',
-        //     mask_id: 'mask-awokajoy' 
-        // }
-
-
-        cubes.find(cube_id, function (err, cube) {
-
-            console.log('found cube: ', cube);
-            console.log('datasets:', cube.datasets);
-            console.log('typeof cube', typeof cube);
-
-            var datasets = cube.datasets;
-            var dataset_ids = [];
-            _.each(datasets, function (d) {
-                dataset_ids.push(d.id);
-            });
-
-            console.log('dataset_ids:', dataset_ids);
+    //     if (!cube_id) return res.send({error: 'Missing argument: cube_id'});
+    //     // cube_request:
+    //     // { 
+    //     //     cube_id: 'cube-4058a673-c0e0-4bad-a6ad-7e0039489540',
+    //     //     dataset: 'file_vcgfviwmkofxcckiqcku',
+    //     //     z: '9',
+    //     //     x: '268',
+    //     //     y: '148',
+    //     //     mask_id: 'mask-awokajoy' 
+    //     // }
 
 
-            // todo: create tile requests for full depth of all datasets... (!)
+    //     // need extent
+    //     // need masks
+    //     // if no masks...?
 
-        });
+    //     cubes.find(cube_id, function (err, cube) {
 
-        res.send({
-            error : null, 
-            estimated_time : 1000
-        });
-    },
+    //         console.log('found cube: ', cube);
+    //         console.log('datasets:', cube.datasets);
+    //         console.log('typeof cube', typeof cube);
+
+    //         var datasets = cube.datasets;
+    //         var dataset_ids = [];
+    //         _.each(datasets, function (d) {
+    //             dataset_ids.push(d.id);
+    //         });
+
+    //         console.log('dataset_ids:', dataset_ids);
+
+
+    //         if (_.size(cube.masks)) {
+    //             console.log('got masks...');
+
+    //             _.forEach(cube.masks, function (m) {
+
+    //                 // need to create a set of tile requests for each mask
+
+    //                 // if geojson mask
+    //                 if (m.type == 'geojson') {
+    //                     var extent = turf.bbox(m.geometry.geometry);
+    //                     console.log('found extent!', extent);
+
+    //                     // cube tiles:
+    //                     // https://tiles-b-maps.mapic.io/v2/cubes/cube-d4bf9fe1-ae9d-4224-8013-02a5aef15b0d/file_sgcqunertykvigdunuce/11/1073/596.png?access_token=pk.Lkr2Zy1qX7tWwR2TnP6PegpuFc8HVY7r28lfWDtH&cache=njulgh&mask_id=mask-rtlujaff
+
+    //                 }
+
+    //             });
+    //         }
+
+
+    //         // todo: create tile requests for full depth of all datasets... (!)
+
+    //     });
+
+    //     res.send({
+    //         error : null, 
+    //         estimated_time : 1000
+    //     });
+    // },
 
     preRender : function (req, res) {
 
@@ -1178,7 +1204,11 @@ module.exports = mile = {
             var extent = metadata.extent;
             var tiles = mile._getPreRenderTiles(extent, layer_id);
 
+            console.log('preRender INSAR extent', extent);
+
             console.log('preRender: layer: ', layer);
+
+            console.log('number of tiles:', _.size(tiles));
 
             mile.requestPrerender({
                 tiles : tiles, 
@@ -1289,7 +1319,7 @@ module.exports = mile = {
             var y = minTileY;
             while (y <= maxTileY) {
                 y++;
-                var tile = layer_id + '/' + z + '/' + y + '/' + x
+                // var tile = layer_id + '/' + z + '/' + y + '/' + x
                 var tile = {
                     layer_id : layer_id, 
                     layerUuid : layer_id,

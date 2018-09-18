@@ -24,6 +24,10 @@ var geojsonArea = require('geojson-area');
 var geojsonExtent = require('geojson-extent');
 var topojson = require('topojson');
 var moment = require('moment');
+var https = require('https');
+
+var turf = {};
+turf.bbox = require('@turf/bbox');
 
 // modules
 var config = global.config;
@@ -572,14 +576,10 @@ module.exports = cubes = {
 
         cubes.find(cube_id, function (err, cube) {
 
-            console.log('cube.masks 1', cube.masks);
-
             // delete mask
             _.remove(cube.masks,function (m) {
                 return m.id == mask_id;
             });
-
-            console.log('cube.masks: ', cube.masks);
 
             // mark changed
             cube.timestamp = moment().valueOf();
@@ -695,12 +695,10 @@ module.exports = cubes = {
         var cube_request = cubes.getCubeRequest(req);
         var ops = {};
 
-        console.log('tile 1');
-
         // return if erroneus request
         if (!cube_request) return mile.serveErrorTile(res);
 
-        console.log('cube_request', cube_request);
+        // console.log('cube_request', cube_request);
         // { 
         //     cube_id: 'cube-4058a673-c0e0-4bad-a6ad-7e0039489540',
         //     dataset: 'file_vcgfviwmkofxcckiqcku',
@@ -731,11 +729,6 @@ module.exports = cubes = {
             var cube = results.cube;
             var dataset = results.dataset;
 
-            console.log('cube? ', _.size(cube));
-            console.log('dataset? ', _.size(dataset));
-            console.log('dataset.error? ', dataset.error);
-            console.log('dataset:', dataset);
-            
             // return on error
             if (!cube || !dataset || dataset.error) {
                 console.log('def error!');
@@ -778,6 +771,7 @@ module.exports = cubes = {
         var tilePath = CUBEPATH + keyString;
 
         // check for cached tile
+        
         fs.readFile(tilePath, function (err, tile_buffer) {
             if (!err && tile_buffer) {
 
@@ -789,6 +783,7 @@ module.exports = cubes = {
             } else {
 
                 // create new tile
+                console.log('Creating tile:', tilePath);
                 cubes._createTileRenderJob({
                     tilePath : tilePath,
                     dataset : dataset,
@@ -818,8 +813,6 @@ module.exports = cubes = {
             res.end(tile_buffer);
         });
     },
-
-
 
     createTile : function (options, done) {
         var dataset = options.dataset;
@@ -890,18 +883,7 @@ module.exports = cubes = {
 
             }
 
-            // var pg_geojson = cubes._retriveGeoJSON(debug_geojson);
-            // var pg_geojson = JSON.stringify(options.cube.masks[0].geometry);
-            // todo: get correct mask
-            // var pg_geojson = cubes._retriveGeoJSON(options.cube.masks[0].geometry);
-            // var filter_query = "(SELECT A.rid FROM " + dataset.table_name + " AS A INNER JOIN st_transform(st_setsrid(ST_geomfromgeojson('" + pg_geojson + "'), 4326), 3857) AS B ON ST_Intersects(A.rast, B), LATERAL ST_ValueCount(ST_Clip(A.rast, B), 1) as t) as subquery";
-            // var filter_query = "(SELECT ST_Clip(" + dataset.table_name + ", st_transform(st_setsrid(ST_geomfromgeojson('" + pg_geojson + "'), 4326), 3857)) FROM " + dataset.table_name + ") as subquery";
-            // var filter_query = "(SELECT ST_Clip(" + dataset.table_name + ".rast, st_transform(st_setsrid(ST_geomfromgeojson('" + pg_geojson + "'), 4326), 3857)) FROM " + dataset.table_name + ") as subquery";
-            // var filter_query = "(SELECT * from " + dataset.table_name +" WHERE ST_Intersects(rast, st_transform(st_setsrid(ST_geomfromgeojson('" + pg_geojson + "'), 4326), 3857))) as subquery";
-            // works! :)
-            // var filter_query = "(SELECT ST_Clip(rast, st_transform(st_setsrid(ST_geomfromgeojson('" + pg_geojson + "'), 4326), 3857)) as rast FROM " + dataset.table_name + " WHERE ST_Intersects(rast, st_transform(st_setsrid(ST_geomfromgeojson('" + pg_geojson + "'), 4326), 3857))) as subquery";
-            // postgis_settings.table = filter_query;  
-
+            // mapnik
             try {   
                 map     = new mapnik.Map(256, 256, mercator.proj4);
                 layer   = new mapnik.Layer('layer', mercator.proj4);
@@ -995,6 +977,216 @@ module.exports = cubes = {
             done(err, tilePath);
         });
     },
+
+
+    preRenderCube : function (req, res) {
+
+        var tmp = {};
+        var cube_id = req.body.cube_id;
+
+        if (!cube_id) return res.send({error: 'Missing argument: cube_id'});
+
+        var ops = [];
+
+        ops.push(function (done) {
+
+            cubes.find(cube_id, function (err, cube) {
+                if (err || !cube) {
+                    return done({
+                        error : 'Layer does not exist',
+                        error_code : 85
+                    });
+                }
+
+                if (!_.size(cube.datasets)) {
+                    return done({
+                        error : 'Layer has no datasets. Try adding data to the layer.',
+                        error_code : 86
+                    })
+                }
+                done(null, cube);
+            });
+
+        });
+
+        ops.push(function (cube, done) {
+
+            var tile_sets = [];
+
+            // handle non-masks
+            if (!_.size(cube.masks)) {
+
+                return done({
+                    error : 'Pre-rendering is only supported for layers with masks. Try adding a mask to the layer.',
+                    error_code : 87
+                });
+
+            }
+
+            _.forEach(cube.masks, function (m) {
+
+                // geojson masks (todo: other mask types)
+                if (m.type == 'geojson') {
+                    
+                    // get extent
+                    var extent = turf.bbox(m.geometry.geometry);
+
+                    // iterate datasets
+                    _.each(cube.datasets, function (d) {
+
+                        // create tile requests
+                        var tiles = cubes._getPreRenderTiles({
+                            extent : extent, 
+                            layer_id : cube_id, 
+                            mask_id : m.id, 
+                            dataset_id : d.id
+                        });
+                        tile_sets.push(tiles)
+
+                    });
+                } 
+
+            });
+            
+            // flatten
+            var alltiles = _.flatten(tile_sets);
+
+            if (!_.size(alltiles)) {
+                return done({
+                    error : 'No tiles available for pre-rendering. Your mask type may not be supported.',
+                    error_code : 88
+                });
+            }
+
+            // run requests
+            cubes.requestPrerender({
+                tiles : alltiles, 
+                access_token : req.body.access_token
+            });
+
+            // return some info
+            done(null, {
+                success : true, 
+                error : null,
+                tiles : _.size(alltiles),
+                estimated_time : (_.size(alltiles) / 3)
+            });
+
+        });
+
+
+        async.waterfall(ops, function (err, results) {
+            if (err) return res.send(err);
+            res.send(results);
+        });
+
+    }, 
+
+
+    requestPrerender : function (options) {
+        var tiles = options.tiles;
+        var access_token = options.access_token;
+        var layer_id = options.layer_id;
+        var raster_ops = [];
+        var grid_ops = [];
+        var nt = 100; // parallel tile requests
+
+        console.log('requestPrerender options', options);
+
+        console.log('Pre-rendering', (_.size(tiles) * 2), 'tiles')
+        var timeStartRaster = Date.now();
+
+        // create array of tile requests
+        _.each(tiles, function (tile) {
+            
+            // raster tiles
+            raster_ops.push(function(done) {
+                var url = 'https://tiles-a-' + process.env.MAPIC_DOMAIN + '/v2/cubes/' + tile.layer_id + '/' + tile.dataset_id + '/' + tile.z + '/' + tile.x + '/' + tile.y + '.png?access_token=' + access_token + '&mask_id=' + tile.mask_id;
+                https.get(url, function (err) {
+                    done();
+                });
+            });
+
+        });
+
+        // request only n tiles at a time
+        async.parallelLimit(raster_ops, nt, function (err, results) {
+            var timeEnd = Date.now();
+            var benched = (timeEnd - timeStartRaster) / 1000;
+            console.log('Pre-rendering of raster tiles done! That took', benched, 'seconds.');
+
+        });
+
+
+    },
+
+    _getPreRenderTiles : function (options) {
+        var tiles = [];
+        var maxZoom = 12;
+        _.times(maxZoom, function (z) {
+            z++;
+            tiles.push(cubes._getPreRenderTilesAtZoom(options, z));
+        });
+        return _.flatten(tiles);
+    },
+
+    _getPreRenderTilesAtZoom : function (options, zoom) {
+        var extent = options.extent;
+        var layer_id = options.layer_id;
+        var mask_id = options.mask_id;
+        var dataset_id = options.dataset_id;
+
+        // latitude
+        var north = parseFloat(extent[1]);
+        var south = parseFloat(extent[3]);
+
+        // longitutde
+        var west = parseFloat(extent[0]);
+        var east = parseFloat(extent[2]);
+
+        var minLng = west;
+        var maxLng = east;
+        var minLat = south;
+        var maxLat = north;
+
+        var minTileX = mile.lon_to_tile_x(minLng, zoom);
+        var maxTileX = mile.lon_to_tile_x(maxLng, zoom);
+
+        var minTileY = mile.lat_to_tile_y(minLat, zoom);
+        var maxTileY = mile.lat_to_tile_y(maxLat, zoom);
+
+        var x = minTileX;
+        var z = zoom;
+        var tiles = [];
+        while (x <= maxTileX) {
+            var y = minTileY;
+            while (y <= maxTileY) {
+                y++;
+                var tile = {
+                    z : z, 
+                    x : x, 
+                    y : y,
+                    layer_id : layer_id, 
+                    dataset_id : dataset_id,
+                    mask_id : mask_id,
+                    type : 'png',
+
+                }
+                tiles.push(tile);
+            }
+            x++;
+        }
+        return tiles;
+    },
+
+
+
+
+
+
+
+
+
 
 
     query : function (req, res) {
