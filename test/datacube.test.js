@@ -768,64 +768,64 @@ describe('Cubes2', function () {
                 });
             });
 
-            it('should update mask @ ' + endpoints.cube.updateMask, function (done) {
-                token(function (err, access_token) {
+            // it('should update mask @ ' + endpoints.cube.updateMask, function (done) {
+            //     token(function (err, access_token) {
 
-                    // test data
-                    var data = {
-                        access_token : access_token,
-                        cube_id : tmp.created_empty.cube_id,
-                        mask : tmp.mask
-                    }
+            //         // test data
+            //         var data = {
+            //             access_token : access_token,
+            //             cube_id : tmp.created_empty.cube_id,
+            //             mask : tmp.mask
+            //         }
 
-                    // replace data
-                    data.mask.meta.title = 'replaced';
+            //         // replace data
+            //         data.mask.meta.title = 'replaced';
 
-                    api.post(endpoints.cube.updateMask)
-                    .send(data)
-                    .expect(httpStatus.OK)
-                    .end(function (err, res) {
-                        if (err) return done(err);
-                        var masks = res.body;
-                        var replacedMask = _.find(masks, function (m) { return m.id == tmp.mask.id; });
-                        expect(replacedMask.meta.title).to.equal('replaced');
-                        done();
-                    });
-                });
-            });
+            //         api.post(endpoints.cube.updateMask)
+            //         .send(data)
+            //         .expect(httpStatus.OK)
+            //         .end(function (err, res) {
+            //             if (err) return done(err);
+            //             var masks = res.body;
+            //             var replacedMask = _.find(masks, function (m) { return m.id == tmp.mask.id; });
+            //             expect(replacedMask.meta.title).to.equal('replaced');
+            //             done();
+            //         });
+            //     });
+            // });
 
-            it.skip('debug: should update mask for specific cube @ ' + endpoints.cube.updateMask, function (done) {
-                token(function (err, access_token) {
+            // it.skip('debug: should update mask for specific cube @ ' + endpoints.cube.updateMask, function (done) {
+            //     token(function (err, access_token) {
 
-                    // read mask from file
-                    var mask = JSON.parse(fs.readFileSync(__dirname + '/open-data/scf-mask.geojson','utf8'));
+            //         // read mask from file
+            //         var mask = JSON.parse(fs.readFileSync(__dirname + '/open-data/scf-mask.geojson','utf8'));
 
-                    // read mask from file
-                    var scf_data = JSON.parse(fs.readFileSync(__dirname + '/open-data/scf-updated.json','utf8'));
+            //         // read mask from file
+            //         var scf_data = JSON.parse(fs.readFileSync(__dirname + '/open-data/scf-updated.json','utf8'));
 
-                    var data = {
-                        access_token : access_token,
-                        cube_id : tmp.created_empty.cube_id,
-                        mask : mask
-                    }
-                    data.mask.meta.title = 'hallingdal222';
+            //         var data = {
+            //             access_token : access_token,
+            //             cube_id : tmp.created_empty.cube_id,
+            //             mask : mask
+            //         }
+            //         data.mask.meta.title = 'hallingdal222';
 
-                    // replace data
-                    data.mask.data = scf_data;
+            //         // replace data
+            //         data.mask.data = scf_data;
 
-                    api.post(endpoints.cube.updateMask)
-                    .send(data)
-                    .expect(httpStatus.OK)
-                    .end(function (err, res) {
-                        if (err) return done(err);
-                        var masks = res.body;
-                        var replacedMask = _.find(masks, function (m) { return m.id == mask.id; });
-                        expect(replacedMask.meta.title).to.equal('hallingdal222');
-                        expect(replacedMask.data[0].year).to.equal('1900');
-                        done();
-                    });
-                });
-            });
+            //         api.post(endpoints.cube.updateMask)
+            //         .send(data)
+            //         .expect(httpStatus.OK)
+            //         .end(function (err, res) {
+            //             if (err) return done(err);
+            //             var masks = res.body;
+            //             var replacedMask = _.find(masks, function (m) { return m.id == mask.id; });
+            //             expect(replacedMask.meta.title).to.equal('hallingdal222');
+            //             expect(replacedMask.data[0].year).to.equal('1900');
+            //             done();
+            //         });
+            //     });
+            // });
 
             it.skip('should upload cube-vector-mask.zip', function (done) {
                 token(function (err, access_token) {
