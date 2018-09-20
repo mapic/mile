@@ -1028,8 +1028,16 @@ module.exports = cubes = {
                 // geojson masks (todo: other mask types)
                 if (m.type == 'geojson') {
                     
+                    var geom = m.geometry;
+                    if (m.geometry && m.geometry.geometry) geom = m.geometry.geometry;
+                    
                     // get extent
-                    var extent = turf.bbox(m.geometry.geometry);
+                    try {
+                        var extent = turf.bbox(m.geometry);
+                    } catch (e) {
+                        console.log('err getting geojson:', e);
+                        var extent = [];
+                    }
 
                     // iterate datasets
                     _.each(cube.datasets, function (d) {
@@ -1050,6 +1058,7 @@ module.exports = cubes = {
             
             // flatten
             var alltiles = _.flatten(tile_sets);
+            console.log('size alltiles', _.size(alltiles));
 
             if (!_.size(alltiles)) {
                 return done({
