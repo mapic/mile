@@ -731,7 +731,7 @@ module.exports = cubes = {
 
             // return on error
             if (!cube || !dataset || dataset.error) {
-                console.log('def error!');
+                console.log('def error!', dataset.error);
                 return mile.serveErrorTile(res);
             }
 
