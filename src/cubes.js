@@ -406,6 +406,7 @@ module.exports = cubes = {
                     // description : mask.description
                     meta : mask.meta,
                     data : mask.data,
+                    data_id : mask.data_id
                 }
                 callback(null, prepared_mask);
             }

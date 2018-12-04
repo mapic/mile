@@ -70,6 +70,30 @@ describe('Masks', function () {
 
     });
 
+    it('should create empty mask with data_id', function (done) {
+        var testData = {
+            access_token : tmp.access_token,
+            cube_id : tmp.layer.cube_id,
+            mask : {
+                type : 'geojson',
+                geometry : null,
+                data_id : 'data-id'
+            }
+        };
+        api.post(endpoints.cube.mask)
+        .send(testData)
+        .end(function (err, res) {
+            if (err) return done(err);
+            var mask = res.body;
+            expect(mask.type).to.equal('geojson');
+            expect(mask.id).to.exist;
+            expect(mask.data_id).to.equal('data-id');
+            tmp.mask = mask;
+            done();
+        });
+
+    });
+
     it('should create mask with geojson', function (done) {
         var testData = {
             access_token : tmp.access_token,
@@ -224,7 +248,7 @@ describe('Masks', function () {
             if (err) return done(err);
             var layer = res.body;
             expect(layer.cube_id).to.equal(testData.cube_id);
-            expect(_.size(layer.masks)).to.equal(4);
+            expect(_.size(layer.masks)).to.equal(5);
             done();
         });
 
@@ -244,7 +268,7 @@ describe('Masks', function () {
             var cube = res.body;
             expect(cube.timestamp).to.exist;
             expect(cube.createdBy).to.exist;
-            expect(_.size(cube.masks)).to.equal(3);
+            expect(_.size(cube.masks)).to.equal(4);
             expect(cube.cube_id).to.equal(tmp.layer.cube_id);
             done();
         });
