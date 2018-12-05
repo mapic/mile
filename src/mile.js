@@ -889,7 +889,7 @@ module.exports = mile = {
             if (!map) return done(new Error('no map 7474'));
 
             // debug write xml
-            if (0) mile._debugXML(params.layerUuid, map.toXML());
+            if (1) mile._debugXML(params.layerUuid, map.toXML());
 
             // map options
             var map_options = {
@@ -1052,7 +1052,6 @@ module.exports = mile = {
             postgis_settings.asynchronous_request = false;
             // postgis_settings.max_async_connection = 10;
 
-            console.log('postgis_settings', postgis_settings);
 
             if ( storedLayer.options.data_type == 'raster' ) {
 
@@ -1074,6 +1073,8 @@ module.exports = mile = {
                 postgis_settings.table = storedLayer.options.sql;
 
             }
+
+            console.log('postgis_settings', postgis_settings);
 
             // everything in spherical mercator (3857)!
             try {   
