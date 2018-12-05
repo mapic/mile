@@ -2,6 +2,7 @@
 var _ = require('lodash');
 var fs = require('fs-extra');
 var pg = require('pg');
+var pgnative = require('pg').native
 var kue = require('kue');
 var path = require('path');
 var zlib = require('zlib');
@@ -63,11 +64,23 @@ module.exports = queries = {
             var pg_password = MAPIC_PGSQL_PASSWORD;
             var pg_database = layer.database_name;
 
-            // set connection string
-            var conString = 'postgres://' + pg_username + ':' + pg_password + '@postgis/' + pg_database;
+            // // set connection string
+            // var conString = 'postgres://' + pg_username + ':' + pg_password + '@postgis/' + pg_database;
+
+            // // initialize a connection pool
+            // pg.connect(conString, function(err, client, pg_done) {
+
+            var pool = new pgnative.Pool({
+                user : pg_username, 
+                password : pg_password,
+                database : pg_database,
+                host : 'postgis'
+            });
 
             // initialize a connection pool
-            pg.connect(conString, function(err, client, pg_done) {
+            // pg.connect(conString, function(err, client, pg_done) {
+            pool.connect(function(err, client, pg_done) {
+                if (err) return done(err);
                 if (err) return console.error('error fetching client from pool', err);
 
                 var lng = lngLat.lng;
