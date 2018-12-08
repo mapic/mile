@@ -1,5 +1,5 @@
 # Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
-version: v1.8.0
+version: v1.13.1
 ignore: {}
 # patches apply the minimum changes required to fix a vulnerability
 patch:
@@ -17,3 +17,95 @@ patch:
   'npm:debug:20170905':
     - gm > debug:
         patched: '2017-11-07T10:51:55.768Z'
+  'npm:hoek:20180212':
+    - nodemon > chokidar > fsevents > node-pre-gyp > hawk > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - mapnik-omnivore > gdal > node-pre-gyp > hawk > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > zipfile > node-pre-gyp > hawk > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - nodemon > chokidar > fsevents > node-pre-gyp > hawk > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > sqlite3 > node-pre-gyp > hawk > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - mapnik-omnivore > gdal > node-pre-gyp > hawk > sntp > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - mapnik-omnivore > srs > gdal > node-pre-gyp > hawk > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - mapnik-omnivore > gdal > node-pre-gyp > request > hawk > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - mapnik-omnivore > gdal > node-pre-gyp > request > hawk > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > srs > gdal > node-pre-gyp > hawk > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - mapnik-omnivore > gdal > node-pre-gyp > hawk > cryptiles > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - mapnik-omnivore > gdal > node-pre-gyp > request > hawk > sntp > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > sqlite3 > node-pre-gyp > hawk > sntp > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - mapnik-omnivore > srs > gdal > node-pre-gyp > hawk > sntp > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > sqlite3 > node-pre-gyp > hawk > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > zipfile > node-pre-gyp > hawk > sntp > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - mapnik-omnivore > srs > gdal > node-pre-gyp > hawk > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - nodemon > chokidar > fsevents > node-pre-gyp > hawk > sntp > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > sqlite3 > node-pre-gyp > request > hawk > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - mapnik-omnivore > srs > gdal > node-pre-gyp > request > hawk > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > zipfile > node-pre-gyp > hawk > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > zipfile > node-pre-gyp > request > hawk > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - mapnik-omnivore > gdal > node-pre-gyp > hawk > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > srs > gdal > node-pre-gyp > hawk > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > srs > gdal > node-pre-gyp > hawk > sntp > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > sqlite3 > node-pre-gyp > hawk > cryptiles > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - nodemon > chokidar > fsevents > node-pre-gyp > hawk > cryptiles > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > sqlite3 > node-pre-gyp > request > hawk > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - mapnik-omnivore > gdal > node-pre-gyp > request > hawk > cryptiles > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - mapnik-omnivore > srs > gdal > node-pre-gyp > request > hawk > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - mapnik-omnivore > srs > gdal > node-pre-gyp > hawk > cryptiles > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > zipfile > node-pre-gyp > request > hawk > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > srs > gdal > node-pre-gyp > request > hawk > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - mapnik-omnivore > srs > gdal > node-pre-gyp > request > hawk > sntp > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > zipfile > node-pre-gyp > hawk > cryptiles > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > zipfile > node-pre-gyp > request > hawk > sntp > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > sqlite3 > node-pre-gyp > request > hawk > sntp > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > srs > gdal > node-pre-gyp > request > hawk > sntp > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > srs > gdal > node-pre-gyp > request > hawk > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > srs > gdal > node-pre-gyp > hawk > cryptiles > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > zipfile > node-pre-gyp > request > hawk > cryptiles > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - mapnik-omnivore > srs > gdal > node-pre-gyp > request > hawk > cryptiles > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > sqlite3 > node-pre-gyp > request > hawk > cryptiles > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+    - grainstore > millstone > srs > gdal > node-pre-gyp > request > hawk > cryptiles > boom > hoek:
+        patched: '2018-12-08T00:45:27.824Z'
+  'npm:mime:20170907':
+    - grainstore > millstone > mime:
+        patched: '2018-12-08T00:45:27.824Z'
