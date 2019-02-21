@@ -373,14 +373,19 @@ module.exports = cubes = {
 
         // get options
         var options = cubes.getBody(req);
+        console.log('mask -->');
+        console.log('options:', options);
         if (!options) return res.status(400).send({error : 'Please provide an options object', error_code : 2});
 
         // get mask
         var mask = options.mask;
+        console.log('mask:', mask);
+
         if (!mask) return res.status(400).send({error : 'Please provide a mask', error_code : 2});
 
         // get cube_id
         var cube_id = options.cube_id;
+        console.log('cube_id', cube_id);
         if (!cube_id) return res.status(400).send({error : 'Please provide a dataset id', error_code : 2});
 
         // get access token
@@ -402,10 +407,10 @@ module.exports = cubes = {
                 var prepared_mask = {
                     type : 'geojson',
                     geometry : mask.geometry,
-                    // title : mask.title,
-                    // description : mask.description
                     meta : mask.meta,
-                    data : mask.data,
+                    // data : mask.data,
+                    data_url_yearly : mask.data_url_yearly,
+                    data_url_backdrop : mask.data_url_backdrop,
                     data_id : mask.data_id
                 }
                 callback(null, prepared_mask);
@@ -519,8 +524,10 @@ module.exports = cubes = {
         }
 
         async.series(ops, function (err, result) {
-            if (err) return res.status(400).send(err);
-
+            if (err) {
+                console.log('err:', err, result);
+                return res.status(400).send(err);
+            }
             // get cube
             var cube = result.cube;
             var finished_mask = result.mask;
@@ -542,17 +549,18 @@ module.exports = cubes = {
             }
 
             // add mask to cube mask array
-            updated_cube.masks.push(finished_mask);
+            // updated_cube.masks.push(finished_mask);
+            updated_cube.masks[0] = finished_mask; // override, only use one mask
 
             // save
             cubes.save(updated_cube, function (err, updated_cube) {
                 if (err) return res.status(400).send({error : 'Failed to save Cube. Error: ' + err.message, error_code : 5});
 
                 // return updated cube
-                // res.send(updated_cube);
-                console.log('added mask:', mask);
-                console.log('cube:', cube);
-                res.send(finished_mask);
+                res.send(updated_cube);
+                // console.log('added mask:', mask);
+                // console.log('cube:', cube);
+                // res.send(finished_mask);
             });
 
         });
