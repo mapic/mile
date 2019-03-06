@@ -1136,7 +1136,6 @@ module.exports = mile = {
 
             var num_tiles = _.size(tiles);
             console.log('num_tiles:', num_tiles);
-            console.log('tiles: ', tiles);
 
             // throw on too many tile requests
             if (num_tiles > 10000) return res.send({
@@ -1480,7 +1479,7 @@ module.exports = mile = {
 // -------------------
 // TOGGLE CLUSTER MODE
 // -------------------
-var useCluster = true;
+var useCluster = false;
 // -------------------
 
 
