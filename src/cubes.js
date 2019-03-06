@@ -779,8 +779,8 @@ module.exports = cubes = {
         var keyString = 'cube_tile:' + cube.cube_id + ':' + dataset.file_id + ':' + style_hash + ':' + cube_request.mask_id + ':' + cube_request.z + ':' + cube_request.x + ':' + cube_request.y + '.png';
         var tilePath = CUBEPATH + keyString;
 
+
         // check for cached tile
-        
         fs.readFile(tilePath, function (err, tile_buffer) {
             if (!err && tile_buffer) {
 
@@ -1020,78 +1020,52 @@ module.exports = cubes = {
 
         ops.push(function (cube, done) {
 
-            var tile_sets = [];
-
             // handle non-masks
             if (!_.size(cube.masks)) {
-
                 return done({
                     error : 'Pre-rendering is only supported for layers with masks. Try adding a mask to the layer.',
                     error_code : 87
                 });
+            };
 
-            }
+            // calculate tile requests
+            var maxZoom = 10;
+            var t = cubes.create_prerender_requests(cube, maxZoom);
+            var tiles = t.tiles;
+            var processed_zoom = t.zoom;
 
-            _.forEach(cube.masks, function (m) {
 
-                // geojson masks (todo: other mask types)
-                if (m.type == 'geojson') {
-                    
-                    var geom = m.geometry;
-                    if (m.geometry && m.geometry.geometry) geom = m.geometry.geometry;
-                    
-                    // get extent
-                    try {
-                        var extent = turf.bbox(m.geometry);
-                    } catch (e) {
-                        console.log('err getting geojson:', e);
-                        var extent = [];
-                    }
-
-                    // iterate datasets
-                    _.each(cube.datasets, function (d) {
-
-                        // create tile requests
-                        var tiles = cubes._getPreRenderTiles({
-                            extent : extent, 
-                            layer_id : cube_id, 
-                            mask_id : m.id, 
-                            dataset_id : d.id
-                        });
-                        tile_sets.push(tiles)
-
-                    });
-                } 
-
-            });
-            
-            // flatten
-            var alltiles = _.flatten(tile_sets);
-            console.log('size alltiles', _.size(alltiles));
-
-            if (!_.size(alltiles)) {
+            // handle empty tiles array
+            if (!_.size(tiles)) {
                 return done({
                     error : 'No tiles available for pre-rendering. Your mask type may not be supported.',
                     error_code : 88
                 });
             }
 
-            // run requests
-            cubes.requestPrerender({
-                tiles : alltiles, 
-                access_token : req.body.access_token
-            });
+
+            // debug switch
+            if (1) { 
+
+                // run requests
+                cubes.requestPrerender({
+                    tiles : tiles, 
+                    access_token : req.body.access_token
+                }, function (err, result) {
+                       console.log('cubes.requestPrerender done, err:', err);
+                });
+            }
 
             // return some info
             done(null, {
                 success : true, 
                 error : null,
-                tiles : _.size(alltiles),
-                estimated_time : (_.size(alltiles) / 3)
+                tiles : _.size(tiles),
+                estimated_time : (_.size(tiles) / 10),
+                processed_zoom : processed_zoom
             });
 
         });
-
 
         async.waterfall(ops, function (err, results) {
             if (err) return res.send(err);
@@ -1101,17 +1075,84 @@ module.exports = cubes = {
     }, 
 
 
-    requestPrerender : function (options) {
+    create_prerender_requests : function (cube, maxZoom) {
+
+        var maxTiles = 10000;
+
+        var tiles = cubes._create_prerender_requests(cube, maxZoom);
+
+        // safety, return empty if zoom exhausted
+        if (maxZoom < 2) return {
+            tiles : [],
+            zoom : 0
+        }
+
+        // if too many tiles, try with lower zoom level
+        if (_.size(tiles) > maxTiles) {
+            var zoom = maxZoom - 1;
+            return cubes.create_prerender_requests(cube, zoom);
+        }
+
+        return {
+            tiles : tiles, 
+            zoom : maxZoom
+        }
+    },
+
+    _create_prerender_requests : function (cube, maxZoom) {
+
+        var tile_sets = [];
+
+        _.forEach(cube.masks, function (m) {
+
+            // geojson masks (todo: other mask types)
+            if (m.type == 'geojson') {
+                
+                var geom = m.geometry;
+                if (m.geometry && m.geometry.geometry) geom = m.geometry.geometry;
+                
+                // get extent
+                try {
+                    var extent = turf.bbox(m.geometry);
+                } catch (e) {
+                    console.log('err getting geojson:', e);
+                    var extent = [];
+                }
+
+                // iterate datasets
+                _.each(cube.datasets, function (d) {
+
+                    // create tile requests
+                    var tiles = cubes.create_prerender_tiles_array({
+                        extent : extent,  // only creates tiles within extent
+                        layer_id : cube.cube_id, 
+                        mask_id : m.id, 
+                        dataset_id : d.id
+                    }, maxZoom);
+                    tile_sets.push(tiles)
+
+                });
+            } 
+
+        });
+        
+        // flatten
+        var alltiles = _.flatten(tile_sets);
+        
+        return alltiles;
+    },
+
+    requestPrerender : function (options, done) {
         var tiles = options.tiles;
         var access_token = options.access_token;
         var layer_id = options.layer_id;
         var raster_ops = [];
         var grid_ops = [];
-        var nt = 100; // parallel tile requests
 
-        console.log('requestPrerender options', options);
 
-        console.log('Pre-rendering', (_.size(tiles) * 2), 'tiles')
+        var tile_count = (_.size(tiles));
+        console.log('Pre-rendering', tile_count, 'tiles')
+
         var timeStartRaster = Date.now();
 
         // create array of tile requests
@@ -1120,6 +1161,12 @@ module.exports = cubes = {
             // raster tiles
             raster_ops.push(function(done) {
                 var url = 'https://tiles-a-' + process.env.MAPIC_DOMAIN + '/v2/cubes/' + tile.layer_id + '/' + tile.dataset_id + '/' + tile.z + '/' + tile.x + '/' + tile.y + '.png?access_token=' + access_token + '&mask_id=' + tile.mask_id;
+                
+                // debug
+                // console.log('(pre-render) url: ', url);
+                // return done();
+                
+                // make GET request
                 https.get(url, function (err) {
                     done();
                 });
@@ -1127,28 +1174,29 @@ module.exports = cubes = {
 
         });
 
-        // request only n tiles at a time
+        // request only nt tiles at a time
+        var nt = 5; // parallel tile requests. benchmarked: 5 is better than 8 or 32...
         async.parallelLimit(raster_ops, nt, function (err, results) {
             var timeEnd = Date.now();
             var benched = (timeEnd - timeStartRaster) / 1000;
-            console.log('Pre-rendering of raster tiles done! That took', benched, 'seconds.');
+            console.log('Pre-rendering of ' + tile_count + ' raster tiles done! That took', benched, 'seconds.');
+            done();
 
         });
 
-
     },
 
-    _getPreRenderTiles : function (options) {
+    create_prerender_tiles_array : function (options, zoom) {
         var tiles = [];
-        var maxZoom = 12;
+        var maxZoom = zoom ? zoom : 7;
         _.times(maxZoom, function (z) {
             z++;
-            tiles.push(cubes._getPreRenderTilesAtZoom(options, z));
+            tiles.push(cubes.create_tile_array_at_zoom(options, z));
         });
         return _.flatten(tiles);
     },
 
-    _getPreRenderTilesAtZoom : function (options, zoom) {
+    create_tile_array_at_zoom : function (options, zoom) {
         var extent = options.extent;
         var layer_id = options.layer_id;
         var mask_id = options.mask_id;
@@ -1179,7 +1227,6 @@ module.exports = cubes = {
         while (x <= maxTileX) {
             var y = minTileY;
             while (y <= maxTileY) {
-                y++;
                 var tile = {
                     z : z, 
                     x : x, 
@@ -1191,6 +1238,8 @@ module.exports = cubes = {
 
                 }
                 tiles.push(tile);
+                y++;
+
             }
             x++;
         }
