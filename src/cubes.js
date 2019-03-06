@@ -988,16 +988,18 @@ module.exports = cubes = {
 
     preRenderCube : function (req, res) {
 
-        var tmp = {};
         var cube_id = req.body.cube_id;
-
         if (!cube_id) return res.send({error: 'Missing argument: cube_id'});
 
         var ops = [];
+        var tmp = {};
 
         ops.push(function (done) {
 
+            // find cube
             cubes.find(cube_id, function (err, cube) {
+
+                // throw if err or no cube
                 if (err || !cube) {
                     return done({
                         error : 'Layer does not exist',
@@ -1005,12 +1007,15 @@ module.exports = cubes = {
                     });
                 }
 
+                // throw if no datasets in cube
                 if (!_.size(cube.datasets)) {
                     return done({
                         error : 'Layer has no datasets. Try adding data to the layer.',
                         error_code : 86
                     })
                 }
+
+                // continue with cube
                 done(null, cube);
             });
 
@@ -1026,14 +1031,14 @@ module.exports = cubes = {
                 });
             };
 
-            // calculate tile requests
-            var maxZoom = 10;
+            // create tile requests
+            var maxZoom = 11; // default maxZoom
             var t = cubes.create_prerender_requests(cube, maxZoom);
             var tiles = t.tiles;
             var processed_zoom = t.zoom;
 
 
-            // handle empty tiles array
+            // throw if no tiles to create
             if (!_.size(tiles)) {
                 return done({
                     error : 'No tiles available for pre-rendering. Your mask type may not be supported.',
@@ -1046,11 +1051,11 @@ module.exports = cubes = {
             if (1) { 
 
                 // run requests
-                cubes.requestPrerender({
+                cubes.run_prerender_requests({
                     tiles : tiles, 
                     access_token : req.body.access_token
                 }, function (err, result) {
-                       console.log('cubes.requestPrerender done, err:', err);
+                       console.log('cubes.run_prerender_requests done, err:', err);
                 });
             }
 
@@ -1065,18 +1070,69 @@ module.exports = cubes = {
 
         });
 
+        // run async 
         async.waterfall(ops, function (err, results) {
             if (err) return res.send(err);
+
+            // return results
             res.send(results);
         });
 
     }, 
 
 
+    run_prerender_requests : function (options, done) {
+        var tiles = options.tiles;
+        var access_token = options.access_token;
+        var layer_id = options.layer_id;
+        var raster_ops = [];
+        var grid_ops = [];
+
+
+        var tile_count = (_.size(tiles));
+        console.log('Pre-rendering', tile_count, 'tiles')
+
+        var timeStartRaster = Date.now();
+
+        // create array of tile requests
+        _.each(tiles, function (tile) {
+            
+            // raster tiles
+            raster_ops.push(function(done) {
+                var url = 'https://tiles-a-' + process.env.MAPIC_DOMAIN + '/v2/cubes/' + tile.layer_id + '/' + tile.dataset_id + '/' + tile.z + '/' + tile.x + '/' + tile.y + '.png?access_token=' + access_token + '&mask_id=' + tile.mask_id;
+                
+                // debug
+                // console.log('(pre-render) url: ', url);
+                // return done();
+                
+                // make GET request
+                https.get(url, function (err) {
+                    done();
+                });
+            });
+
+        });
+
+        // request only nt tiles at a time
+        var nt = 5; // parallel tile requests. benchmarked: 5 is better than 8 or 32...
+        async.parallelLimit(raster_ops, nt, function (err, results) {
+            var timeEnd = Date.now();
+            var benched = (timeEnd - timeStartRaster) / 1000;
+            console.log('Pre-rendering of ' + tile_count + ' raster tiles done! That took', benched, 'seconds.');
+            done();
+
+        });
+
+    },
+
+
     create_prerender_requests : function (cube, maxZoom) {
 
+        // max number of tiles allowed 
+        // for a pre-render run
         var maxTiles = 10000;
 
+        // create requests
         var tiles = cubes._create_prerender_requests(cube, maxZoom);
 
         // safety, return empty if zoom exhausted
@@ -1140,49 +1196,6 @@ module.exports = cubes = {
         return alltiles;
     },
 
-    requestPrerender : function (options, done) {
-        var tiles = options.tiles;
-        var access_token = options.access_token;
-        var layer_id = options.layer_id;
-        var raster_ops = [];
-        var grid_ops = [];
-
-
-        var tile_count = (_.size(tiles));
-        console.log('Pre-rendering', tile_count, 'tiles')
-
-        var timeStartRaster = Date.now();
-
-        // create array of tile requests
-        _.each(tiles, function (tile) {
-            
-            // raster tiles
-            raster_ops.push(function(done) {
-                var url = 'https://tiles-a-' + process.env.MAPIC_DOMAIN + '/v2/cubes/' + tile.layer_id + '/' + tile.dataset_id + '/' + tile.z + '/' + tile.x + '/' + tile.y + '.png?access_token=' + access_token + '&mask_id=' + tile.mask_id;
-                
-                // debug
-                // console.log('(pre-render) url: ', url);
-                // return done();
-                
-                // make GET request
-                https.get(url, function (err) {
-                    done();
-                });
-            });
-
-        });
-
-        // request only nt tiles at a time
-        var nt = 5; // parallel tile requests. benchmarked: 5 is better than 8 or 32...
-        async.parallelLimit(raster_ops, nt, function (err, results) {
-            var timeEnd = Date.now();
-            var benched = (timeEnd - timeStartRaster) / 1000;
-            console.log('Pre-rendering of ' + tile_count + ' raster tiles done! That took', benched, 'seconds.');
-            done();
-
-        });
-
-    },
 
     create_prerender_tiles_array : function (options, zoom) {
         var tiles = [];
@@ -1237,7 +1250,6 @@ module.exports = cubes = {
                 }
                 tiles.push(tile);
                 y++;
-
             }
             x++;
         }

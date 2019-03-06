@@ -1118,11 +1118,7 @@ module.exports = mile = {
     },
 
     preRender : function (req, res) {
-
         var layer_id = req.body.layer_id;
-
-        // console.log('preRender: layer_id: ', layer_id);
-
         if (!layer_id) return res.send({error: 'Missing argument: layer_id'});
 
         // get layer
@@ -1132,18 +1128,32 @@ module.exports = mile = {
             var layer = tools.safeParse(storedLayerJSON);
             var metadata = tools.safeParse(layer.options.metadata);
             var extent = metadata.extent;
-            var tiles = mile._getPreRenderTiles(extent, layer_id);
 
-            // console.log('preRender INSAR extent', extent);
-            // console.log('preRender: layer: ', layer);
-            // console.log('number of tiles:', _.size(tiles));
+            // create tiles
+            var maxZoom = 14;
+            var tiles = mile.create_prerender_tiles_array({extent : extent, layer_id : layer_id}, maxZoom);
 
+
+            var num_tiles = _.size(tiles);
+            console.log('num_tiles:', num_tiles);
+            console.log('tiles: ', tiles);
+
+            // throw on too many tile requests
+            if (num_tiles > 10000) return res.send({
+                success : false, 
+                error : 'Too many tiles!',
+                tiles : num_tiles,
+                estimated_time : (_.size(tiles) / 30)
+            });
+
+            // start pre-render
             mile.requestPrerender({
                 tiles : tiles, 
                 access_token : req.body.access_token,
                 layer_id : layer_id
             })
 
+            // return info to client
             res.send({
                 success : true, 
                 error : null,
@@ -1153,7 +1163,6 @@ module.exports = mile = {
 
         });
 
-
     },
 
     requestPrerender : function (options) {
@@ -1162,7 +1171,7 @@ module.exports = mile = {
         var layer_id = options.layer_id;
         var raster_ops = [];
         var grid_ops = [];
-        var nt = 100; // parallel tile requests
+        var nt = 4; // parallel tile requests
 
         console.log('Pre-rendering', (_.size(tiles) * 2), 'tiles')
         var timeStartRaster = Date.now();
@@ -1213,16 +1222,21 @@ module.exports = mile = {
 
     },
 
-    _getPreRenderTiles : function (extent, layer_id) {
+    create_prerender_tiles_array : function (options, zoom) {
         var tiles = [];
-        _.times(18, function (z) {
+        var maxZoom = zoom ? zoom : 7;
+        _.times(maxZoom, function (z) {
             z++;
-            tiles.push(mile._getPreRenderTilesAtZoom(extent, layer_id, z));
+            tiles.push(cubes.create_tile_array_at_zoom(options, z));
         });
         return _.flatten(tiles);
     },
 
-    _getPreRenderTilesAtZoom : function (extent, layer_id, zoom) {
+    create_tile_array_at_zoom : function (options, zoom) {
+        var extent = options.extent;
+        var layer_id = options.layer_id;
+        var mask_id = options.mask_id;
+        var dataset_id = options.dataset_id;
 
         // latitude
         var north = parseFloat(extent[1]);
@@ -1249,23 +1263,26 @@ module.exports = mile = {
         while (x <= maxTileX) {
             var y = minTileY;
             while (y <= maxTileY) {
-                y++;
-                // var tile = layer_id + '/' + z + '/' + y + '/' + x
                 var tile = {
-                    layer_id : layer_id, 
-                    layerUuid : layer_id,
                     z : z, 
                     x : x, 
                     y : y,
+                    layer_id : layer_id, 
+                    dataset_id : dataset_id,
+                    mask_id : mask_id,
                     type : 'png',
 
                 }
                 tiles.push(tile);
+                y++;
             }
             x++;
         }
         return tiles;
     },
+
+
+
 
     deg_to_rad : function (deg) {
         return deg * Math.PI / 180;
@@ -1458,6 +1475,79 @@ module.exports = mile = {
     checkAccess : tools.checkAccess,
 }
 
+
+
+// -------------------
+// TOGGLE CLUSTER MODE
+// -------------------
+var useCluster = true;
+// -------------------
+
+
+let workers = [];
+
+if (useCluster) {
+
+    // with clustering
+    if (cluster.isMaster) { 
+
+        // start server using cluster
+        console.log('Clusters: ' + numCPUs);
+        server(mile);
+
+        // fork workers
+        for (var i = 0; i < numCPUs - 1; i++) {  
+            
+            workers.push(cluster.fork());
+
+            // to receive messages from worker process
+            workers[i].on('message', function(message) {
+                console.log(message);
+            });
+        };
+
+        // process is clustered on a core and process id is assigned
+        cluster.on('online', function(worker) {
+            console.log('Worker ' + worker.process.pid + ' is listening');
+        });
+
+        // listen to exit, keep alive
+        cluster.on('exit', function(worker, code, signal) { 
+            
+            console.error('Cluster died, respawning...');
+            workers.push(cluster.fork());
+            
+            // to receive messages from worker process
+            workers[workers.length-1].on('message', function(message) {
+                console.log(message);
+            });
+        });
+
+    } 
+
+
+
+
+
+// run mile without clustering
+} else {
+
+    console.log('Starting without clustering...');
+
+    // run server on single cluster
+    server(mile);
+
+}
+
+
+
+
+
+
+
+
+
+
 // start server
 // todo: move around
-server(mile);
+// server(mile);
