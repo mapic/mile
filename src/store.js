@@ -49,8 +49,6 @@ process.env.AWS_SECRET_ACCESS_KEY = process.env.MAPIC_AWS_S3_SECRETACCESSKEY || 
 
 if (!process.env.TRAVIS) {
 
-    console.log('NOT TRAVIS', process.env.TRAVIS);
-    
     try {
         var AWS = require('aws-sdk');
         var s3 = new AWS.S3({region: 'eu-central-1'});
@@ -69,7 +67,7 @@ if (!process.env.TRAVIS) {
         });
 
         // check for bucket
-        if (!_.isUndefined(bucketFound)) return console.log('Bucket found!', bucketFound);
+        if (!_.isUndefined(bucketFound)) return console.log('Using S3 Bucket @', bucketFound.Name);
 
         // create bucket
         s3.createBucket({
@@ -77,7 +75,7 @@ if (!process.env.TRAVIS) {
             // Region : 'eu-central-1'
         }, function(err, data) {
             if (err) return console.log("Error", err);
-            console.log("Created S3 bucket: ", data.Location);
+            console.log("Created S3 bucket @", data.Location);
         });
     });
 
@@ -88,7 +86,7 @@ _.each(['redis'], function (i) {
     async.retry({times: 100, interval: 2000}, connectRedis.bind(this, i), function (err, results) {
         redis_instances[i].on('error', silentLog);
         redis_instances[i].select(MAPIC_REDIS_DB, silentLog)
-        console.log('Connected to', i);
+        console.log('Connected to Redis @', i);
     });
 });
 function connectRedis (i, callback) {

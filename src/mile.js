@@ -62,6 +62,8 @@ var pgsql_options = {
     dbpass: MAPIC_PGSQL_PASSWORD
 };
 
+var debug = false;
+
 module.exports = mile = { 
 
     // config : global.config,
@@ -158,7 +160,7 @@ module.exports = mile = {
             async.series(ops, function (err, data) {
 
                 if (err) {
-                    console.error({
+                    debug && console.error({
                         err_id : 2,
                         err_msg : 'serve tile',
                         error : err,
@@ -175,7 +177,7 @@ module.exports = mile = {
                 // log tile request
                 var end_time = new Date().getTime();
                 var create_tile_time = end_time - start_time;
-                console.tile({
+                debug && console.log({
                     z : params.z,
                     x : params.x,
                     y : params.y,
@@ -701,8 +703,6 @@ module.exports = mile = {
                 err_msg : 'get layer error',
                 error : err
             });
-
-            console.log('getLayer', layerUuid, layer, err);
             res.end(layer);
         });
     },
@@ -1012,7 +1012,7 @@ module.exports = mile = {
             // set bounding box of tile
             bbox = mercator.xyz_to_envelope(parseInt(params.x), parseInt(params.y), parseInt(params.z), false);
 
-            console.log('bbox', bbox);
+            // console.log('bbox', bbox);
 
             var buffered_bbox = [];
             // _.each(bbox, function (b, a, c) {
@@ -1074,7 +1074,7 @@ module.exports = mile = {
 
             }
 
-            console.log('postgis_settings', postgis_settings);
+            // console.log('postgis_settings', postgis_settings);
 
             // everything in spherical mercator (3857)!
             try {   
@@ -1121,7 +1121,7 @@ module.exports = mile = {
 
         var layer_id = req.body.layer_id;
 
-        console.log('preRender: layer_id: ', layer_id);
+        // console.log('preRender: layer_id: ', layer_id);
 
         if (!layer_id) return res.send({error: 'Missing argument: layer_id'});
 
@@ -1134,9 +1134,9 @@ module.exports = mile = {
             var extent = metadata.extent;
             var tiles = mile._getPreRenderTiles(extent, layer_id);
 
-            console.log('preRender INSAR extent', extent);
-            console.log('preRender: layer: ', layer);
-            console.log('number of tiles:', _.size(tiles));
+            // console.log('preRender INSAR extent', extent);
+            // console.log('preRender: layer: ', layer);
+            // console.log('number of tiles:', _.size(tiles));
 
             mile.requestPrerender({
                 tiles : tiles, 
@@ -1152,9 +1152,6 @@ module.exports = mile = {
             });
 
         });
-
-        
-
 
 
     },
@@ -1319,7 +1316,8 @@ module.exports = mile = {
     _debugXML : function (layer_id, xml) {
         var xml_filename = 'tmp/' + layer_id + '.debug.xml';
         fs.outputFile(xml_filename, xml, function (err) {
-            if (!err) console.log('wrote xml to ', xml_filename);
+            if (err) console.log(err);
+            // if (!err) console.log('wrote xml to ', xml_filename);
         });
     },
 
@@ -1363,7 +1361,7 @@ module.exports = mile = {
             
             // return data if any (and not forced render)
             if (!params.force_render && data) {
-                console.log('using cached tile (params.force_render =', params.force_render,')');
+                console.log('Serving cached tile');
                 return done(null, data); // debug, turned off to create every time
             }
             

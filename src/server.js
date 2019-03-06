@@ -1,13 +1,13 @@
 // vile/server.js
-var _ 		= require('lodash');
-var colors 	= require('colors');
+var _ 			= require('lodash');
+var colors 		= require('colors');
 var express 	= require('express');
 var bodyParser 	= require('body-parser')
-var cors 	= require('cors')
-var fs 		= require('fs');
-var path 	= require('path');
+var cors 		= require('cors')
+var fs 			= require('fs');
+var path 		= require('path');
 var compression = require('compression')
-var http 	= require('http');
+var http 		= require('http');
 var request 	= require('request');
 var winston 	= require('winston');
 
@@ -155,7 +155,7 @@ module.exports = function (mile) {
 	app.listen(3003);
 
 	// debug
-	console.log('Mile is up @ ' + 3003);
+	console.log('\n\nMile is up @ ' + 3003);
 }
 
 

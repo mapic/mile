@@ -373,19 +373,17 @@ module.exports = cubes = {
 
         // get options
         var options = cubes.getBody(req);
-        console.log('mask -->');
-        console.log('options:', options);
         if (!options) return res.status(400).send({error : 'Please provide an options object', error_code : 2});
 
         // get mask
         var mask = options.mask;
-        console.log('mask:', mask);
+        // console.log('mask:', mask);
 
         if (!mask) return res.status(400).send({error : 'Please provide a mask', error_code : 2});
 
         // get cube_id
         var cube_id = options.cube_id;
-        console.log('cube_id', cube_id);
+        // console.log('cube_id', cube_id);
         if (!cube_id) return res.status(400).send({error : 'Please provide a dataset id', error_code : 2});
 
         // get access token
@@ -669,7 +667,7 @@ module.exports = cubes = {
 
             // update relevant keys
             _.forEach(newMask, function (value, key) {
-                console.log('Updating mask', key);
+                // console.log('Updating mask', key);
                 oldMask[key] = value;
             });
 
@@ -740,7 +738,7 @@ module.exports = cubes = {
 
             // return on error
             if (!cube || !dataset || dataset.error) {
-                console.log('def error!', dataset.error);
+                console.log('Tile error:', dataset.error);
                 return mile.serveErrorTile(res);
             }
 
@@ -2211,7 +2209,7 @@ module.exports = cubes = {
 
     del : function (cube_id, done) {
         store.layers.del(cube_id, function (err) {
-            console.log('deleted cube layer, err, cube_id', err, cube_id);
+            console.log('Deleted Cube Layer: err, cube_id:', err, cube_id);
             done(err);
         });
     },
