@@ -31,9 +31,20 @@ module.exports = function (mile) {
 	app.post('/v2/tiles/render', mile.checkAccess, function (req, res) {
 		mile.preRender(req,res);
 	});
+	
 	// pre-render layer
-	app.post('/v2/tiles/renderCube', mile.checkAccess, function (req, res) {
-		mile.cubes.preRenderCube(req,res);
+	app.post('/v2/cubes/render/start', mile.checkAccess, function (req, res) {
+		mile.cubes.render.start(req,res);
+	});
+
+	// pre-render layer
+	app.post('/v2/cubes/render/status', mile.checkAccess, function (req, res) {
+		mile.cubes.render.status(req,res);
+	});
+
+	// pre-render layer
+	app.post('/v2/cubes/render/estimate', mile.checkAccess, function (req, res) {
+		mile.cubes.render.estimate(req,res);
 	});
 
 	// create cube layer

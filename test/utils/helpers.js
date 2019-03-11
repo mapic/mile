@@ -15,7 +15,7 @@ var access = require('./access.localhost.json');
 var domain = (process.env.MAPIC_DOMAIN == 'localhost') ? 'https://172.17.0.1' : 'https://' + process.env.MAPIC_DOMAIN;
 var api = supertest(domain);
 
-console.log('domain: ', domain);
+console.log('\nDomain: ', domain);
 
 // Avoids DEPTH_ZERO_SELF_SIGNED_CERT error for self-signed certs
 // See https://github.com/systemapic/pile/issues/38

@@ -208,7 +208,7 @@ module.exports = tools = {
 			}
 
 			// not allowed
-			res.json({access : 'Unauthorized'});
+			res.status(401).json({access : 'Unauthorized'});
 		});
 	},
 

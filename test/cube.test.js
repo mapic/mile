@@ -29,6 +29,7 @@ var debugMode = process.env.MAPIC_DEBUG; // override
 // var debugMode = true;
 
 var tmp = {};
+var ACCESS_TOKEN;
 
 // Avoids DEPTH_ZERO_SELF_SIGNED_CERT error for self-signed certs
 // See https://github.com/systemapic/pile/issues/38
@@ -78,8 +79,8 @@ describe('Cubes', function () {
             helpers.ensure_test_user_exists,
             helpers.create_project, 
             function (callback) {
-                token(function (err, access_token) {
-                    tmp.access_token = access_token;
+                token(function (err, token) {
+                    ACCESS_TOKEN = token;
                     callback();
                 })
             },
@@ -106,31 +107,31 @@ describe('Cubes', function () {
     // - clean up: delete cubes, datasets that were created during test!
 
 
-        it('should create empty cube @ ' + endpoints.cube.create, function (done) {
+        it('should create empty timeseries layer @ ' + endpoints.cube.create, function (done) {
 
-                // test data, no default options required
-                var data = {access_token : tmp.access_token};
+            // test data, no default options required
+            var data = {access_token : ACCESS_TOKEN};
 
-                api.post(endpoints.cube.create)
-                .send(data)
-                .expect(httpStatus.OK)
-                .end(function (err, res) {
-                    if (err) return done(err);
-                    var cube = res.body;
-                    debugMode && console.log(cube);
-                    expect(cube.timestamp).to.exist;
-                    expect(cube.createdBy).to.exist;
-                    expect(cube.cube_id).to.exist;
-                    tmp.created_empty = cube;
-                    done();
-                });
+            api.post(endpoints.cube.create)
+            .send(data)
+            .expect(httpStatus.OK)
+            .end(function (err, res) {
+                if (err) return done(err);
+                var cube = res.body;
+                debugMode && console.log(cube);
+                expect(cube.timestamp).to.exist;
+                expect(cube.createdBy).to.exist;
+                expect(cube.cube_id).to.exist;
+                tmp.created_empty = cube;
+                done();
+            });
         });
 
-        it('should create cube with options @ ' + endpoints.cube.create, function (done) {
+        it('should create timeseries layer with options @ ' + endpoints.cube.create, function (done) {
                 
             // test data, no default options required
             var data = {
-                access_token : tmp.access_token,
+                access_token : ACCESS_TOKEN,
                 options : {
                     type : 'scf',
                     dateformat : 'YYYYMMDD'
@@ -155,11 +156,11 @@ describe('Cubes', function () {
             });
         });
 
-        it('should create cube with a dataset @ ' + endpoints.cube.create, function (done) {
+        it('should create timeseries layer with a dataset @ ' + endpoints.cube.create, function (done) {
 
             // test data
             var data = {
-                access_token : tmp.access_token,
+                access_token : ACCESS_TOKEN,
                 datasets : ['dataset-uuid-random']
             }
 
@@ -180,11 +181,11 @@ describe('Cubes', function () {
             });
         });
 
-        it('should get cube by cube_id @ ' + endpoints.cube.get, function (done) {
+        it('should get timeseries layer by cube_id @ ' + endpoints.cube.get, function (done) {
 
             // test data
             var data = {
-                access_token : tmp.access_token,
+                access_token : ACCESS_TOKEN,
                 cube_id : tmp.created_empty.cube_id
             }
 
@@ -206,7 +207,7 @@ describe('Cubes', function () {
 
             // test data
             var data = {
-                access_token : tmp.access_token,
+                access_token : ACCESS_TOKEN,
                 cube_id : tmp.created_empty.cube_id,
                 datasets : [{
                     id : 'random-uuid-1',
@@ -242,7 +243,7 @@ describe('Cubes', function () {
 
             // test data
             var data = {
-                access_token : tmp.access_token,
+                access_token : ACCESS_TOKEN,
                 cube_id : tmp.created_empty.cube_id,
                 datasets : [{
                     id : 'random-uuid-1',
@@ -267,11 +268,11 @@ describe('Cubes', function () {
             });
         });
 
-        it('should update cube @ ' + endpoints.cube.update, function (done) {
+        it('should update timeseries layer @ ' + endpoints.cube.update, function (done) {
 
             // test data
             var data = {
-                access_token : tmp.access_token,
+                access_token : ACCESS_TOKEN,
                 cube_id : tmp.created_empty.cube_id,
                 style : get_default_cartocss(),
                 quality : 'png8'
@@ -295,274 +296,502 @@ describe('Cubes', function () {
 
 
         it('should upload dataset @ ' + endpoints.data.import, function (done) {
-            token(function (err, access_token) {
-                api.post(endpoints.data.import)
-                .type('form')
-                .field('access_token', access_token)
-                .field('data', fs.createReadStream(path.resolve(__dirname, './open-data/snow_scandinavia_jan.tif')))
-                .expect(httpStatus.OK)
-                .end(function (err, res) {
-                    if (err) return done(err);
-                    var status = res.body;
-                    debugMode && console.log(status);
-                    expect(status.file_id).to.exist;
-                    expect(status.user_id).to.exist;
-                    expect(status.upload_success).to.exist;
-                    expect(status.filename).to.be.equal('snow_scandinavia_jan.tif');
-                    expect(status.status).to.be.equal('Processing');
-                    tmp.uploaded_raster = status;
-                    done();
-                });
+            api.post(endpoints.data.import)
+            .type('form')
+            .field('access_token', ACCESS_TOKEN)
+            .field('data', fs.createReadStream(path.resolve(__dirname, './open-data/snow_scandinavia_jan.tif')))
+            .expect(httpStatus.OK)
+            .end(function (err, res) {
+                if (err) return done(err);
+                var status = res.body;
+                debugMode && console.log(status);
+                expect(status.file_id).to.exist;
+                expect(status.user_id).to.exist;
+                expect(status.upload_success).to.exist;
+                expect(status.filename).to.be.equal('snow_scandinavia_jan.tif');
+                expect(status.status).to.be.equal('Processing');
+                tmp.uploaded_raster = status;
+                done();
             });
         });
 
         it('should upload second dataset @ ' + endpoints.data.import, function (done) {
-            token(function (err, access_token) {
-                api.post(endpoints.data.import)
-                .type('form')
-                .field('access_token', access_token)
-                .field('data', fs.createReadStream(path.resolve(__dirname, './open-data/snow_scandinavia_july.tif')))
-                .expect(httpStatus.OK)
-                .end(function (err, res) {
-                    if (err) return done(err);
-                    var status = res.body;
-                    debugMode && console.log(status);
-                    expect(status.file_id).to.exist;
-                    expect(status.user_id).to.exist;
-                    expect(status.upload_success).to.exist;
-                    expect(status.filename).to.be.equal('snow_scandinavia_july.tif');
-                    expect(status.status).to.be.equal('Processing');
-                    tmp.uploaded_raster_2 = status;
-                    done();
-                });
+            api.post(endpoints.data.import)
+            .type('form')
+            .field('access_token', ACCESS_TOKEN)
+            .field('data', fs.createReadStream(path.resolve(__dirname, './open-data/snow_scandinavia_july.tif')))
+            .expect(httpStatus.OK)
+            .end(function (err, res) {
+                if (err) return done(err);
+                var status = res.body;
+                debugMode && console.log(status);
+                expect(status.file_id).to.exist;
+                expect(status.user_id).to.exist;
+                expect(status.upload_success).to.exist;
+                expect(status.filename).to.be.equal('snow_scandinavia_july.tif');
+                expect(status.status).to.be.equal('Processing');
+                tmp.uploaded_raster_2 = status;
+                done();
             });
         });
 
-        it('should add dataset to cube @ ' + endpoints.cube.add, function (done) {
-            token(function (err, access_token) {
+        it('should add dataset to timeseries layer @ ' + endpoints.cube.add, function (done) {
 
-                // test data
-                var data = {
-                    access_token : access_token,
-                    cube_id : tmp.created_empty.cube_id,
-                    datasets : [{
-                        id : tmp.uploaded_raster.file_id,
-                        description : 'Filename: ' + tmp.uploaded_raster.filename,
-                        timestamp : moment().format()
-                    }]
-                }
+            // test data
+            var data = {
+                access_token : ACCESS_TOKEN,
+                cube_id : tmp.created_empty.cube_id,
+                datasets : [{
+                    id : tmp.uploaded_raster.file_id,
+                    description : 'Filename: ' + tmp.uploaded_raster.filename,
+                    timestamp : moment().format()
+                }]
+            }
 
-                api.post(endpoints.cube.add)
-                .send(data)
-                .expect(httpStatus.OK)
-                .end(function (err, res) {
-                    if (err) return done(err);
-                    var cube = res.body;
-                    debugMode && console.log(cube);
-                    expect(cube.timestamp).to.exist;
-                    expect(cube.createdBy).to.exist;
-                    expect(cube.cube_id).to.equal(tmp.created_empty.cube_id);
-                    expect(cube.datasets).to.have.lengthOf(1);
-                    expect(cube.datasets[0].id).to.equal(data.datasets[0].id);
-                    expect(cube.datasets[0].description).to.equal(data.datasets[0].description);
-                    expect(cube.datasets[0].timestamp).to.equal(data.datasets[0].timestamp);
-                    done();
-                });
+            api.post(endpoints.cube.add)
+            .send(data)
+            .expect(httpStatus.OK)
+            .end(function (err, res) {
+                if (err) return done(err);
+                var cube = res.body;
+                debugMode && console.log(cube);
+                expect(cube.timestamp).to.exist;
+                expect(cube.createdBy).to.exist;
+                expect(cube.cube_id).to.equal(tmp.created_empty.cube_id);
+                expect(cube.datasets).to.have.lengthOf(1);
+                expect(cube.datasets[0].id).to.equal(data.datasets[0].id);
+                expect(cube.datasets[0].description).to.equal(data.datasets[0].description);
+                expect(cube.datasets[0].timestamp).to.equal(data.datasets[0].timestamp);
+                done();
             });
         });
 
-        it('should add second dataset to cube @ ' + endpoints.cube.add, function (done) {
-            token(function (err, access_token) {
+        it('should add second dataset to timeseries layer @ ' + endpoints.cube.add, function (done) {
 
-                // test data
-                var data = {
-                    access_token : access_token,
-                    cube_id : tmp.created_empty.cube_id,
-                    datasets : [{
-                        id : tmp.uploaded_raster_2.file_id,
-                        description : 'Filename: ' + tmp.uploaded_raster_2.filename,
-                        timestamp : moment().format()
-                    }]
-                }
+            // test data
+            var data = {
+                access_token : ACCESS_TOKEN,
+                cube_id : tmp.created_empty.cube_id,
+                datasets : [{
+                    id : tmp.uploaded_raster_2.file_id,
+                    description : 'Filename: ' + tmp.uploaded_raster_2.filename,
+                    timestamp : moment().format()
+                }]
+            }
 
-                api.post(endpoints.cube.add)
-                .send(data)
-                .expect(httpStatus.OK)
-                .end(function (err, res) {
-                    if (err) return done(err);
-                    var cube = res.body;
-                    debugMode && console.log(cube);
-                    expect(cube.timestamp).to.exist;
-                    expect(cube.createdBy).to.exist;
-                    expect(cube.cube_id).to.equal(tmp.created_empty.cube_id);
-                    expect(cube.datasets).to.have.lengthOf(2);
-                    expect(cube.datasets[1].id).to.equal(data.datasets[0].id);
-                    expect(cube.datasets[1].description).to.equal(data.datasets[0].description);
-                    expect(cube.datasets[1].timestamp).to.equal(data.datasets[0].timestamp);
-                    done();
-                });
+            api.post(endpoints.cube.add)
+            .send(data)
+            .expect(httpStatus.OK)
+            .end(function (err, res) {
+                if (err) return done(err);
+                var cube = res.body;
+                debugMode && console.log(cube);
+                expect(cube.timestamp).to.exist;
+                expect(cube.createdBy).to.exist;
+                expect(cube.cube_id).to.equal(tmp.created_empty.cube_id);
+                expect(cube.datasets).to.have.lengthOf(2);
+                expect(cube.datasets[1].id).to.equal(data.datasets[0].id);
+                expect(cube.datasets[1].description).to.equal(data.datasets[0].description);
+                expect(cube.datasets[1].timestamp).to.equal(data.datasets[0].timestamp);
+                done();
             });
         });
 
         it('should process raster', function (done) {
             this.timeout(10000);
             this.slow(5000);
-            token(function (err, access_token) {
-                var processingInterval = setInterval(function () {
-                    api.get(endpoints.data.status)
-                    .query({ file_id : tmp.uploaded_raster.file_id, access_token : access_token})
-                    .end(function (err, res) {
-                        if (err) return done(err);
-                        var status = helpers.parse(res.text);
-                        if (status.processing_success) {
-                            clearInterval(processingInterval);
-                            debugMode && console.log(status);
-                            expect(status.upload_success).to.exist;
-                            expect(status.status).to.be.equal('Done');
-                            expect(status.filename).to.be.equal('snow_scandinavia_jan.tif');
-                            expect(status.error_code).to.be.null;
-                            expect(status.error_text).to.be.null;
-                            done();
-                        }
-                    });
-                }, 500);
-            });
+            var processingInterval = setInterval(function () {
+                api.get(endpoints.data.status)
+                .query({ file_id : tmp.uploaded_raster.file_id, access_token : ACCESS_TOKEN})
+                .end(function (err, res) {
+                    if (err) return done(err);
+                    var status = helpers.parse(res.text);
+                    if (status.processing_success) {
+                        clearInterval(processingInterval);
+                        debugMode && console.log(status);
+                        expect(status.upload_success).to.exist;
+                        expect(status.status).to.be.equal('Done');
+                        expect(status.filename).to.be.equal('snow_scandinavia_jan.tif');
+                        expect(status.error_code).to.be.null;
+                        expect(status.error_text).to.be.null;
+                        done();
+                    }
+                });
+            }, 500);
         });
 
         it('should process second raster', function (done) {
             this.timeout(10000);
             this.slow(5000);
-            token(function (err, access_token) {
-                var processingInterval = setInterval(function () {
-                    api.get(endpoints.data.status)
-                    .query({ file_id : tmp.uploaded_raster_2.file_id, access_token : access_token})
-                    .end(function (err, res) {
-                        if (err) return done(err);
-                        var status = helpers.parse(res.text);
-                        if (status.processing_success) {
-                            clearInterval(processingInterval);
-                            debugMode && console.log(status);
-                            expect(status.upload_success).to.exist;
-                            expect(status.status).to.be.equal('Done');
-                            expect(status.filename).to.be.equal('snow_scandinavia_july.tif');
-                            expect(status.error_code).to.be.null;
-                            expect(status.error_text).to.be.null;
-                            done();
-                        }
-                    });
-                }, 500);
-            });
-        });
-
-        it('should get expected raster-tile from cube', function (done) {
-            this.slow(5000);
-            token(function (err, access_token) {
-                var type = 'png';
-                var tile = [7,67,37]; // oslo
-                var cube_id = tmp.created_empty.cube_id;
-                var tiles_url = base_cubes_url();
-                var dataset_uuid = tmp.uploaded_raster.file_id;
-                tiles_url += cube_id + '/' + dataset_uuid + '/' + tile[0] + '/' + tile[1] + '/' + tile[2] + '.' + type + '?access_token=' + access_token;
-                var expected = __dirname + '/open-data/expected-cube-tile-1.png';
-                var actual = __dirname + '/open-data/cube-tile-1.png'
-                http.get({
-                    url : tiles_url,
-                    noSslVerifier : true
-                }, actual, function (err, result) {
+            var processingInterval = setInterval(function () {
+                api.get(endpoints.data.status)
+                .query({ file_id : tmp.uploaded_raster_2.file_id, access_token : ACCESS_TOKEN})
+                .end(function (err, res) {
                     if (err) return done(err);
-                    var e = fs.readFileSync(actual);
-                    var a = fs.readFileSync(expected);
-                    assert.ok(Math.abs(e.length - a.length) < 250);
-                    done();
+                    var status = helpers.parse(res.text);
+                    if (status.processing_success) {
+                        clearInterval(processingInterval);
+                        debugMode && console.log(status);
+                        expect(status.upload_success).to.exist;
+                        expect(status.status).to.be.equal('Done');
+                        expect(status.filename).to.be.equal('snow_scandinavia_july.tif');
+                        expect(status.error_code).to.be.null;
+                        expect(status.error_text).to.be.null;
+                        done();
+                    }
                 });
-            });
+            }, 500);
         });
 
-        it('should get expected second raster-tile from cube', function (done) {
+        it('should get expected raster-tile from timeseries layer', function (done) {
             this.slow(5000);
-            token(function (err, access_token) {
-                var type = 'png';
-                var tile = [7,67,37]; // oslo
-                var cube_id = tmp.created_empty.cube_id;
-                var tiles_url = base_cubes_url();
-                var dataset_uuid = tmp.uploaded_raster_2.file_id;
-                tiles_url += cube_id + '/' + dataset_uuid + '/' + tile[0] + '/' + tile[1] + '/' + tile[2] + '.' + type + '?access_token=' + access_token;
-                var expected = __dirname + '/open-data/expected-cube-tile-2.png';
-                var actual = __dirname + '/open-data/cube-tile-2.png'  
-
-                http.get({
-                    url : tiles_url,
-                    noSslVerifier : true
-                }, actual, function (err, result) {
-                    if (err) return done(err);
-                    var e = fs.readFileSync(actual);
-                    var a = fs.readFileSync(expected);
-                    assert.ok(Math.abs(e.length - a.length) < 100);
-                    done();
-                });
+            var type = 'png';
+            var tile = [7,67,37]; // oslo
+            var cube_id = tmp.created_empty.cube_id;
+            var tiles_url = base_cubes_url();
+            var dataset_uuid = tmp.uploaded_raster.file_id;
+            tiles_url += cube_id + '/' + dataset_uuid + '/' + tile[0] + '/' + tile[1] + '/' + tile[2] + '.' + type + '?access_token=' + ACCESS_TOKEN;
+            var expected = __dirname + '/open-data/expected-cube-tile-1.png';
+            var actual = __dirname + '/open-data/cube-tile-1.png'
+            http.get({
+                url : tiles_url,
+                noSslVerifier : true
+            }, actual, function (err, result) {
+                if (err) return done(err);
+                var e = fs.readFileSync(actual);
+                var a = fs.readFileSync(expected);
+                assert.ok(Math.abs(e.length - a.length) < 250);
+                done();
             });
         });
 
-        it('should get cube containing two datasets', function (done) {
-            token(function (err, access_token) {
+        it('should get expected second raster-tile from timeseries layer', function (done) {
+            this.slow(5000);
+            var type = 'png';
+            var tile = [7,67,37]; // oslo
+            var cube_id = tmp.created_empty.cube_id;
+            var tiles_url = base_cubes_url();
+            var dataset_uuid = tmp.uploaded_raster_2.file_id;
+            tiles_url += cube_id + '/' + dataset_uuid + '/' + tile[0] + '/' + tile[1] + '/' + tile[2] + '.' + type + '?access_token=' + ACCESS_TOKEN;
+            var expected = __dirname + '/open-data/expected-cube-tile-2.png';
+            var actual = __dirname + '/open-data/cube-tile-2.png'  
 
-                // test data
-                var data = {
-                    access_token : access_token,
-                    cube_id : tmp.created_empty.cube_id
-                }
+            http.get({
+                url : tiles_url,
+                noSslVerifier : true
+            }, actual, function (err, result) {
+                if (err) return done(err);
+                var e = fs.readFileSync(actual);
+                var a = fs.readFileSync(expected);
+                assert.ok(Math.abs(e.length - a.length) < 100);
+                done();
+            });
+        });
 
-                api.get(endpoints.cube.get)
-                .query(data)
+        it('should get timeseries layer containing two datasets', function (done) {
+
+            // test data
+            var data = {
+                access_token : ACCESS_TOKEN,
+                cube_id : tmp.created_empty.cube_id
+            }
+
+            api.get(endpoints.cube.get)
+            .query(data)
+            .expect(httpStatus.OK)
+            .end(function (err, res) {
+                if (err) return done(err);
+                var cube = res.body;
+                debugMode && console.log(cube);
+                expect(cube.timestamp).to.exist;
+                expect(cube.createdBy).to.exist;
+                expect(cube.cube_id).to.equal(tmp.created_empty.cube_id);
+                expect(cube.datasets).to.have.lengthOf(2);
+                expect(cube.datasets[0].id).to.equal(tmp.uploaded_raster.file_id);
+                expect(cube.datasets[1].id).to.equal(tmp.uploaded_raster_2.file_id);
+
+                tmp.cube_with_datasets = cube;
+                done();
+            });
+        });
+
+        it('should create timeseries layer', function (done) {
+
+            var layer = {
+                access_token : ACCESS_TOKEN,
+                projectUuid : util.test_project_uuid,
+                data : { cube : tmp.cube_with_datasets },
+                metadata : tmp.uploaded_raster.metadata,
+                title : 'Snow raster cube',
+                description : 'cube layer description',
+                file : 'file-' + tmp.cube_with_datasets.cube_id,
+                style : JSON.stringify(get_default_cartocss()) // save default json style
+            }
+
+            api.post('/v2/layers/create')
+            .send(layer)
+            .expect(httpStatus.OK)
+            .end(function (err, res) {
+                if (err) return done(err);
+                var cube = JSON.parse(res.body.data.cube);
+                debugMode && console.log(cube);
+                expect(cube.timestamp).to.exist;
+                expect(cube.createdBy).to.exist;
+                expect(cube.cube_id).to.equal(tmp.created_empty.cube_id);
+                expect(cube.datasets).to.have.lengthOf(2);
+                expect(cube.datasets[0].id).to.equal(tmp.uploaded_raster.file_id);
+                expect(cube.datasets[1].id).to.equal(tmp.uploaded_raster_2.file_id);
+                done();
+            });
+        });
+
+
+
+
+
+
+
+
+        // 
+        // pre-rendering
+        // -------------
+
+        it('should get pre-render estimate', function (done) {
+
+            var data = {
+                access_token : ACCESS_TOKEN,
+                cube_id : tmp.cube_with_datasets.cube_id
+            }
+
+            api.post('/v2/cubes/render/estimate')
+            .send(data)
+            .expect(httpStatus.OK)
+            .end(function (err, res) {
+                if (err) return done(err);
+
+                var result = res.body;
+                // { success: true,
+                //   error: null,
+                //   num_tiles: 6550,
+                //   estimated_time: 655,
+                //   processed_zoom: 9 }
+
+                expect(result.num_tiles).to.be.above(0);
+                expect(result.estimated_time).to.be.above(0);
+                expect(result.error).to.be.null;
+                done();
+            });
+
+
+        });
+
+        it('should get pre-render estimate @ specific zoom level', function (done) {
+
+            var data = {
+                access_token : ACCESS_TOKEN,
+                cube_id : tmp.cube_with_datasets.cube_id,
+                max_zoom : 5
+            }
+
+            api.post('/v2/cubes/render/estimate')
+            .send(data)
+            .expect(httpStatus.OK)
+            .end(function (err, res) {
+                if (err) return done(err);
+
+                var result = res.body;
+                // { success: true,
+                //   error: null,
+                //   num_tiles: 6550,
+                //   estimated_time: 655,
+                //   processed_zoom: 9 }
+
+                expect(result.processed_zoom).to.equal(data.max_zoom);
+                expect(result.num_tiles).to.be.above(0);
+                expect(result.estimated_time).to.be.above(0);
+                expect(result.error).to.be.null;
+                done();
+            });
+
+
+        });
+
+        it('should dry-run pre-render job', function (done) {
+
+            var data = {
+                access_token : ACCESS_TOKEN,
+                cube_id : tmp.cube_with_datasets.cube_id,
+                dry_run : true
+            }
+
+            api.post('/v2/cubes/render/start')
+            .send(data)
+            .expect(httpStatus.OK)
+            .end(function (err, res) {
+                if (err) return done(err);
+                
+                var result = res.body;
+                // { success: true,
+                //   error: null,
+                //   num_tiles: 6550,
+                //   estimated_time: 655,
+                //   processed_zoom: 9,
+                //   dry_run: true }
+
+                expect(result.error).to.be.null;
+                expect(result.dry_run).to.be.true;
+                expect(result.num_tiles).to.be.above(0);
+                expect(result.estimated_time).to.be.above(0);
+                done();
+            });
+
+
+        });
+
+        it('should start pre-render job', function (done) {
+
+            var data = {
+                access_token : ACCESS_TOKEN,
+                cube_id : tmp.cube_with_datasets.cube_id,
+                max_zoom : 3
+            }
+
+            api.post('/v2/cubes/render/start')
+            .send(data)
+            .expect(httpStatus.OK)
+            .end(function (err, res) {
+                if (err) return done(err);
+                
+                var result = res.body;
+                // { success: true,
+                //   error: null,
+                //   num_tiles: 20,
+                //   estimated_time: 2,
+                //   processed_zoom: 3,
+                //   render_job_id: 'render-job-tcjwtbkarm' }
+
+                expect(result.success).to.be.true;
+                expect(result.error).to.be.null;
+                expect(result.num_tiles).to.be.above(0);
+                expect(result.estimated_time).to.be.above(0);
+                expect(result.render_job_id).to.exist;
+                expect(result.processed_zoom).to.equal(data.max_zoom);
+                tmp.render_job_id = result.render_job_id;
+                done();
+            });
+
+
+        });
+
+        it('should get pre-render status', function (done) {
+
+            var data = {
+                access_token : ACCESS_TOKEN, 
+                render_job_id : tmp.render_job_id
+            }
+
+            api.post('/v2/cubes/render/status')
+            .send(data)
+            .expect(httpStatus.OK)
+            .end(function (err, res) {
+                if (err) return done(err);
+
+                var result = res.body;
+                // { tiles_processed: 0,
+                //   finished: false,
+                //   num_tiles: 20,
+                //   estimated_time: 2,
+                //   processed_zoom: 3,
+                //   error: null,
+                //   render_job_id: 'render-job-nwmfovd' }
+
+                expect(result.finished).to.be.false;
+                expect(result.tiles_processed).to.exist;
+                expect(result.render_job_id).to.equal(data.render_job_id);
+                done();
+            });
+
+
+        });
+
+        it('should get pre-render status with some processed tiles', function (done) {
+            this.slow(5000);
+
+            var data = {
+                access_token : ACCESS_TOKEN, 
+                render_job_id : tmp.render_job_id
+            }
+
+            setTimeout(function () {
+                api.post('/v2/cubes/render/status')
+                .send(data)
                 .expect(httpStatus.OK)
                 .end(function (err, res) {
                     if (err) return done(err);
-                    var cube = res.body;
-                    debugMode && console.log(cube);
-                    expect(cube.timestamp).to.exist;
-                    expect(cube.createdBy).to.exist;
-                    expect(cube.cube_id).to.equal(tmp.created_empty.cube_id);
-                    expect(cube.datasets).to.have.lengthOf(2);
-                    expect(cube.datasets[0].id).to.equal(tmp.uploaded_raster.file_id);
-                    expect(cube.datasets[1].id).to.equal(tmp.uploaded_raster_2.file_id);
 
-                    tmp.cube_with_datasets = cube;
+                    var result = res.body;
+                    // { tiles_processed: 14,
+                    //   finished: false,
+                    //   num_tiles: 20,
+                    //   estimated_time: 2,
+                    //   processed_zoom: 3,
+                    //   error: null,
+                    //   render_job_id: 'render-job-nwmfovd' }
+
+                    expect(result.render_job_id).to.exist;
+                    expect(result.tiles_processed).to.not.be.null;
                     done();
                 });
-            });
+
+            }, 1000);
         });
 
-        it('should create CubeLayer on Mapic API', function (done) {
-            token(function (err, access_token) {
 
-                var layer = {
-                    access_token : access_token,
-                    projectUuid : util.test_project_uuid,
-                    data : { cube : tmp.cube_with_datasets },
-                    metadata : tmp.uploaded_raster.metadata,
-                    title : 'Snow raster cube',
-                    description : 'cube layer description',
-                    file : 'file-' + tmp.cube_with_datasets.cube_id,
-                    style : JSON.stringify(get_default_cartocss()) // save default json style
-                }
+        it('should get pre-render status when render job is done', function (done) {
+            
+            var timeout = process.env.TRAVIS ? 20000 : 5000;
+            this.slow(timeout * 2);
 
-                api.post('/v2/layers/create')
-                .send(layer)
+
+            var data = {
+                access_token : ACCESS_TOKEN, 
+                render_job_id : tmp.render_job_id
+            }
+
+            setTimeout(function () {
+                api.post('/v2/cubes/render/status')
+                .send(data)
                 .expect(httpStatus.OK)
                 .end(function (err, res) {
                     if (err) return done(err);
-                    var cube = JSON.parse(res.body.data.cube);
-                    debugMode && console.log(cube);
-                    expect(cube.timestamp).to.exist;
-                    expect(cube.createdBy).to.exist;
-                    expect(cube.cube_id).to.equal(tmp.created_empty.cube_id);
-                    expect(cube.datasets).to.have.lengthOf(2);
-                    expect(cube.datasets[0].id).to.equal(tmp.uploaded_raster.file_id);
-                    expect(cube.datasets[1].id).to.equal(tmp.uploaded_raster_2.file_id);
+
+                    var result = res.body;
+                    // { tiles_processed: 20,
+                    //   finished: true,
+                    //   num_tiles: 20,
+                    //   estimated_time: 2,
+                    //   processed_zoom: 3,
+                    //   error: null,
+                    //   render_job_id: 'render-job-mjotcgl',
+                    //   processing_time: 3.684,
+                    //   tiles_per_second_avg: 5.4288816503800215 }
+
+                    expect(result.render_job_id).to.exist;
+                    expect(result.tiles_processed).to.not.be.null;
+                    expect(result.tiles_per_second_avg).to.exist;
+                    expect(result.processing_time).to.exist;
+                    expect(result.finished).to.be.true;
                     done();
                 });
-            });
+
+            }, timeout);
         });
+
+
+
+
+
+
 
 
 

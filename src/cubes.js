@@ -99,18 +99,19 @@ module.exports = cubes = {
 
     deleteCube : function (req, res) {
         var options = req.body;
-        if (!options) return res.status(400).send({error : 'Please provide a cube_id OR layer_id'});
+        if (!options) return cubes.returnError(res,  'Please provide an options object.', 400, 2);
 
         var cube_id = options.cube_id || options.layer_id;
-        if (!cube_id) return res.status(400).send({error : 'Please provide a cube_id OR layer_id'})
+        if (!cube_id) return cubes.returnError(res,  'Please provide a cube_id or layer_id.', 400, 2);
 
         // check if cube exists
         cubes.find(cube_id, function (err, cube) {
-            if (err) return res.status(400).send({error : 'There is no such layer. Please provide a valid cube_id OR layer_id.'}) 
+            if (err) return cubes.returnError(res,  'No such cube/layer id.', 400, 2);
             
             // cube exists, so we can delete it
             cubes.del(cube_id, function (err) {
-                if (err) return res.status(500).send({error : 'Something went wrong: ' + err});
+                if (err) return cubes.returnError(res,  'Something went wrong:' + err.message, 400, 2);
+
                 res.send({
                     deleteCube : cube_id,
                     success : true,
@@ -124,15 +125,15 @@ module.exports = cubes = {
         
         // get options
         var options = cubes.getBody(req);
-        if (!options) return res.status(400).send({error : 'Please provide a dataset id'})
+        if (!options) return cubes.returnError(res,  'Please provide a dataset id.', 400, 2);
         
         // get uuid
         var cube_id = options.cube_id;
-        if (!cube_id) return res.status(400).send({error : 'Please provide a dataset id'})
+        if (!cube_id) return cubes.returnError(res,  'Please provide a dataset id.', 400, 2);
 
         // get cube
         cubes.find(cube_id, function (err, cube) {
-            if (err) return res.status(400).send({error : 'No such cube_id'}) 
+            if (err) return cubes.returnError(res,  'No such cube_id.', 400, 2);
             res.send(cube);
         });
     },
@@ -141,17 +142,15 @@ module.exports = cubes = {
 
         // get options
         var options = cubes.getBody(req);
-        if (!options) return res.status(400).send({error : 'Please provide a dataset id', error_code : 1});
+        if (!options) return cubes.returnError(res,  'Please provide an options object', 400, 2);
 
         // get cube_id
         var cube_id = options.cube_id;
-        if (!cube_id) return res.status(400).send({error : 'Please provide a dataset id', error_code : 2});
+        if (!cube_id) return cubes.returnError(res,  'Please provide a dataset id.', 400, 2);
 
         // get datasets
         var datasets = options.datasets;
-        if (!datasets.length) return res.status(400).send({error : 'Please provide datasets', error_code : 3});
-
-        // todo: verify correct format of datasets. add test.
+        if (!datasets.length) return cubes.returnError(res,  'Please provide some datasets.', 400, 2);
 
         var ops = [];
 
@@ -181,7 +180,7 @@ module.exports = cubes = {
            
         // run ops
         async.waterfall(ops, function (err, updated_cube) {
-            if (err) return res.status(400).send({error : err.message}) 
+            if (err) return cubes.returnError(res,  'Something went wrong:' + err.message, 400, 2);
 
             // return updated cube
             res.send(updated_cube);
@@ -192,15 +191,15 @@ module.exports = cubes = {
 
         // get options
         var options = cubes.getBody(req);
-        if (!options) return res.status(400).send({error : 'Please provide a dataset id', error_code : 1});
+        if (!options) return cubes.returnError(res,  'Please provide an options object.', 400, 2);
 
         // get cube_id
         var cube_id = options.cube_id;
-        if (!cube_id) return res.status(400).send({error : 'Please provide a dataset id', error_code : 2});
+        if (!cube_id) return cubes.returnError(res,  'Please provide a cube_id.', 400, 2);
 
         // get datasets
         var datasets = options.datasets;
-        if (!datasets.length) return res.status(400).send({error : 'Please provide a dataset id', error_code : 3});
+        if (!datasets.length) return cubes.returnError(res,  'Please provide some datasets to remove.', 400, 2);
 
         var ops = [];
 
@@ -225,7 +224,7 @@ module.exports = cubes = {
            
         // run ops
         async.waterfall(ops, function (err, updated_cube) {
-            if (err) return res.status(400).send({error : err.message}) 
+            if (err) return cubes.returnError(res,  'Something went wrong: ' + err.message, 400, 2);
 
             // return updated cube
             res.send(updated_cube);
@@ -236,11 +235,11 @@ module.exports = cubes = {
 
         // get options
         var options = cubes.getBody(req);
-        if (!options) return res.status(400).send({error : 'Please provide a dataset id', error_code : 1});
+        if (!options) return cubes.returnError(res,  'Please provide an options object.', 400, 2);
 
         // get cube_id
         var cube_id = options.cube_id;
-        if (!cube_id) return res.status(400).send({error : 'Please provide a dataset id', error_code : 2});
+        if (!cube_id) return cubes.returnError(res,  'Please provide a cube_id', 400, 2);
 
         var ops = [];
 
@@ -267,7 +266,7 @@ module.exports = cubes = {
            
         // run ops
         async.waterfall(ops, function (err, updated_cube) {
-            if (err) return res.status(400).send({error : err.message}) 
+            if (err) return cubes.returnError(res,  'Something went wrong:' + err.message, 400, 2);
 
             // return updated cube
             res.send(updated_cube);
@@ -279,21 +278,17 @@ module.exports = cubes = {
 
         // get options
         var options = cubes.getBody(req);
-        if (!options) return res.status(400).send({error : 'Please provide a dataset id', error_code : 1});
+        if (!options) return cubes.returnError(res,  'Please provide an options object.', 400, 2);
 
         // get cube_id
         var cube_id = options.cube_id;
-        if (!cube_id) return res.status(400).send({error : 'Please provide a dataset id', error_code : 2});
+        if (!cube_id) return cubes.returnError(res,  'Please provide a cube_id.', 400, 2);
 
         // get datasets
         var datasets = options.datasets;
-        if (!datasets.length) return res.status(400).send({error : 'Please provide datasets', error_code : 3});
-
-        // todo: verify correct format of datasets. add test.
-        // todo: security: only be able to replace own cubes
+        if (!datasets.length) return cubes.returnError(res,  'Please provide some datasets.', 400, 2);
 
         var ops = [];
-        
 
         // get cube
         ops.push(function (callback) {
@@ -352,7 +347,6 @@ module.exports = cubes = {
 
                 // mark cube changed
                 cube.timestamp = moment().valueOf();
-                // cube.lastModified = moment().valueOf(); // todo: rename timestamp to lastModified
 
             });
 
@@ -373,7 +367,7 @@ module.exports = cubes = {
            
         // run ops
         async.waterfall(ops, function (err, updated_cube) {
-            if (err) return res.status(400).send({error : err.message}) 
+            if (err) return cubes.returnError(res,  'Something went wrong:' + err.message, 400, 2);
 
             // return updated cube
             res.send(updated_cube);
@@ -385,18 +379,16 @@ module.exports = cubes = {
 
         // get options
         var options = cubes.getBody(req);
-        if (!options) return res.status(400).send({error : 'Please provide an options object', error_code : 2});
+        if (!options) return cubes.returnError(res,  'Please provide an options object.', 400, 2);
 
         // get mask
         var mask = options.mask;
-        // console.log('mask:', mask);
 
-        if (!mask) return res.status(400).send({error : 'Please provide a mask', error_code : 2});
+        if (!mask) return cubes.returnError(res,  'Please provide a mask object.', 400, 2);
 
         // get cube_id
         var cube_id = options.cube_id;
-        // console.log('cube_id', cube_id);
-        if (!cube_id) return res.status(400).send({error : 'Please provide a dataset id', error_code : 2});
+        if (!cube_id) return cubes.returnError(res,  'Please provide a cube_id', 400, 2);
 
         // get access token
         var access_token = options.access_token;
@@ -418,7 +410,6 @@ module.exports = cubes = {
                     type : 'geojson',
                     geometry : mask.geometry,
                     meta : mask.meta,
-                    // data : mask.data,
                     data_url_yearly : mask.data_url_yearly,
                     data_url_backdrop : mask.data_url_backdrop,
                     data_id : mask.data_id
@@ -443,8 +434,6 @@ module.exports = cubes = {
                 var prepared_mask = {
                     type : 'topojson',
                     geometry : topology,
-                    // title : mask.title,
-                    // description : mask.description
                     meta : mask.meta,
                     data : mask.data,
                 }
@@ -535,15 +524,11 @@ module.exports = cubes = {
 
         async.series(ops, function (err, result) {
             if (err) {
-                console.log('err:', err, result);
-                return res.status(400).send(err);
+                return cubes.returnError(res,  'Something went wrong:' + err.message, 400, 2);
             }
             // get cube
             var cube = result.cube;
             var finished_mask = result.mask;
-
-            // add data if available
-            // if (options.data) finished_mask.data = options.data;
 
             // add mask id
             finished_mask.id = 'mask-' + tools.getRandomChars(8);
@@ -564,13 +549,10 @@ module.exports = cubes = {
 
             // save
             cubes.save(updated_cube, function (err, updated_cube) {
-                if (err) return res.status(400).send({error : 'Failed to save Cube. Error: ' + err.message, error_code : 5});
+                if (err) return cubes.returnError(res,  'Something went wrong:' + err.message, 400, 2);
 
                 // return updated cube
                 res.send(updated_cube);
-                // console.log('added mask:', mask);
-                // console.log('cube:', cube);
-                // res.send(finished_mask);
             });
 
         });
@@ -581,15 +563,15 @@ module.exports = cubes = {
         
         // get options
         var options = cubes.getBody(req);
-        if (!options) return res.status(400).send({error : 'Please provide an options object', error_code : 2});
+        if (!options) return cubes.returnError(res,  'Please provide an options object', 400, 2);
 
         // get cube_id
         var cube_id = options.cube_id;
-        if (!cube_id) return res.status(400).send({error : 'Please provide a dataset id', error_code : 2});
+        if (!cube_id) return cubes.returnError(res,  'Please provide a dataset id', 400, 2);
 
         // get mask_id
         var mask_id = options.mask_id;
-        if (!cube_id) return res.status(400).send({error : 'Please provide a dataset id', error_code : 2});
+        if (!cube_id) return cubes.returnError(res,  'Please provide a dataset id', 400, 2);
 
         var ops = {};
 
@@ -605,7 +587,7 @@ module.exports = cubes = {
  
             // save
             cubes.save(cube, function (err, updated_cube) {
-                if (err) return res.status(400).send({error : 'Failed to save Cube. Error: ' + err.message, error_code : 5});
+                if (err) return cubes.returnError(res,  'Failed to save Cube. Error: ' + err.message, 400, 2);
 
                 // return updated cube
                 res.send(updated_cube);
@@ -618,13 +600,13 @@ module.exports = cubes = {
 
         // get options
         var options = cubes.getBody(req);
-        if (!options) return res.status(400).send({error : 'Please provide an options object', error_code : 2});
+        if (!options) return cubes.returnError(res,  'Please provide an options object', 400, 2);
 
         // get mask
-        if (!options.mask_id) return res.status(400).send({error : 'Please provide a mask_id', error_code : 2});
+        if (!options.mask_id) return cubes.returnError(res,  'Please provide a mask_id', 400, 2);
 
         // get cube_id
-        if (!options.cube_id) return res.status(400).send({error : 'Please provide a cube_id', error_code : 2});
+        if (!options.cube_id) return cubes.returnError(res,  'Please provide a cube_id', 400, 2);
 
         // get access token
         var access_token = options.access_token;
@@ -648,7 +630,7 @@ module.exports = cubes = {
 
         // get options
         var options = cubes.getBody(req);
-        if (!options) return res.status(400).send({error : 'Please provide an options object', error_code : 2});
+        if (!options) return cubes.returnError(res,  'Please provide an options object.', 400, 2);
 
         // get mask
         if (!options.mask) return cubes.returnError(res, 'Please provide a mask.', 400, 2);
@@ -665,8 +647,6 @@ module.exports = cubes = {
 
             // find mask
             var maskIndex = _.findIndex(cube.masks, function (m) {
-                console.log('options.mask.id', options.mask.id);
-                console.log('m', m);
                 return m.id == options.mask.id;
             });
 
@@ -769,7 +749,6 @@ module.exports = cubes = {
         var cube_request = options.cube_request;
 
         // check if tile is outside bounds if dataset
-        // todo: add mask bounds also
         var outside_extent = cubes._isOutsideExtent(options);
         if (outside_extent) return mile.serveEmptyTile(res);
 
@@ -841,7 +820,6 @@ module.exports = cubes = {
         var bbox;
         var ops = [];
 
-
         // define settings, xml
         ops.push(function (callback) {
 
@@ -879,13 +857,24 @@ module.exports = cubes = {
             if (mask_id && !_.isNull(mask_id) && !_.isUndefined(mask_id)) {
 
                 // find mask
-                var mask = _.find(options.cube.masks, function (m) {
+                var masks = _.find(options.cube.masks, function (m) {
                     return m.id == mask_id;
                 });
 
+                // get mask 
+                var mask = _.isArray(masks) ? masks[0] : masks;
+
+                // note: creating cube tiles is (much) faster without mask geometry filtering! 
+                //       however, when pre-rendering smaller extents of larger datasets, it would still
+                //        makse sense to filter, but before-hand using simple extent intersect to determine empty tiles,
+                //        and not postgis!
+                // 
+                // todo: create API and tests for ordering pre-rendering, getting PR status and PR estiamates before starting.
+
+                // filter 
                 if (mask) {
 
-                    console.log('got mask for filter tile');
+                    console.log('Filtering data for tile based on mask geometry...');
 
                     // find geojson (todo: if geojson, not other type)
                     var pg_geojson = cubes._retriveGeoJSON(mask.geometry);
@@ -896,6 +885,8 @@ module.exports = cubes = {
                     // replace table with query
                     postgis_settings.table = filter_query;  
 
+                } else {
+                    console.log('Not filtering based on mask...', mask, masks, mask_id);
                 }
 
             }
@@ -995,11 +986,135 @@ module.exports = cubes = {
         });
     },
 
+   
+    render : {
+        start : function (req, res) {
+            return cubes.render_start(req, res);
+        },
 
-    preRenderCube : function (req, res) {
+        status : function (req, res) {
+            return cubes.render_status(req, res);
+        },
 
-        var cube_id = req.body.cube_id;
-        if (!cube_id) return res.send({error: 'Missing argument: cube_id'});
+        estimate : function (req, res) {
+            return cubes.render_estimate(req, res);
+        },
+    },
+
+    render_status : function (req, res) {
+        var options = req.body;
+        var render_job_id = options.render_job_id;
+
+        // set status for render job
+        store.layers.get(render_job_id, function (err, status) {
+            if (err) return cubes.returnError(err);
+
+            // parse
+            var rendered_status = tools.safeParse(status);
+
+            // get count
+            store.layers.get(render_job_id + '_processed_count', function (err, count) {
+
+                // add processed count
+                rendered_status.tiles_processed = _.toNumber(count);
+
+                // return 
+                res.send(rendered_status);
+
+            });
+        });
+    },
+
+    render_estimate : function (req, res) {
+        var options = req.body;
+
+        // get pre-render estimates
+        cubes.get_estimate_pre_render_cube(options, function (err, estimate) {
+            if (err) return cubes.returnError(res, err.message);
+
+            // delete tiles key
+            delete estimate.tiles;
+
+            // return estimate
+            res.send(estimate);
+        });
+    },
+
+
+    render_start : function (req, res) {
+
+        // get tiles & estimate
+        // start render job
+        // return only estimate
+
+        var options = req.body;
+        var dry_run = options.dry_run;
+
+        // get pre-render estimates
+        cubes.get_estimate_pre_render_cube(options, function (err, estimate) {
+            if (err) return cubes.returnError(res, err.message);
+
+            // debug switch
+            if (dry_run) { 
+
+                // mark dry_run
+                estimate.dry_run = true;
+
+            } else {
+
+                // set render job id
+                estimate.render_job_id = 'render-job-' + tools.getRandomChars(7);
+
+                // create status
+                var status = {
+                    tiles_processed : 0,
+                    finished : false,
+                    num_tiles : estimate.num_tiles,
+                    estimated_time : estimate.estimated_time,
+                    processed_zoom : estimate.processed_zoom,
+                    error : estimate.error,
+                    render_job_id : estimate.render_job_id
+                }
+
+                // set status for render job
+                store.layers.set(status.render_job_id, JSON.stringify(status));
+
+                // run requests
+                cubes.run_prerender_requests({
+                    tiles : estimate.tiles, 
+                    access_token : options.access_token,
+                    render_job_id : estimate.render_job_id
+                }, function (err, result) {
+                       console.log('cubes.run_prerender_requests done, err:', err);
+
+                        // returns here when render job is done
+
+                        // set render job status
+                        status.finished = true;
+                        status.processing_time = result.processing_time;
+                        status.tiles_per_second_avg = result.tiles_per_second_avg;
+                        store.layers.set(status.render_job_id, JSON.stringify(status));
+
+                });
+
+            };
+
+            // delete tiles key
+            delete estimate.tiles;
+
+            // return estimate
+            res.send(estimate);
+
+        });
+
+    },
+   
+
+    get_estimate_pre_render_cube : function (options, callback) {
+
+        var cube_id = options.cube_id;
+        var maxZoom = _.isNumber(options.max_zoom) ? options.max_zoom : 11;
+        if (!cube_id) return callback('Please provide a dataset id');
 
         var ops = [];
         var tmp = {};
@@ -1010,20 +1125,16 @@ module.exports = cubes = {
             cubes.find(cube_id, function (err, cube) {
 
                 // throw if err or no cube
-                if (err || !cube) {
-                    return done({
-                        error : 'Layer does not exist',
-                        error_code : 85
-                    });
-                }
+                if (err || !cube) return done({
+                    message : 'Layer does not exist',
+                    error_code : 85
+                });
 
                 // throw if no datasets in cube
-                if (!_.size(cube.datasets)) {
-                    return done({
-                        error : 'Layer has no datasets. Try adding data to the layer.',
-                        error_code : 86
-                    })
-                }
+                if (!_.size(cube.datasets)) return done({
+                    message : 'Layer has no datasets. Try adding data to the layer.',
+                    error_code : 86
+                });
 
                 // continue with cube
                 done(null, cube);
@@ -1031,78 +1142,115 @@ module.exports = cubes = {
 
         });
 
+        // get cube extent
+        ops.push(function (cube, done) {
+        
+            // if mask
+            var mask = cube && cube.masks ? cube.masks[0] : false;
+
+            if (mask) {
+
+                // get geometry
+                var geom = mask.geometry;
+                if (mask.geometry && mask.geometry.geometry) geom = mask.geometry.geometry;
+                
+                // get extent
+                var extent = turf.bbox(mask.geometry);
+
+                // set extent
+                cube.extent = extent;
+            
+                // continue
+                done(null, cube);
+            
+            } else {
+
+                // no mask, so need to get extent from dataset in postgis
+                cubes._get_raster_dataset_extent({
+                    cube : cube, 
+                    access_token : options.access_token
+                }, done);
+            };
+        });
+
         ops.push(function (cube, done) {
 
-            // handle non-masks
-            if (!_.size(cube.masks)) {
-                return done({
-                    error : 'Pre-rendering is only supported for layers with masks. Try adding a mask to the layer.',
-                    error_code : 87
-                });
-            };
-
             // create tile requests
-            var maxZoom = 11; // default maxZoom
             var t = cubes.create_prerender_requests(cube, maxZoom);
             var tiles = t.tiles;
             var processed_zoom = t.zoom;
-
-
-
-            // throw if no tiles to create
-            if (!_.size(tiles)) {
-                return done({
-                    error : 'No tiles available for pre-rendering. Your mask type may not be supported.',
-                    error_code : 88
-                });
-            }
-
-
-            // debug switch
-            if (1) { 
-
-                // run requests
-                cubes.run_prerender_requests({
-                    tiles : tiles, 
-                    access_token : req.body.access_token
-                }, function (err, result) {
-                       console.log('cubes.run_prerender_requests done, err:', err);
-                });
-            } else {
-                // debug info
-                console.log('number of tiles requested:', _.size(tiles));
-                console.log('zoom level:', processed_zoom);
-            }
 
             // return some info
             done(null, {
                 success : true, 
                 error : null,
-                tiles : _.size(tiles),
+                num_tiles : _.size(tiles),
                 estimated_time : (_.size(tiles) / 10),
-                processed_zoom : processed_zoom
+                processed_zoom : processed_zoom,
+                tiles : tiles
             });
-
         });
 
         // run async 
-        async.waterfall(ops, function (err, results) {
-            if (err) return res.send(err);
+        async.waterfall(ops, callback);
+    },
 
-            // return results
-            res.send(results);
+    _get_raster_dataset_extent : function (options, done) {
+
+        var cube = options.cube;
+        var ops = [];
+
+        // get dataset details
+        ops.push(function (callback) {
+
+            // get first dataset
+            var dataset = _.first(cube.datasets);
+
+            // get dataset details
+            mile.getUploadStatus({
+                file_id : dataset.id,
+                access_token : options.access_token
+            }, callback);
+
         });
 
-    }, 
+        // get extent
+        ops.push(function (dataset, callback) {
+
+            // get meta
+            var meta = tools.safeParse(dataset.metadata);
+
+            // get extent bbox
+            var extent = turf.bbox(meta.extent_geojson);
+
+            // set extent
+            cube.extent = extent;
+
+            // continue
+            callback(null, cube);
+
+        });
+
+        // run async ops
+        async.waterfall(ops, done);
+
+    },
+
+    _get_status_pre_render_cube : function (req, res) {
+        return res.send({
+            endpoint : '/v2/cubes/render/status',
+            request_type : 'POST',
+        })
+    },
 
 
     run_prerender_requests : function (options, done) {
         var tiles = options.tiles;
         var access_token = options.access_token;
         var layer_id = options.layer_id;
+        var render_job_id = options.render_job_id;
         var raster_ops = [];
         var grid_ops = [];
-
 
         var tile_count = (_.size(tiles));
         console.log('Pre-rendering', tile_count, 'tiles')
@@ -1115,13 +1263,13 @@ module.exports = cubes = {
             // raster tiles
             raster_ops.push(function(done) {
                 var url = 'https://tiles-a-' + process.env.MAPIC_DOMAIN + '/v2/cubes/' + tile.layer_id + '/' + tile.dataset_id + '/' + tile.z + '/' + tile.x + '/' + tile.y + '.png?access_token=' + access_token + '&mask_id=' + tile.mask_id;
-                
-                // debug
-                // console.log('(pre-render) url: ', url);
-                // return done();
-                
+               
                 // make GET request
                 https.get(url, function (err) {
+
+                    // count finished tiles
+                    store.layers.incr(render_job_id + '_processed_count');
+
                     done();
                 });
             });
@@ -1133,8 +1281,15 @@ module.exports = cubes = {
         async.parallelLimit(raster_ops, nt, function (err, results) {
             var timeEnd = Date.now();
             var benched = (timeEnd - timeStartRaster) / 1000;
+
             console.log('Pre-rendering of ' + tile_count + ' raster tiles done! That took', benched, 'seconds.');
-            done();
+
+            var status = {
+                processing_time : benched,
+                tiles_per_second_avg : tile_count / benched
+            }
+
+            done(null, status);
 
         });
 
@@ -1143,8 +1298,7 @@ module.exports = cubes = {
 
     create_prerender_requests : function (cube, maxZoom) {
 
-        // max number of tiles allowed 
-        // for a pre-render run
+        // max number of tiles allowed for a pre-render run
         var maxTiles = 10000;
 
         // create requests
@@ -1162,50 +1316,34 @@ module.exports = cubes = {
             return cubes.create_prerender_requests(cube, zoom);
         }
 
-        console.log('tiles:', tiles);
         return {
             tiles : tiles, 
             zoom : maxZoom
         }
     },
 
+
     _create_prerender_requests : function (cube, maxZoom) {
 
         var tile_sets = [];
 
-        _.forEach(cube.masks, function (m) {
+        // get mask
+        var mask = cube && cube.masks && _.size(cube.masks) ? cube.masks[0] : false;
+        var mask_id =  mask ? mask.id : null;
 
-            console.log('_create_prerender_requests, foreach mask m', m);
+        // iterate datasets
+        _.each(cube.datasets, function (d) {
 
-            // geojson masks (todo: other mask types)
-            if (m.type == 'geojson') {
-                
-                var geom = m.geometry;
-                if (m.geometry && m.geometry.geometry) geom = m.geometry.geometry;
-                
-                // get extent
-                try {
-                    var extent = turf.bbox(m.geometry);
-                    console.log('Pre-rendering EXTENT (mask geometry):', extent);
-                } catch (e) {
-                    console.log('err getting geojson:', e);
-                    var extent = [];
-                }
+            // create tile requests
+            var tiles = cubes.create_prerender_tiles_array({
+                extent : cube.extent,  // only creates tiles within extent
+                layer_id : cube.cube_id, 
+                mask_id : mask_id,
+                dataset_id : d.id
+            }, maxZoom);
 
-                // iterate datasets
-                _.each(cube.datasets, function (d) {
-
-                    // create tile requests
-                    var tiles = cubes.create_prerender_tiles_array({
-                        extent : extent,  // only creates tiles within extent
-                        layer_id : cube.cube_id, 
-                        mask_id : m.id, 
-                        dataset_id : d.id
-                    }, maxZoom);
-                    tile_sets.push(tiles)
-
-                });
-            } 
+            // push 
+            tile_sets.push(tiles)
 
         });
         
@@ -1274,6 +1412,21 @@ module.exports = cubes = {
         }
         return tiles;
     },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
