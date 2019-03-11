@@ -1483,60 +1483,60 @@ var useCluster = false;
 // -------------------
 
 
-let workers = [];
+// let workers = [];
 
-if (useCluster) {
+// if (useCluster) {
 
-    // with clustering
-    if (cluster.isMaster) { 
+//     // with clustering
+//     if (cluster.isMaster) { 
 
-        // start server using cluster
-        console.log('Clusters: ' + numCPUs);
-        server(mile);
+//         // start server using cluster
+//         console.log('Clusters: ' + numCPUs);
+//         server(mile);
 
-        // fork workers
-        for (var i = 0; i < numCPUs - 1; i++) {  
+//         // fork workers
+//         for (var i = 0; i < numCPUs - 1; i++) {  
             
-            workers.push(cluster.fork());
+//             workers.push(cluster.fork());
 
-            // to receive messages from worker process
-            workers[i].on('message', function(message) {
-                console.log(message);
-            });
-        };
+//             // to receive messages from worker process
+//             workers[i].on('message', function(message) {
+//                 console.log(message);
+//             });
+//         };
 
-        // process is clustered on a core and process id is assigned
-        cluster.on('online', function(worker) {
-            console.log('Worker ' + worker.process.pid + ' is listening');
-        });
+//         // process is clustered on a core and process id is assigned
+//         cluster.on('online', function(worker) {
+//             console.log('Worker ' + worker.process.pid + ' is listening');
+//         });
 
-        // listen to exit, keep alive
-        cluster.on('exit', function(worker, code, signal) { 
+//         // listen to exit, keep alive
+//         cluster.on('exit', function(worker, code, signal) { 
             
-            console.error('Cluster died, respawning...');
-            workers.push(cluster.fork());
+//             console.error('Cluster died, respawning...');
+//             workers.push(cluster.fork());
             
-            // to receive messages from worker process
-            workers[workers.length-1].on('message', function(message) {
-                console.log(message);
-            });
-        });
+//             // to receive messages from worker process
+//             workers[workers.length-1].on('message', function(message) {
+//                 console.log(message);
+//             });
+//         });
 
-    } 
-
-
+//     } 
 
 
 
-// run mile without clustering
-} else {
+
+
+// // run mile without clustering
+// } else {
 
     console.log('Starting without clustering...');
 
     // run server on single cluster
     server(mile);
 
-}
+// }
 
 
 

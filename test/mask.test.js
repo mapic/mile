@@ -60,8 +60,11 @@ describe('Masks', function () {
         api.post(endpoints.cube.mask)
         .send(testData)
         .end(function (err, res) {
-            if (err) return done(err);
-            var mask = res.body;
+            if (err) {
+                return done(err);
+            }
+            var cube = res.body;
+            var mask = cube.masks[0];
             expect(mask.type).to.equal('geojson');
             expect(mask.id).to.exist;
             tmp.mask = mask;
@@ -84,7 +87,8 @@ describe('Masks', function () {
         .send(testData)
         .end(function (err, res) {
             if (err) return done(err);
-            var mask = res.body;
+            var cube = res.body;
+            var mask = cube.masks[0];
             expect(mask.type).to.equal('geojson');
             expect(mask.id).to.exist;
             expect(mask.data_id).to.equal('data-id');
@@ -107,7 +111,8 @@ describe('Masks', function () {
         .send(testData)
         .end(function (err, res) {
             if (err) return done(err);
-            var mask = res.body;
+            var cube = res.body;
+            var mask = cube.masks[0];
             expect(mask.type).to.equal('geojson');
             expect(mask.geometry).to.equal(testData.mask.geometry);
             expect(mask.id).to.exist;
@@ -129,7 +134,8 @@ describe('Masks', function () {
         .expect(httpStatus.OK)
         .end(function (err, res) {
             if (err) return done(err);
-            var mask = res.body;
+            var cube = res.body;
+            var mask = cube.masks[0];
             expect(mask.geometry).to.equal(testData.mask.geometry);
             expect(mask.type).to.equal('topojson');
             expect(mask.id).to.exist;
@@ -153,34 +159,35 @@ describe('Masks', function () {
                     "areal" : "338.45 km2",
                     "årlig tilsig" : "323 mm"
                 },
-                data : 'string'
             },
         };
         api.post(endpoints.cube.mask)
         .send(testData)
         .expect(httpStatus.OK)
         .end(function (err, res) {
-            if (err) return done(err);
-            var mask = res.body;
-            expect(mask.data).to.exist;
-            expect(mask.meta).to.exist;
+            if (err) {
+                return done(err);
+            }
+            var cube = res.body;
+            var mask = cube.masks[0];
             expect(mask.meta.title).to.equal('hallingdal');
             expect(mask.meta['årlig tilsig']).to.equal('323 mm');
-            expect(mask.data).to.equal('string');
             expect(mask.type).to.equal('geojson');
             expect(mask.geometry).to.exist;
             expect(mask.id).to.exist;
+            tmp.mask = mask;
             done();
         });
     });
 
-    it('should update mask data discreetly', function (done) {
+    it('should update mask data_urls', function (done) {
         var testData = {
             access_token : tmp.access_token,
             cube_id : tmp.layer.cube_id,
             mask : {
                 id : tmp.mask.id,
-                data : 'test-data'
+                data_url_backdrop : 'test-data-backdrop',
+                data_url_yearly : 'test-data-yearly'
             }
         };
         api.post(endpoints.cube.updateMask)
@@ -190,7 +197,8 @@ describe('Masks', function () {
             var mask = res.body;
             expect(mask.type).to.equal('geojson'); 
             expect(mask.id).to.equal(tmp.mask.id);
-            expect(mask.data).to.equal('test-data');
+            expect(mask.data_url_backdrop).to.equal('test-data-backdrop');
+            expect(mask.data_url_yearly).to.equal('test-data-yearly');
             done();
         });
     });
@@ -209,7 +217,10 @@ describe('Masks', function () {
         .send(testData)
         .expect(httpStatus.OK)
         .end(function (err, res) {
-            if (err) return done(err);
+            if (err) {
+                console.log('err:', err);
+                return done(err);
+            }
             var mask = res.body;
             expect(mask.type).to.equal('geojson');
             expect(mask.geometry).to.equal(testData.mask.geometry);
@@ -248,7 +259,7 @@ describe('Masks', function () {
             if (err) return done(err);
             var layer = res.body;
             expect(layer.cube_id).to.equal(testData.cube_id);
-            expect(_.size(layer.masks)).to.equal(5);
+            expect(_.size(layer.masks)).to.equal(1);
             done();
         });
 
@@ -268,7 +279,7 @@ describe('Masks', function () {
             var cube = res.body;
             expect(cube.timestamp).to.exist;
             expect(cube.createdBy).to.exist;
-            expect(_.size(cube.masks)).to.equal(4);
+            expect(_.size(cube.masks)).to.equal(0);
             expect(cube.cube_id).to.equal(tmp.layer.cube_id);
             done();
         });

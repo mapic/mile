@@ -60,6 +60,18 @@ var pgsql_options = {
 
 module.exports = cubes = { 
 
+    returnError : function (res, errorText, statusCode, errorCode) {
+        var errorText = errorText || 'There was an unspecified error with your request.';
+        var statusCode = statusCode || 400;
+        var errorCode = errorCode || 100;
+
+        // log error
+        console.log('\nError: [ HTTP:', statusCode, ']', errorText, '(' + errorCode + ')\n');
+
+        // return error to client
+        res.status(statusCode).send({error : errorText, error_code : errorCode});
+    },
+
     create : function (req, res) {
         var options = req.body;
 
@@ -639,27 +651,27 @@ module.exports = cubes = {
         if (!options) return res.status(400).send({error : 'Please provide an options object', error_code : 2});
 
         // get mask
-        if (!options.mask) return res.status(400).send({error : 'Please provide a mask', error_code : 2});
+        if (!options.mask) return cubes.returnError(res, 'Please provide a mask.', 400, 2);
 
          // get mask
-        if (!options.mask.id) return res.status(400).send({error : 'Please provide a mask.id', error_code : 2});
+        if (!options.mask.id) return cubes.returnError(res,  'Please provide a mask.id', 400, 2);
 
         // get cube_id
-        if (!options.cube_id) return res.status(400).send({error : 'Please provide a cube_id', error_code : 2});
+        if (!options.cube_id) return cubes.returnError(res,  'Please provide a cube_id', 400, 2);
 
         // find cube
         cubes.find(options.cube_id, function (err, cube) {
-            if (err || !cube) {
-                return res.status(400).send({error : 'Please provide a valid cube_id', error_code : 2});
-            }
+            if (err || !cube) return cubes.returnError(res,  'Please provide a valid cube_id', 400, 2);
 
             // find mask
             var maskIndex = _.findIndex(cube.masks, function (m) {
+                console.log('options.mask.id', options.mask.id);
+                console.log('m', m);
                 return m.id == options.mask.id;
             });
 
             // return if not found
-            if (maskIndex < 0) return res.status(400).send({error : 'No such mask.id', error_code : 2});
+            if (maskIndex < 0) return cubes.returnError(res,  'No such mask.id', 400, 2);
 
             // replace mask
             var oldMask = cube.masks[maskIndex];
@@ -667,7 +679,6 @@ module.exports = cubes = {
 
             // update relevant keys
             _.forEach(newMask, function (value, key) {
-                // console.log('Updating mask', key);
                 oldMask[key] = value;
             });
 
@@ -679,7 +690,7 @@ module.exports = cubes = {
 
             // save
             cubes.save(cube, function (err, updated_cube) {
-                if (err) return res.status(400).send({error : 'Failed to save Cube. Error: ' + err.message, error_code : 5});
+                if (err) return cubes.returnError(res, 'Failed to save Cube. Error: ' + err.message, 400, 2);
 
                 // return updated mask
                 res.send(updated_cube.masks[maskIndex]);
@@ -689,9 +700,6 @@ module.exports = cubes = {
 
     },
 
-    updateDatasetMask : function (req, res) {
-        
-    },
 
     // cube tile requests
     tile : function (req, res) {
@@ -877,6 +885,8 @@ module.exports = cubes = {
 
                 if (mask) {
 
+                    console.log('got mask for filter tile');
+
                     // find geojson (todo: if geojson, not other type)
                     var pg_geojson = cubes._retriveGeoJSON(mask.geometry);
 
@@ -1038,6 +1048,7 @@ module.exports = cubes = {
             var processed_zoom = t.zoom;
 
 
+
             // throw if no tiles to create
             if (!_.size(tiles)) {
                 return done({
@@ -1057,6 +1068,10 @@ module.exports = cubes = {
                 }, function (err, result) {
                        console.log('cubes.run_prerender_requests done, err:', err);
                 });
+            } else {
+                // debug info
+                console.log('number of tiles requested:', _.size(tiles));
+                console.log('zoom level:', processed_zoom);
             }
 
             // return some info
@@ -1147,6 +1162,7 @@ module.exports = cubes = {
             return cubes.create_prerender_requests(cube, zoom);
         }
 
+        console.log('tiles:', tiles);
         return {
             tiles : tiles, 
             zoom : maxZoom
@@ -1159,6 +1175,8 @@ module.exports = cubes = {
 
         _.forEach(cube.masks, function (m) {
 
+            console.log('_create_prerender_requests, foreach mask m', m);
+
             // geojson masks (todo: other mask types)
             if (m.type == 'geojson') {
                 
@@ -1168,6 +1186,7 @@ module.exports = cubes = {
                 // get extent
                 try {
                     var extent = turf.bbox(m.geometry);
+                    console.log('Pre-rendering EXTENT (mask geometry):', extent);
                 } catch (e) {
                     console.log('err getting geojson:', e);
                     var extent = [];
