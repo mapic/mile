@@ -44,7 +44,8 @@ mapnik.register_default_input_plugins();
 // global paths (todo: move to config)
 var VECTORPATH = '/data/vector_tiles/';
 var RASTERPATH = '/data/raster_tiles/';
-var CUBEPATH   = '/data/cube_tiles/';
+// var CUBEPATH   = '/data/cube_tiles/';
+var CUBEPATH   = '/data/tiles';
 var GRIDPATH   = '/data/grid_tiles/';
 var PROXYPATH  = '/data/proxy_tiles/';
 
@@ -764,6 +765,15 @@ module.exports = cubes = {
         var keyString = 'cube_tile:' + cube.cube_id + ':' + dataset.file_id + ':' + style_hash + ':' + cube_request.mask_id + ':' + cube_request.z + ':' + cube_request.x + ':' + cube_request.y + '.png';
         var tilePath = CUBEPATH + keyString;
 
+        // new tilePath
+        var tilePath = [
+            CUBEPATH,
+            cube.cube_id,
+            dataset.file_id,
+            style_hash
+        ].join('/') + '/' + cube_request.mask_id + ':' + cube_request.z + ':' + cube_request.x + ':' + cube_request.y + '.png';
+
+        console.log('new tile path', tilePath);
 
         // check for cached tile
         fs.readFile(tilePath, function (err, tile_buffer) {
@@ -775,6 +785,8 @@ module.exports = cubes = {
                 res.end(tile_buffer);
 
             } else {
+
+                if (err) console.log('err reading tile:', err);
 
                 // create new tile
                 console.log('Creating tile:', tilePath);
@@ -1154,23 +1166,28 @@ module.exports = cubes = {
                 var geom = mask.geometry;
                 if (mask.geometry && mask.geometry.geometry) geom = mask.geometry.geometry;
                 
-                // get extent
-                var extent = turf.bbox(mask.geometry);
+                try {
 
-                // set extent
-                cube.extent = extent;
-            
-                // continue
-                done(null, cube);
-            
-            } else {
+                    // get extent
+                    var extent = turf.bbox(mask.geometry);
 
-                // no mask, so need to get extent from dataset in postgis
-                cubes._get_raster_dataset_extent({
-                    cube : cube, 
-                    access_token : options.access_token
-                }, done);
-            };
+                     // set extent
+                    cube.extent = extent;
+                
+                    // continue
+                    return done(null, cube);
+
+                } catch (e) {
+                    console.log('Failed to use mask geometry, getting dataset extent instead.')
+                }
+            } 
+
+            // no mask, so need to get extent from dataset in postgis
+            cubes._get_raster_dataset_extent({
+                cube : cube, 
+                access_token : options.access_token
+            }, done);
+
         });
 
         ops.push(function (cube, done) {
