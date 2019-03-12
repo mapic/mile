@@ -773,7 +773,6 @@ module.exports = cubes = {
             style_hash
         ].join('/') + '/' + cube_request.mask_id + ':' + cube_request.z + ':' + cube_request.x + ':' + cube_request.y + '.png';
 
-        console.log('new tile path', tilePath);
 
         // check for cached tile
         fs.readFile(tilePath, function (err, tile_buffer) {
@@ -785,8 +784,6 @@ module.exports = cubes = {
                 res.end(tile_buffer);
 
             } else {
-
-                if (err) console.log('err reading tile:', err);
 
                 // create new tile
                 console.log('Creating tile:', tilePath);
