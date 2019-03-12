@@ -612,9 +612,39 @@ describe('Cubes', function () {
                 expect(result.error).to.be.null;
                 done();
             });
-
-
         });
+
+        it('should get pre-render estimate with maxTiles', function (done) {
+
+            var data = {
+                access_token : ACCESS_TOKEN,
+                cube_id : tmp.cube_with_datasets.cube_id,
+                max_tiles : 20000
+            }
+
+            api.post('/v2/cubes/render/estimate')
+            .send(data)
+            .expect(httpStatus.OK)
+            .end(function (err, res) {
+                if (err) return done(err);
+
+                var result = res.body;
+                // { success: true,
+                //   error: null,
+                //   num_tiles: 6550,
+                //   estimated_time: 655,
+                //   processed_zoom: 9,
+                //   max_tiles: 20000 }
+
+                expect(result.num_tiles).to.be.above(0);
+                expect(result.estimated_time).to.be.above(0);
+                expect(result.error).to.be.null;
+                expect(result.max_tiles).to.equal(data.max_tiles);
+                done();
+            });
+        });
+
+
 
         it('should dry-run pre-render job', function (done) {
 

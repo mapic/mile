@@ -1123,6 +1123,9 @@ module.exports = cubes = {
 
         var cube_id = options.cube_id;
         var maxZoom = _.isNumber(options.max_zoom) ? options.max_zoom : 11;
+        var maxTiles = options.max_tiles || 10000;
+
+        // ensure cube_id
         if (!cube_id) return callback('Please provide a dataset id');
 
         var ops = [];
@@ -1190,7 +1193,7 @@ module.exports = cubes = {
         ops.push(function (cube, done) {
 
             // create tile requests
-            var t = cubes.create_prerender_requests(cube, maxZoom);
+            var t = cubes.create_prerender_requests(cube, maxZoom, maxTiles);
             var tiles = t.tiles;
             var processed_zoom = t.zoom;
 
@@ -1201,7 +1204,8 @@ module.exports = cubes = {
                 num_tiles : _.size(tiles),
                 estimated_time : (_.size(tiles) / 10),
                 processed_zoom : processed_zoom,
-                tiles : tiles
+                tiles : tiles,
+                max_tiles : maxTiles
             });
         });
 
@@ -1310,10 +1314,11 @@ module.exports = cubes = {
     },
 
 
-    create_prerender_requests : function (cube, maxZoom) {
+    create_prerender_requests : function (cube, maxZoom, maxTiles) {
 
         // max number of tiles allowed for a pre-render run
-        var maxTiles = 10000;
+        var maxTiles = maxTiles || 10000;
+        console.log('maxTiles -->', maxTiles);
 
         // create requests
         var tiles = cubes._create_prerender_requests(cube, maxZoom);
@@ -1327,7 +1332,7 @@ module.exports = cubes = {
         // if too many tiles, try with lower zoom level
         if (_.size(tiles) > maxTiles) {
             var zoom = maxZoom - 1;
-            return cubes.create_prerender_requests(cube, zoom);
+            return cubes.create_prerender_requests(cube, zoom, maxTiles);
         }
 
         return {
