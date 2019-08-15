@@ -35,11 +35,17 @@ describe('Masks', function () {
 
     it('should create empty layer', function (done) {
 
+        console.log('endpoints.cube.create', endpoints.cube.create)
+
         api.post(endpoints.cube.create)
         .send({ access_token : tmp.access_token })
         .end(function (err, res) {
-            if (err) return done(err);
+            if (err) {
+                console.log('err', err);
+                return done(err);
+            }
             var layer = res.body;
+            console.log('resylt', layer);
             expect(layer.timestamp).to.exist;
             expect(layer.createdBy).to.exist;
             expect(layer.cube_id).to.exist;
