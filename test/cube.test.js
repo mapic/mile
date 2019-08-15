@@ -720,6 +720,8 @@ describe('Cubes', function () {
                 render_job_id : tmp.render_job_id
             }
 
+            console.log('data:', data);
+
             api.post('/v2/cubes/render/status')
             .send(data)
             .expect(httpStatus.OK)
@@ -727,6 +729,7 @@ describe('Cubes', function () {
                 if (err) return done(err);
 
                 var result = res.body;
+                console.log('result', result);
                 // { tiles_processed: 0,
                 //   finished: false,
                 //   num_tiles: 20,
@@ -752,6 +755,8 @@ describe('Cubes', function () {
                 render_job_id : tmp.render_job_id
             }
 
+            console.log('data', data);
+
             setTimeout(function () {
                 api.post('/v2/cubes/render/status')
                 .send(data)
@@ -760,6 +765,8 @@ describe('Cubes', function () {
                     if (err) return done(err);
 
                     var result = res.body;
+
+                    console.log('result', result);
                     // { tiles_processed: 14,
                     //   finished: false,
                     //   num_tiles: 20,
@@ -779,7 +786,7 @@ describe('Cubes', function () {
 
         it('should get pre-render status when render job is done', function (done) {
             
-            var timeout = process.env.TRAVIS ? 20000 : 5000;
+            var timeout = process.env.TRAVIS ? 20000 : 10000;
             this.slow(timeout * 2);
 
 
@@ -787,6 +794,7 @@ describe('Cubes', function () {
                 access_token : ACCESS_TOKEN, 
                 render_job_id : tmp.render_job_id
             }
+            console.log('data', data);
 
             setTimeout(function () {
                 api.post('/v2/cubes/render/status')
@@ -796,6 +804,7 @@ describe('Cubes', function () {
                     if (err) return done(err);
 
                     var result = res.body;
+                    console.log('result', result);
                     // { tiles_processed: 20,
                     //   finished: true,
                     //   num_tiles: 20,
