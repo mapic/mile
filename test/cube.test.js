@@ -713,6 +713,10 @@ describe('Cubes', function () {
 
         });
 
+
+    if (!process.env.TRAVIS) {
+    
+
         it('should get pre-render status', function (done) {
 
             var data = {
@@ -746,6 +750,8 @@ describe('Cubes', function () {
 
 
         });
+
+
 
         it('should get pre-render status with some processed tiles', function (done) {
             this.slow(5000);
@@ -827,7 +833,7 @@ describe('Cubes', function () {
         });
 
 
-
+    }
 
 
 
