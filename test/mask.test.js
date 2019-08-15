@@ -32,7 +32,7 @@ describe('Masks', function () {
         });
     });
 
-    if (!process.env.TRAVIS) return;
+    if (process.env.TRAVIS) return;
 
 
     it('should create empty layer', function (done) {
