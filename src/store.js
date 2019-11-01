@@ -132,6 +132,7 @@ module.exports = store = {
         var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
         var params = {Bucket: bucketName, Key: keyString};
         s3.getObject(params, function(err, data) {
+            if (err) console.log('err: ', err, keyString, params)
             if (err || !data) return done(null);
             done(null, data.Body);
         });
