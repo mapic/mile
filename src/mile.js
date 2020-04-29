@@ -1170,7 +1170,10 @@ module.exports = mile = {
         var layer_id = options.layer_id;
         var raster_ops = [];
         var grid_ops = [];
-        var nt = 4; // parallel tile requests
+        var os = require('os');
+        var cpuCount = os.cpus().length;
+        var nt = 6; // parallel tile requests
+        // var nt = cpuCount - 1; // parallel tile requests
 
         console.log('Pre-rendering', (_.size(tiles) * 2), 'tiles')
         var timeStartRaster = Date.now();
@@ -1210,7 +1213,7 @@ module.exports = mile = {
             });
 
             // request only n tiles at a time
-            async.parallelLimit(raster_ops, nt, function (err, results) {
+            async.parallelLimit(grid_ops, nt, function (err, results) {
                 var timeEnd = Date.now();
                 var benched = (timeEnd - timeStartGrid) / 1000;
                 console.log('Pre-rendering of grid tiles done! That took', benched, 'seconds.');
@@ -1332,7 +1335,7 @@ module.exports = mile = {
     _debugXML : function (layer_id, xml) {
         var xml_filename = 'tmp/' + layer_id + '.debug.xml';
         fs.outputFile(xml_filename, xml, function (err) {
-            if (err) console.log(err);
+            if (err) console.log('debugXML err', err);
             // if (!err) console.log('wrote xml to ', xml_filename);
         });
     },
