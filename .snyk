@@ -1,5 +1,5 @@
 # Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
-version: v1.8.0
+version: v1.14.1
 ignore: {}
 # patches apply the minimum changes required to fix a vulnerability
 patch:
@@ -17,3 +17,30 @@ patch:
   'npm:debug:20170905':
     - gm > debug:
         patched: '2017-11-07T10:51:55.768Z'
+  SNYK-JS-LODASH-567746:
+    - async > lodash:
+        patched: '2020-04-30T21:31:22.261Z'
+    - carto > lodash:
+        patched: '2020-04-30T21:31:22.261Z'
+    - kue > lodash:
+        patched: '2020-04-30T21:31:22.261Z'
+    - aws-sdk > xmlbuilder > lodash:
+        patched: '2020-04-30T21:31:22.261Z'
+    - carto > mapnik-reference > lodash:
+        patched: '2020-04-30T21:31:22.261Z'
+    - grainstore > carto > lodash:
+        patched: '2020-04-30T21:31:22.261Z'
+    - mongoose > async > lodash:
+        patched: '2020-04-30T21:31:22.261Z'
+    - snyk > inquirer > lodash:
+        patched: '2020-04-30T21:31:22.261Z'
+    - snyk > snyk-resolve-deps > lodash:
+        patched: '2020-04-30T21:31:22.261Z'
+    - aws-sdk > xml2js > xmlbuilder > lodash:
+        patched: '2020-04-30T21:31:22.261Z'
+    - mongoose-times > mongoose > async > lodash:
+        patched: '2020-04-30T21:31:22.261Z'
+    - snyk > snyk-go-plugin > graphlib > lodash:
+        patched: '2020-04-30T21:31:22.261Z'
+    - lodash:
+        patched: '2020-04-30T21:31:22.261Z'
