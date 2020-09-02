@@ -57,7 +57,7 @@
     "mongoose": "^4.0.8",
     "mongoose-times": "^0.1.0",
     "monitr": "1.0.0",
-    "node-forge": "^0.7.1",
+    "node-forge": "^0.10.0",
     "nodemon": "^1.9.1",
     "pbf": "^3.0.2",
     "pg": "^7.4.0",
