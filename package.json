@@ -32,7 +32,7 @@
     "bars": "jstrace/bars",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.13.2",
-    "carto": "^0.18.2",
+    "carto": "^1.1.0",
     "chai": "^4.1.2",
     "colors": "^1.1.2",
     "compression": "^1.5.1",
