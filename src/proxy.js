@@ -101,7 +101,7 @@ module.exports = proxy = {
 		ops.push(function (callback) {
 
 			fs.readFile(tile_on_disk_path, function (err, data) {
-				
+
 				// found tile on disk
 				if (!err && data) return callback({
 					status : 'got tile!'
@@ -131,6 +131,8 @@ module.exports = proxy = {
 
 				// get tile
 				http.get(httpOptions, tile_on_disk_path, function (err, result) {
+					// console.log('GET tile err', err);
+					// console.log('GET TILE result', result);
 					if (err) console.error({
 						err_id : 16,
 						err_msg : 'fetch tile',
@@ -164,8 +166,11 @@ module.exports = proxy = {
 		// url schemes
 		var google_types = {
 			vector: "http://mt0.google.com/vt/",
-			aerial: "https://khms1.googleapis.com/kh?v=182&hl=en-US&",
+			// aerial: "https://khms1.googleapis.com/kh?v=182&hl=en-US&",
+			aerial : "http://mt0.google.com/vt/lyrs=s&hl=en&",
 		}
+
+		// http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}
 
 		// google url
 		var url = google_types[options.type] + 'x=' + options.x + '&y=' + options.y + '&z=' + options.z;
