@@ -124,7 +124,7 @@ module.exports = proxy = {
 		// url schemes
 		var google_types = {
 			vector: "http://mt0.google.com/vt/",
-			aerial: "https://khms1.googleapis.com/kh?v=182&hl=en-US&",
+            aerial : "http://mt0.google.com/vt/lyrs=s&hl=en&"
 		}
 
 		// google url
