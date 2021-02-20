@@ -22,9 +22,15 @@ var RASTERPATH   = '/data/raster_tiles/';
 var GRIDPATH     = '/data/grid_tiles/';
 var PROXYPATH 	 = '/data/proxy_tiles/';
 
-var pile_settings = {
-	store : 'disk' // or redis
-}
+
+const S3_BUCKETNAME = 'mapic-s3.proxy-tiles.mapic.io';
+
+try {
+	var AWS = require('aws-sdk');
+	var s3 = new AWS.S3({region: 'eu-central-1'});
+} catch (e) {
+	console.log('AWS error: ', e);
+};
 
 module.exports = proxy = { 
 
@@ -35,131 +41,85 @@ module.exports = proxy = {
 		grid : 'application/json'
 	},
 
-	serveTile : function (res, options) {
 
-		// tile path on disk
-		var tile_on_disk_path = PROXYPATH + options.provider + '/' + options.type + '/' + options.z + '/' + options.x + '/' + options.y + '.' + options.format;
+    serveProxyTile : function (req, res) {
 
-		// read tile, serve
-		fs.readFile(tile_on_disk_path, function (err, buffer) {
-			if (err) console.error({
-				err_id : 14,
-				err_msg : 'serve tile',
-				error : err
-			});
+    	// parse url, set options
+        var params = req.params[0].split('/');
+        var options = {
+            provider : params[0],
+            type     : params[1],
+            z        : params[2],
+            x        : params[3],
+            y        : params[4].split('.')[0],
+            format   : params[4].split('.')[1]
+        }
 
-			// error tile
-			if (err) return proxy.serveErrorTile(res);
+        // get proxy tile from S3 or fetch
+        proxy.getProxyTile(options, function (err, buffer) {
 
-			// send tile to client
-			res.writeHead(200, {'Content-Type': mile.headers[options.format]}); 
-			res.end(buffer);
-		});
+        	// return tile to client
+            proxy.serveTile(res, options, buffer);
+        });
 
-	},
+    },
 
-	serveErrorTile : function (res) {
-		var errorTile = 'public/errorTile.png';
-		fs.readFile('public/noAccessTile.png', function (err, tile) {
-			res.writeHead(200, {'Content-Type': 'image/png'});
-			res.end(tile);
-		});
-	},
+    // return tiles from disk or create
+    getProxyTile : function (options, done) {
 
-	_serveTile : function (options, done) {
+        // check S3 bucket
+        proxy.getProxyTileS3(options, function (err, data) {
+            if (err) console.log('getProxyTile err: ', err);
+            
+            // return data if any (and not forced render)
+            // todo: also check size, to fix empty proxy tiles
+            if (!options.force_render && data) {
+                console.log('Serving cached proxy tile');
+                return done(null, data); // debug, turned off to create every time
+            }
+            
+            // create
+            proxy.fetchProxyTile(options, done);
+        });
+    },
 
-		// provider
-		var provider = options.provider;
+    getProxyTileS3 : function (options, done) {
+        var keyString = 'proxy_tile:' + options.provider + ':' + options.z + ':' + options.x + ':' + options.y + '.' + options.format;
+        var params = {Bucket: S3_BUCKETNAME, Key: keyString};
+        s3.getObject(params, function(err, data) {
+            if (err || !data) return done(null);
+            done(null, data.Body);
+        });
+    },
 
-		// pass to provider
-		if (provider == 'norkart') return proxy._getNorkartTile(options, done);
-		if (provider == 'google') return proxy._getGoogleTile(options, done);
+    // read/write to AWS S3
+    putProxyTileS3 : function (buffer, options, done) {
+        var keyString = 'proxy_tile:' + options.provider + ':' + options.z + ':' + options.x + ':' + options.y + '.' + options.format;
+        s3.putObject({
+            Bucket: S3_BUCKETNAME,
+            Key: keyString,
+            Body: buffer
+        }, function (err, response) {
+        	if (err) console.log('err saving proxy tile to S3', err, options);
+        	// console.log('saved proxy tile to S3', response)
+            done && done(null);
+        });
+    },
+    
 
-		// provider not supported err
-		var err = 'Provider not supported!', provider
-		if (err) console.error({
-			err_id : 17,
-			err_msg : 'get tile from provider',
-			error : err
-		});
-		done(err);
-	},
+    fetchProxyTile : function (options, done) {
 
-	_fetchTile : function (options, done) {
+    	// pass to provider
+		if (options.provider == 'norkart') return proxy._fetchNorkartTile(options, done);
+		if (options.provider == 'google')  return proxy._fetchGoogleTile(options, done);
 
-		// check disk first
-		var tile_on_disk_folder = PROXYPATH + options.provider + '/' + options.type + '/' + options.z + '/' + options.x + '/' 
-		var tile_on_disk_path = tile_on_disk_folder + options.y + '.' + options.format;
+		// error
+		console.log('No proxy provider assigned!', options);
+		return done('Missing proxy provider key.');
 
-		// url, headers
-		var url = options.url;
-		var headers = options.headers;
+    },
 
-		var ops = [];
-
-		// check disk
-		ops.push(function (callback) {
-
-			fs.readFile(tile_on_disk_path, function (err, data) {
-				
-				// found tile on disk
-				if (!err && data) return callback({
-					status : 'got tile!'
-				});
-
-				// didnt find, do next
-				callback(null);
-			});
-		});
-
-		// get tile from http
-		ops.push(function (callback) {
-
-			// create folder
-			fs.ensureDir(tile_on_disk_folder, function (err) {
-				if (err) console.error({
-					err_id : 15,
-					err_msg : 'fetch tile',
-					error : err
-				});
-			
-				var httpOptions = {
-					url: url,
-					timeout : '10000',
-					headers : headers
-				};
-
-				// get tile
-				http.get(httpOptions, tile_on_disk_path, function (err, result) {
-					if (err) console.error({
-						err_id : 16,
-						err_msg : 'fetch tile',
-						error : 'tile_on_disk_path: ' + tile_on_disk_path
-					});
-					
-					// got tile
-					if (!err && result) return callback({
-						status : 'got tile!'
-					});
-
-					// didn't get tile, something wrong					
-					callback({ error: 'Could not get tile from disk nor http.' });
-				});
-			});
-		});
-		
-		// run ops
-		async.series(ops, function (err) {
-
-			// some error
-			if (err.error) return done(err.error);
-
-			// done here
-			done();
-		});
-	},
-
-	_getGoogleTile : function (options, done) {
+    _fetchGoogleTile : function (options, done) {
 
 		// url schemes
 		var google_types = {
@@ -180,10 +140,10 @@ module.exports = proxy = {
 		}
 
 		// fetch
-		proxy._fetchTile(options, done);
+		proxy._fetchProxyTile(options, done);
 	},
 
-	_getNorkartTile : function (options, done) {
+	_fetchNorkartTile : function (options, done) {
 
 		// url schemes
 		var norkart_types = {
@@ -202,9 +162,54 @@ module.exports = proxy = {
 		}
 
 		// fetch
-		proxy._fetchTile(options, done);
+		proxy._fetchProxyTile(options, done);
 
 	},
+
+	serveTile : function (res, options, buffer) {
+
+		// send tile to client
+		res.writeHead(200, {'Content-Type': proxy.headers[options.format]}); 
+		res.end(buffer);
+	},
+
+	serveErrorTile : function (res) {
+		var errorTile = 'public/errorTile.png';
+		fs.readFile('public/noAccessTile.png', function (err, tile) {
+			res.writeHead(200, {'Content-Type': 'image/png'});
+			res.end(tile);
+		});
+	},
+
+	
+	_fetchProxyTile : function (options, done) {
+
+		var httpOptions = {
+			url: options.url,
+			timeout : '10000',
+			headers : options.headers
+		};
+
+		// get tile
+		http.get(httpOptions, function (err, response) {
+			if (err) {
+				console.log('_fetchProxyTile http err:', err);
+				return done(err);
+			}
+			
+			// save to S3 (no need to wait)
+			proxy.putProxyTileS3(response.buffer, options);
+
+			// console.log('HTTP GOT TILE', response.buffer);
+
+			// return tile buffer
+			return done(null, response.buffer);
+		
+		});
+		
+	},
+
+
 
 	_tile2lng : function (x,z) {
 		return (x/Math.pow(2,z)*360-180);

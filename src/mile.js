@@ -223,20 +223,23 @@ module.exports = mile = {
 
     serveProxyTile : function (req, res) {
 
-        // parse url, set options
-        var params = req.params[0].split('/');
-        var options = {
-            provider : params[0],
-            type     : params[1],
-            z        : params[2],
-            x        : params[3],
-            y        : params[4].split('.')[0],
-            format   : params[4].split('.')[1]
-        }
+        proxy.serveProxyTile(req, res);
+        
 
-        proxy._serveTile(options, function (err) {
-            proxy.serveTile(res, options);
-        });
+        // // parse url, set options
+        // var params = req.params[0].split('/');
+        // var options = {
+        //     provider : params[0],
+        //     type     : params[1],
+        //     z        : params[2],
+        //     x        : params[3],
+        //     y        : params[4].split('.')[0],
+        //     format   : params[4].split('.')[1]
+        // }
+
+        // proxy._serveTile(options, function (err) {
+        //     proxy.serveTile(res, options);
+        // });
 
     },
 
