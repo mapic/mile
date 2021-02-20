@@ -55,6 +55,11 @@ var pgsql_options = {
     dbpass: MAPIC_PGSQL_PASSWORD
 };
 
+var MAPIC_POSTGIS_HOST = process.env.MAPIC_POSTGIS_HOST;
+var MAPIC_POSTGIS_USERNAME = process.env.MAPIC_POSTGIS_USERNAME;
+var MAPIC_POSTGIS_PASSWORD = process.env.MAPIC_POSTGIS_PASSWORD;
+
+
 module.exports = snow_query = { 
 
     vector : {
@@ -258,18 +263,18 @@ module.exports = snow_query = {
             var pg_geojson = snow_query.helpers.retriveGeoJSON(geojson);
 
             // set postgis options
-            var pg_username = MAPIC_PGSQL_USERNAME;
-            var pg_password = MAPIC_PGSQL_PASSWORD;
+            // var pg_username = MAPIC_POSTGIS_USERNAME;
+            // var pg_password = MAPIC_POSTGIS_PASSWORD;
             var pg_database = dataset.database_name;
 
             // set connection string
             // var conString = 'postgres://' + pg_username + ':' + pg_password + '@postgis/' + pg_database;
 
             var pool = new pg.Pool({
-                user : pg_username, 
-                password : pg_password,
+                user : MAPIC_POSTGIS_USERNAME, 
+                password : MAPIC_POSTGIS_PASSWORD,
                 database : pg_database,
-                host : 'postgis'
+                host : MAPIC_POSTGIS_HOST
             });
 
             // initialize a connection pool

@@ -45,15 +45,10 @@ var GRIDPATH   = '/data/grid_tiles/';
 var PROXYPATH  = '/data/proxy_tiles/';
 
 
-var MAPIC_PGSQL_USERNAME = 'systemapic';
-var MAPIC_PGSQL_PASSWORD = 'docker';
+var MAPIC_POSTGIS_HOST     = process.env.MAPIC_POSTGIS_HOST;
+var MAPIC_POSTGIS_USERNAME = process.env.MAPIC_POSTGIS_USERNAME;
+var MAPIC_POSTGIS_PASSWORD = process.env.MAPIC_POSTGIS_PASSWORD;
 
-// postgis conn
-var pgsql_options = {
-    dbhost: 'postgis',
-    dbuser: MAPIC_PGSQL_USERNAME,
-    dbpass: MAPIC_PGSQL_PASSWORD
-};
 
 module.exports = snow_query = { 
 

@@ -15,14 +15,15 @@ test -n "$4" && BUCKETS=$4
 
 # get config
 # source /mapic/config/env.sh || exit 1
-MAPIC_PGSQL_USERNAME=systemapic
-MAPIC_PGSQL_PASSWORD=docker
+# MAPIC_PGSQL_USERNAME=systemapic
+# MAPIC_PGSQL_PASSWORD=docker
+
 
 # set -f
 if [ "$5" == "bar" ]; then
 
 	# with bars (for terminal fun)
-	PGPASSWORD=$MAPIC_PGSQL_PASSWORD psql -U $MAPIC_PGSQL_USERNAME -d $1 -h postgis -c 'with column_stats as (
+	PGPASSWORD=$MAPIC_POSTGIS_PASSWORD psql -U $MAPIC_POSTGIS_USERNAME -d $1 -h $MAPIC_POSTGIS_HOST -c 'with column_stats as (
 	    select min("'$3'") as min,
 	           max("'$3'") as max
 	      from '$2'
@@ -41,7 +42,7 @@ if [ "$5" == "bar" ]; then
 
 else 
 
-	PGPASSWORD=$MAPIC_PGSQL_PASSWORD psql -U $MAPIC_PGSQL_USERNAME -d $1 -h postgis -c 'select row_to_json(t) from (with column_stats as (
+	PGPASSWORD=$MAPIC_POSTGIS_PASSWORD psql -U $MAPIC_POSTGIS_USERNAME -d $1 -h $MAPIC_POSTGIS_HOST -c 'select row_to_json(t) from (with column_stats as (
 	    select min("'$3'") as min,
 	           max("'$3'") as max
 	      from '$2'

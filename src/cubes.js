@@ -59,6 +59,11 @@ var pgsql_options = {
     dbpass: MAPIC_PGSQL_PASSWORD
 };
 
+var MAPIC_POSTGIS_HOST = process.env.MAPIC_POSTGIS_HOST;
+var MAPIC_POSTGIS_USERNAME = process.env.MAPIC_POSTGIS_USERNAME;
+var MAPIC_POSTGIS_PASSWORD = process.env.MAPIC_POSTGIS_PASSWORD;
+
+
 module.exports = cubes = { 
 
     returnError : function (res, errorText, statusCode, errorCode) {
