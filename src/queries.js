@@ -22,14 +22,25 @@ var geojsonArea = require('geojson-area');
 // plugin: deformation query
 var defo = require('./queries/deformation-query');
 
-var MAPIC_PGSQL_USERNAME = 'systemapic';
-var MAPIC_PGSQL_PASSWORD = 'docker';
+// var MAPIC_PGSQL_USERNAME = 'systemapic';
+// var MAPIC_PGSQL_PASSWORD = 'docker';
+
+
+// var pgsql_options = {
+//     dbhost: 'postgis',
+//     dbuser: MAPIC_PGSQL_USERNAME,
+//     dbpass: MAPIC_PGSQL_PASSWORD
+// };
+
+var MAPIC_POSTGIS_HOST = process.env.MAPIC_POSTGIS_HOST;
+var MAPIC_POSTGIS_USERNAME = process.env.MAPIC_POSTGIS_USERNAME;
+var MAPIC_POSTGIS_PASSWORD = process.env.MAPIC_POSTGIS_PASSWORD;
 
 
 var pgsql_options = {
-    dbhost: 'postgis',
-    dbuser: MAPIC_PGSQL_USERNAME,
-    dbpass: MAPIC_PGSQL_PASSWORD
+    dbhost: MAPIC_POSTGIS_HOST,
+    dbuser: MAPIC_POSTGIS_USERNAME,
+    dbpass: MAPIC_POSTGIS_PASSWORD
 };
 
 module.exports = queries = { 
@@ -60,8 +71,8 @@ module.exports = queries = {
             var layer = layerObject.options;
 
             // set postgis options
-            var pg_username = MAPIC_PGSQL_USERNAME;
-            var pg_password = MAPIC_PGSQL_PASSWORD;
+            var pg_username = MAPIC_POSTGIS_USERNAME;
+            var pg_password = MAPIC_POSTGIS_PASSWORD;
             var pg_database = layer.database_name;
 
             // // set connection string

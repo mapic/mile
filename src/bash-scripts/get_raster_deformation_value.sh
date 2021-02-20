@@ -32,10 +32,10 @@ LAT=$4
 
 # get config
 # source /mapic/config/env.sh
-MAPIC_PGSQL_USERNAME=systemapic
-MAPIC_PGSQL_PASSWORD=docker
+# MAPIC_PGSQL_USERNAME=systemapic
+# MAPIC_PGSQL_PASSWORD=docker
 
-PGPASSWORD=$MAPIC_PGSQL_PASSWORD psql -U $MAPIC_PGSQL_USERNAME -d $DATABASE -h postgis -c "select row_to_json(t) from (select ST_Value(rast, ST_Transform(ST_SetSRID(ST_MakePoint($LON, $LAT), 4326), 3857)) from $RASTER) as t;"
+PGPASSWORD=$MAPIC_POSTGIS_PASSWORD psql -U $MAPIC_POSTGIS_USERNAME -d $DATABASE -h $MAPIC_POSTGIS_HOST -c "select row_to_json(t) from (select ST_Value(rast, ST_Transform(ST_SetSRID(ST_MakePoint($LON, $LAT), 4326), 3857)) from $RASTER) as t;"
 # -c "select row_to_json(t) from (select * from $2 where st_intersects(st_transform(st_setsrid(ST_geomfromgeojson('$3'), 4326), 3857), sub.the_geom_3857)) as t;"
 # -c "select row_to_json(t) from (select * from $2 where st_intersects(st_transform(st_setsrid(ST_geomfromgeojson('$3'), 4326), 3857), sub.the_geom_3857)) as t;"
 

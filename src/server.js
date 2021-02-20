@@ -77,6 +77,7 @@ module.exports = function (mile) {
 		mile.cubes.update(req, res);
 	});
 
+
 	// add mask
 	app.post('/v2/cubes/mask', mile.checkAccess, function (req, res) {
 		mile.cubes.mask(req, res);
@@ -167,6 +168,7 @@ module.exports = function (mile) {
 
 	// debug
 	console.log('\n\nMile is up @ ' + 3003);
+	console.log('(Threads:' + process.env.UV_THREADPOOL_SIZE + ')');
 }
 
 
