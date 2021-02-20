@@ -905,8 +905,8 @@ module.exports = mile = {
 
         // you shouldn't hardcode your keys in production! See http://docs.aws.amazon.com/AWSJavaScriptSDK/guide/node-configuring.html
         AWS.config.update({
-            accessKeyId: 'AKIAWBIYT7JUHENK2JUP', 
-            secretAccessKey: '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',
+            accessKeyId: process.env.MAPIC_AWS_ACCESSKEYID, 
+            secretAccessKey: process.env.MAPIC_AWS_SECRETACCESSKEY,
             region : 'eu-central-1'
         });
 
@@ -939,8 +939,8 @@ module.exports = mile = {
 
         // you shouldn't hardcode your keys in production! See http://docs.aws.amazon.com/AWSJavaScriptSDK/guide/node-configuring.html
         AWS.config.update({
-            accessKeyId: 'AKIAWBIYT7JUHENK2JUP', 
-            secretAccessKey: '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',
+            accessKeyId: process.env.MAPIC_AWS_ACCESSKEYID, 
+            secretAccessKey: process.env.MAPIC_AWS_SECRETACCESSKEY,
             region : 'eu-central-1'
         });
 
