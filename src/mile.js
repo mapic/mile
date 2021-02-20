@@ -39,7 +39,6 @@ turf.transformScale = require('@turf/transform-scale');
 turf.bbox = require('@turf/bbox');
 
 // modules
-// global.config = require('../config.js');
 var server = require('./server');
 var store  = require('./store');
 var proxy = require('./proxy');
@@ -59,16 +58,9 @@ var RASTERPATH   = '/data/raster_tiles/';
 var GRIDPATH     = '/data/grid_tiles/';
 var PROXYPATH    = '/data/proxy_tiles/';
 
-// var MAPIC_PGSQL_USERNAME = 'systemapic';
-// var MAPIC_PGSQL_PASSWORD = 'docker';
 
-// var pgsql_options = {
-//     dbhost: 'postgis',
-//     dbuser: MAPIC_PGSQL_USERNAME,
-//     dbpass: MAPIC_PGSQL_PASSWORD
-// };
-
-var MAPIC_POSTGIS_HOST = process.env.MAPIC_POSTGIS_HOST;
+// postgis env
+var MAPIC_POSTGIS_HOST     = process.env.MAPIC_POSTGIS_HOST;
 var MAPIC_POSTGIS_USERNAME = process.env.MAPIC_POSTGIS_USERNAME;
 var MAPIC_POSTGIS_PASSWORD = process.env.MAPIC_POSTGIS_PASSWORD;
 
@@ -104,12 +96,12 @@ module.exports = mile = {
 
     proxyProviders : ['google', 'norkart'],
 
-    fetchDataArea : queries.fetchDataArea,
-    fetchData : queries.fetchData,
-    fetchHistogram : queries.fetchHistogram,
-    getVectorPoints : queries.getVectorPoints,
-    fetchRasterDeformation : queries.fetchRasterDeformation,
-    queryRasterPoint : queries.queryRasterPoint,
+    fetchDataArea           : queries.fetchDataArea,
+    fetchData               : queries.fetchData,
+    fetchHistogram          : queries.fetchHistogram,
+    getVectorPoints         : queries.getVectorPoints,
+    fetchRasterDeformation  : queries.fetchRasterDeformation,
+    queryRasterPoint        : queries.queryRasterPoint,
     
     jobs : function () {
         return jobs;
@@ -222,25 +214,7 @@ module.exports = mile = {
     },
 
     serveProxyTile : function (req, res) {
-
         proxy.serveProxyTile(req, res);
-        
-
-        // // parse url, set options
-        // var params = req.params[0].split('/');
-        // var options = {
-        //     provider : params[0],
-        //     type     : params[1],
-        //     z        : params[2],
-        //     x        : params[3],
-        //     y        : params[4].split('.')[0],
-        //     format   : params[4].split('.')[1]
-        // }
-
-        // proxy._serveTile(options, function (err) {
-        //     proxy.serveTile(res, options);
-        // });
-
     },
 
     // this layer is only a postgis layer. a Wu Layer Model must be created by client after receiving this postgis layer
@@ -652,46 +626,6 @@ module.exports = mile = {
             callback(null, layer);
         });
 
-        // get extent of file (todo: put in file object)
-        ops.push(function (layer, callback) {
-            
-            // todo: move to queries.js
-
-            // debug!
-            return callback(null, layer); // debug!!
-
-            var GET_EXTENT_SCRIPT_PATH = 'src/get_st_extent.sh';
-
-            // ensure mandatory fields
-            if (!layer.options.database_name) return callback(new Error("Unknown database_name in layer options"));
-            if (!layer.options.table_name) return callback(new Error("Unknown table_name in layer options"));
-
-            // st_extent script 
-            var command = [
-                GET_EXTENT_SCRIPT_PATH,     // script
-                layer.options.database_name,    // database name
-                layer.options.table_name,       // table name
-                layer.options.geom_column,  // geometry column
-            ].join(' ');
-
-
-            // create database in postgis
-            exec(command, {maxBuffer: 1024 * 50000}, function (err, stdout, stdin) {
-                if (err) return callback(new Error(stdout));
-
-                // parse stdout
-                try { var extent = stdout.split('(')[1].split(')')[0]; } 
-                catch (e) { return callback(e); }
-
-                // set extent
-                layer.options.extent = extent;
-
-                // callback
-                callback(null, layer);
-            });
-        });
-
-
         // save layer to store.redis
         ops.push(function (layer, callback) {
 
@@ -927,7 +861,7 @@ module.exports = mile = {
             if (err) {
                 console.log(err, err.stack); // an error occurred
             } else {    
-                console.log(data);           // successful response
+                console.log(data.Payload);           // successful response
 
             }
 
@@ -961,8 +895,7 @@ module.exports = mile = {
             if (err) {
                 console.log(err, err.stack); // an error occurred
             } else {    
-                console.log(data);           // successful response
-
+                console.log(data.Payload);           // successful response
             }
 
             // should be all good
@@ -973,340 +906,6 @@ module.exports = mile = {
     },
 
 
-    _lambdaRender : function (data, done) {
-
-        console.log('DATA ==================')
-        // console.log(JSON.stringify(data));
-
-        mile._debugJSON(JSON.stringify(data));
-
-        // input:
-        // var data = {
-        //     xml : xml,
-        //     bbox : buffered_bbox,
-        //     postgis_settings : postgis_settings,
-        //     extent : mile_layer.options.extent,
-        //     mile_layer : mile_layer,
-        //     bufferSize : 128,
-        //     proj : mercator.proj4,
-        //     params : params,
-        //     aws : {
-        //         S3_BUCKETNAME           : 'mapic-s3.' + process.env.MAPIC_DOMAIN,
-        //         AWS_REGION              : process.env.MAPIC_AWS_S3_REGION,
-
-        //         // todo! 
-        //         AWS_ACCESS_KEY_ID       : process.env.MAPIC_AWS_S3_ACCESSKEYID || process.env.MAPIC_AWS_ACCESSKEYID,
-        //         AWS_SECRET_ACCESS_KEY   : process.env.MAPIC_AWS_S3_SECRETACCESSKEY || process.env.MAPIC_AWS_SECRETACCESSKEY,
-        //     }
-        // }
-
-
-        // prepare all the data BEFORE lambda, and pass as JSON
-        //  - layer
-        //  - postgis settings
-        //  - bbox, extent, xyz params
-        //  - carto xml
-
-        // create mapnik objects in lambda
-        //  - mapnik.Layer
-        //  - mapnik.Map
-        //  - mapnik.Datasource
-        //  - mapnik.Image
-
-        // render tile
-        //  - map.render()
-        //  - buffer output (png)
-
-        // save to S3
-
-        // return success, and mile will get tile from S3
-
-        // -------------------
-
-        // dependencies needed:
-        //  - node mapnik
-        //      - mapnik
-        //      - maybe lots more
-        //  - mercator
-
-        
-        // benchmark
-        var startTime = Date.now();
-
-        // create layer
-        var layer = new mapnik.Layer('layer', data.proj);
-
-        // create datasource
-        var datasource = new mapnik.Datasource(data.postgis_settings);
-            
-        // set datasource
-        layer.datasource = datasource;
-
-        // add styles
-        layer.styles = ['layer']; 
-
-        // create map
-        var map = new mapnik.Map(256, 256, data.proj);
-
-        // set buffer
-        map.bufferSize = data.bufferSize;
-
-        // set extent
-        map.extent = data.bbox; // must have extent!
-
-        // add layer to map
-        map.add_layer(layer);
-
-        // add xml (async)
-        map.fromString(data.xml, {strict : true}, function (err, new_map) {
-
-            // map options
-            var map_options = {
-                buffer_size : data.bufferSize,
-                variables : { 
-                    zoom : data.params.z // insert min_max etc 
-                }
-            }
-            
-            // create image
-            var im = new mapnik.Image(256, 256);
-
-            // render image
-            new_map.render(im, map_options, function (err, tile) {
-                if (err) {
-                    console.log('ERROR: map.render()', err);
-                    return done(err);
-                }
-
-                // benchmark
-                var endTime = Date.now() - startTime;
-                console.log('rendered raster in', endTime, 'ms');
-
-                // save tile in S3
-                var params = data.params;
-                var AWS_REGION = data.aws.AWS_REGION;
-                var S3_BUCKETNAME = data.aws.S3_BUCKETNAME;
-                process.env.AWS_ACCESS_KEY_ID = data.aws.AWS_ACCESS_KEY_ID;
-                process.env.AWS_SECRET_ACCESS_KEY = data.aws.AWS_SECRET_ACCESS_KEY;
-
-                var AWS = require('aws-sdk');
-                var s3 = new AWS.S3({region: AWS_REGION});
-
-                var bucketName = S3_BUCKETNAME;
-                var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
-
-                tile.encode('png8', function (err, buffer) {
-                    s3.putObject({
-                        Bucket: bucketName,
-                        Key: keyString,
-                        Body: buffer
-                    }, function (err, response) {
-                        if (err) console.log(err);
-                        done(null);
-                    });
-                });
-
-
-            });
-        });
-
-    },
-
-    _lambdaRenderGrid : function (data, done) {
-
-        // input:
-        // var data = {
-        //     xml : xml,
-        //     bbox : buffered_bbox,
-        //     postgis_settings : postgis_settings,
-        //     extent : mile_layer.options.extent,
-        //     mile_layer : mile_layer,
-        //     bufferSize : 128,
-        //     proj : mercator.proj4,
-        //     params : params,
-        //     aws : {
-        //         S3_BUCKETNAME           : 'mapic-s3.' + process.env.MAPIC_DOMAIN,
-        //         AWS_REGION              : process.env.MAPIC_AWS_S3_REGION,
-
-        //         // todo! 
-        //         AWS_ACCESS_KEY_ID       : process.env.MAPIC_AWS_S3_ACCESSKEYID || process.env.MAPIC_AWS_ACCESSKEYID,
-        //         AWS_SECRET_ACCESS_KEY   : process.env.MAPIC_AWS_S3_SECRETACCESSKEY || process.env.MAPIC_AWS_SECRETACCESSKEY,
-        //     }
-        // }
-
-        // benchmark
-        var startTime = Date.now();
-
-        // create layer
-        var layer = new mapnik.Layer('layer', data.proj);
-
-        // create datasource
-        var datasource = new mapnik.Datasource(data.postgis_settings);
-            
-        // set datasource
-        layer.datasource = datasource;
-
-        // add styles
-        layer.styles = ['layer']; 
-
-        // create map
-        var map = new mapnik.Map(256, 256, data.proj);
-
-        // set buffer
-        map.bufferSize = data.bufferSize;
-
-        // set extent
-        map.extent = data.bbox; // must have extent!
-
-        // add layer to map
-        map.add_layer(layer);
-
-        // add xml (async)
-        map.fromString(data.xml, {strict : true}, function (err, new_map) {
-
-            // map options
-            var map_options = {
-                buffer_size : data.bufferSize,
-                layer : 0,
-                fields : ['gid'],
-            }
-
-            
-            // create grid
-            var im = new mapnik.Grid(map.width, map.height);
-
-            // render image
-            new_map.render(im, map_options, function (err, grid) {
-                if (err) {
-                    console.log('ERROR: map.render()', err);
-                    return done(err);
-                }
-
-                // benchmark
-                var endTime = Date.now() - startTime;
-                console.log('rendered grid in', endTime, 'ms');
-
-
-
-                // save tile in S3
-                var params = data.params;
-                var AWS_REGION = data.aws.AWS_REGION;
-                var S3_BUCKETNAME = data.aws.S3_BUCKETNAME;
-                process.env.AWS_ACCESS_KEY_ID = data.aws.AWS_ACCESS_KEY_ID;
-                process.env.AWS_SECRET_ACCESS_KEY = data.aws.AWS_SECRET_ACCESS_KEY;
-
-                var s3 = new AWS.S3({region: AWS_REGION});
-
-                var bucketName = S3_BUCKETNAME;
-                // var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
-
-                var keyString = 'grid_tile:'  + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
-               
-                // tile.encode('png8', function (err, buffer) {
-                //     s3.putObject({
-                //         Bucket: bucketName,
-                //         Key: keyString,
-                //         Body: buffer
-                //     }, function (err, response) {
-                //         if (err) console.log(err);
-                //         done(null);
-                //     });
-                // });
-
-                grid.encode({features : true}, function (err, utf) {
-                    if (err) return done(err);
-
-                    s3.putObject({
-                        Bucket: bucketName,
-                        Key: keyString,
-                        Body: JSON.stringify(utf)
-                    }, function (err, response) {
-                        done(null);
-                    });
-                    
-                    // save grid to redis
-                    // store.saveGridTile(keyString, JSON.stringify(utf), done);
-                });
-
-
-            });
-        });
-
-        // if (err || !map)  {
-        //     console.error({
-        //         err_id : 61,
-        //         err_msg : 'render grid tile',
-        //         error : err
-        //     });
-        //     return done(err || 'No map! ERR:4493')
-        // }
-
-        // var map_options = {
-        //     variables : { 
-        //         zoom : params.z // insert min_max etc 
-        //     }
-        // }
-
-        // // raster
-        // var im = new mapnik.Grid(map.width, map.height);
-
-        // // var fields = ['gid', 'east', 'north', 'range', 'azimuth', 'vel', 'coherence', 'height', 'demerr'];
-        // var fields = ['gid']; // todo: this is hardcoded!, get first column instead (could be ['id'] etc)
-
-        // var map_options = {
-        //     layer : 0,
-        //     fields : fields,
-        //     buffer_size : 128
-        // }
-        
-        // // check
-        // if (!im) return callback('Unsupported type.')
-
-        // // render
-        // map.render(im, map_options, function (err, grid) {
-        //     if (err) return done(err);
-        //     if (!grid) return done('no grid 233');
-
-        //     grid.encode({features : true}, function (err, utf) {
-        //         if (err) return done(err);
-                
-        //         // save grid to redis
-        //         var keyString = 'grid_tile:'  + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
-        //         store.saveGridTile(keyString, JSON.stringify(utf), done);
-        //     });
-        // });
-
-    },
-
-    // _lambdaPutS3 : function (tile, data, done) {
-
-    //     var params = data.params;
-    //     var AWS_REGION = data.aws.AWS_REGION;
-    //     var S3_BUCKETNAME = data.aws.S3_BUCKETNAME;
-
-    //     process.env.AWS_ACCESS_KEY_ID = data.aws.AWS_ACCESS_KEY_ID;
-    //     process.env.AWS_SECRET_ACCESS_KEY = data.aws.AWS_SECRET_ACCESS_KEY;
-
-        
-    //     var AWS = require('aws-sdk');
-    //     var s3 = new AWS.S3({region: AWS_REGION});
-
-    //     var bucketName = S3_BUCKETNAME;
-    //     var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
-
-    //     tile.encode('png8', function (err, buffer) {
-    //         s3.putObject({
-    //             Bucket: bucketName,
-    //             Key: keyString,
-    //             Body: buffer
-    //         }, function (err, response) {
-    //             if (err) console.log(err);
-    //             done(null);
-    //         });
-    //     });
-
-    // },
-
     _renderRasterTile : function (params, done) {
 
         // benchmark
@@ -1314,9 +913,6 @@ module.exports = mile = {
 
         // prepare data
         mile._prepareTile(params, function (err, data) {
-
-            // pseduo fn for lambda
-            // mile._lambdaRender(data, done);
 
             // render tile on lambda
             mile.invokeLambdaRaster(data, done);
@@ -1418,7 +1014,7 @@ module.exports = mile = {
             // ----------
             // - mapnik.Layer and mapnik.Datasource needs to be created TWICE. 
             //   once here in order to render carto xml
-            //   and again in Lambda... should be ok.
+            //   and again in Lambda... 
             //
             // ----------
 
@@ -1484,324 +1080,20 @@ module.exports = mile = {
 
     },
 
-    _prepareTileLegacy : function (params, done) {
-
-        // parse url into layerUuid, zxy, type
-        var ops = [];
-        var map;
-        var layer;
-        var postgis;
-        var bbox;
-
-        // check params
-        if (!params.layerUuid)     return done('Invalid url: Missing layerUuid.');
-        if (params.z == undefined) return done('Invalid url: Missing tile coordinates. z', params.z);
-        if (params.x == undefined) return done('Invalid url: Missing tile coordinates. x', params.x);
-        if (params.y == undefined) return done('Invalid url: Missing tile coordinates. y', params.y);
-        if (!params.type)          return done('Invalid url: Missing type extension.');
-
-
-        // look for stored layerUuid
-        ops.push(function (callback) {
-            store.layers.get(params.layerUuid, callback);
-        });
-
-        // ensure extent is set on layer
-        ops.push(function (storedLayerJSON, callback) {
-            if (!storedLayerJSON) {
-                console.log('NO STORED LAYER');
-                return callback('No such layerUuid.');
-            } 
-            // parse layer
-            var layer = tools.safeParse(storedLayerJSON);
-
-            // parse extent from metadata, 4326 -> 3857
-            
-            var metadata = layer.options.metadata;
-            var parsed_metadata = tools.safeParse(metadata);
-            var web_extent = parsed_metadata.extent;
-            // var input = [1.91584716169939,28.9021474441477,2.51108360353875,29.355418173006];
-            // console.log('web_extent', web_extent);
-            var input = web_extent;
-            var input_a = [parseFloat(input[0]), parseFloat(input[2])]
-            var input_b = [parseFloat(input[1]), parseFloat(input[3])]
-            // console.log('input', input);
-            var FROM_PROJECTION = 'EPSG:4326'
-            var TO_PROJECTION = 'EPSG:3857';
-            var output_a = proj4(FROM_PROJECTION, TO_PROJECTION, input_a);
-            var output_b = proj4(FROM_PROJECTION, TO_PROJECTION, input_b);
-            // console.log('output_a', output_a); //[ 213271.13047811456, 279622.0777225077 ]
-            // console.log('output_b', output_b); // [ 3217372.336314635, 3420961.0477779116 ]
-            // console.log('all good');
-
-            // desired output:
-            // existing extent 213271.130478115 3363197.48257298,279532.548085272 3420961.04777791
-
-            // create string
-            var output_extent = output_a[0] + ' ' + output_b[0] + ',' + output_a[1] + ' ' + output_b[1];
-            // console.log('output_extent', output_extent);
-
-            layer.options.extent = output_extent;
-
-            // continue
-            callback(null, layer);
-        });
-
-
-        // define settings, xml
-        ops.push(function (storedLayer, callback) {
-            if (!storedLayer) return callback('No such layerUuid.');
-
-           
-            // insert layer settings 
-            var postgis_settings = {
-                user     : pgsql_options.dbuser,
-                password : pgsql_options.dbpass,
-                host     : pgsql_options.dbhost,
-                srid     : '3857',
-                dbname   : storedLayer.options.database_name,
-                extent   : storedLayer.options.extent,
-                srid     : storedLayer.options.srid,
-                type     : 'postgis',
-                table    : storedLayer.options.sql,
-                geometry_field : 'the_geom_3857',
-                asynchronous_request : false,
-            };
-
-
-            // overwrite some postgis_settings for raster data source
-            if ( storedLayer.options.data_type == 'raster' ) {
-                postgis_settings.type = 'pgraster';
-                postgis_settings.clip_rasters = 'true';
-                postgis_settings.use_overviews = 'true';
-                postgis_settings.prescale_rasters = 'true';
-                postgis_settings.geometry_field = 'rast';
-                postgis_settings.table = storedLayer.options.file_id;
-                postgis_settings.band = 1;
-            } 
-
-
-            // set bounding box of tile
-            bbox = mercator.xyz_to_envelope(parseInt(params.x), parseInt(params.y), parseInt(params.z), false);
-            var buffered_bbox = [];
-            buffered_bbox.push(parseFloat(bbox[0]) * 1);    // todo: fix clipped boundaries...
-            buffered_bbox.push(parseFloat(bbox[1]) * 1);
-            buffered_bbox.push(parseFloat(bbox[2]) * 1);
-            buffered_bbox.push(parseFloat(bbox[3]) * 1);
-
-
-
-            // everything in spherical mercator (3857)!
-            try {   
-                map     = new mapnik.Map(256, 256, mercator.proj4);
-                layer   = new mapnik.Layer('layer', mercator.proj4);
-                postgis = new mapnik.Datasource(postgis_settings);
-                
-            // catch errors
-            } catch (e) { return callback(e.message); }
-
-            // set buffer
-            map.bufferSize = 128;
-            // map.bufferSize = 64;
-
-            // set extent
-            // console.log('bbox:', bbox);
-            // map.extent = bbox; // must have extent!
-            map.extent = buffered_bbox; // must have extent!
-
-            // set datasource
-            layer.datasource = postgis;
-
-            // add styles
-            layer.styles = ['layer']; // style names in xml
-            
-            // // add layer to map
-            // map.add_layer(layer);
-
-            // parse xml from cartocss
-            var cartoTimeStart = Date.now();
-
-            // mile.cartoRenderer(storedLayer, layer, callback);
-            mile.cartoRenderer(storedLayer, layer, function (err, xml){
-                var cartoTime = Date.now() - cartoTimeStart;
-                console.log('rendered carto in', cartoTime, 'ms');
-                callback(err, xml);
-            });
-        });
-
-        // load xml to map
-        ops.push(function (xml, callback) {
-            // add layer to map
-            map.add_layer(layer);
-            map.fromString(xml, {strict : true}, callback);
-        });
-
-        // run ops
-        async.waterfall(ops, done);
-
-    },
-
-    _renderRasterTileLegacy : function (params, done) {
-
-        var prepareStartTime = Date.now();
-        // added LEGACY 
-        mile._prepareTileLegacy(params, function (err, map) {
-            
-            var prepareEndTime = Date.now() - prepareStartTime;
-            console.log('prepared tile in', prepareEndTime, 'ms');
-
-
-            if (err) return done(err);
-            if (!map) return done(new Error('no map 7474'));
-
-            // debug write xml
-            if (0) mile._debugXML(params.layerUuid, map.toXML());
-
-
-
-            // map options
-            var map_options = {
-                buffer_size : 128,
-                variables : { 
-                    zoom : params.z // insert min_max etc 
-                }
-            }
-            
-            // raster
-            var im = new mapnik.Image(256, 256);
-
-            // render
-            var startTime = Date.now();
-
-            // we could send only this fn to lambda... 
-            // would have to pass: 
-            // - map (or is that possible, since it's a binary/object/idkwhat)
-            // - map_options
-            // - layer_id etc...
-            map.render(im, map_options, function (err, tile) {
-                if (err) {
-                    console.error({
-                        err_id : 5,
-                        err_msg : 'render raster',
-                        error : err
-                    });
-                    // mile._debugXML(params.layerUuid, map.toXML(), true);
-                    return done(err);
-                }
-
-                var endTime = Date.now() - startTime;
-
-                console.log('rendered raster in', endTime, 'ms');
-
-                // save png to redis
-                store._saveRasterTile(tile, params, done);
-            });
-        });
-        
-    },
-
-
     _renderGridTile : function (params, done) {
 
-        // mile._prepareTileLegacy(params, function (err, map) {
+        // prepare data
         mile._prepareTile(params, function (err, data) {
 
-
+            // render tile on lambda
             mile.invokeLambdaGrid(data, done);
-            // mile._lambdaRenderGrid(data, done);
-
-            // if (err || !map)  {
-            //     console.error({
-            //         err_id : 61,
-            //         err_msg : 'render grid tile',
-            //         error : err
-            //     });
-            //     return done(err || 'No map! ERR:4493')
-            // }
-
-            // var map_options = {
-            //     variables : { 
-            //         zoom : params.z // insert min_max etc 
-            //     }
-            // }
-
-            // // raster
-            // var im = new mapnik.Grid(map.width, map.height);
-
-            // // var fields = ['gid', 'east', 'north', 'range', 'azimuth', 'vel', 'coherence', 'height', 'demerr'];
-            // var fields = ['gid']; // todo: this is hardcoded!, get first column instead (could be ['id'] etc)
-
-            // var map_options = {
-            //     layer : 0,
-            //     fields : fields,
-            //     buffer_size : 128
-            // }
             
-            // // check
-            // if (!im) return callback('Unsupported type.')
-
-            // // render
-            // map.render(im, map_options, function (err, grid) {
-            //     if (err) return done(err);
-            //     if (!grid) return done('no grid 233');
-
-            //     grid.encode({features : true}, function (err, utf) {
-            //         if (err) return done(err);
-                    
-            //         // save grid to redis
-            //         var keyString = 'grid_tile:'  + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
-            //         store.saveGridTile(keyString, JSON.stringify(utf), done);
-            //     });
-            // });
         });
     },
 
 
     preRender : function (req, res) {
-        var layer_id = req.body.layer_id;
-        if (!layer_id) return res.send({error: 'Missing argument: layer_id'});
-
-        // get layer
-        store.layers.get(layer_id, function (err, storedLayerJSON) {    
-            if (err || !storedLayerJSON) return res.send({error: 'Missing layer_id'});
-
-            var layer = tools.safeParse(storedLayerJSON);
-            var metadata = tools.safeParse(layer.options.metadata);
-            var extent = metadata.extent;
-
-            // create tiles
-            var maxZoom = 14;
-            var tiles = mile.create_prerender_tiles_array({extent : extent, layer_id : layer_id}, maxZoom);
-
-
-            var num_tiles = _.size(tiles);
-            console.log('num_tiles:', num_tiles);
-
-            // throw on too many tile requests
-            if (num_tiles > 10000) return res.send({
-                success : false, 
-                error : 'Too many tiles!',
-                tiles : num_tiles,
-                estimated_time : (_.size(tiles) / 30)
-            });
-
-            // start pre-render
-            mile.requestPrerender({
-                tiles : tiles, 
-                access_token : req.body.access_token,
-                layer_id : layer_id
-            })
-
-            // return info to client
-            res.send({
-                success : true, 
-                error : null,
-                tiles : _.size(tiles),
-                estimated_time : (_.size(tiles) / 30)
-            });
-
-        });
-
+        return res.send('Deprecated!');
     },
 
     requestPrerender : function (options) {
@@ -1982,8 +1274,12 @@ module.exports = mile = {
             return;
         }
         fs.outputFile(xml_filename, xml, function (err) {
+<<<<<<< 95e3a435bc0a1f7467beb0aa65b08251d8ca639e
             if (err) console.log('debugXML err', err);
             // if (!err) console.log('wrote xml to ', xml_filename);
+=======
+            if (err) console.log(err);
+>>>>>>> cleanup
         });
     },
 
@@ -2127,78 +1423,3 @@ module.exports = mile = {
 // start server
 server(mile);
 
-// // -------------------
-// // TOGGLE CLUSTER MODE
-// // -------------------
-// // var useCluster = true;
-// var useCluster = false;
-// // -------------------
-
-
-// let workers = [];
-
-// if (useCluster) {
-
-//     // with clustering
-//     if (cluster.isMaster) { 
-
-//         // start server using cluster
-//         console.log('Clusters: ' + numCPUs);
-//         server(mile);
-
-//         // fork workers
-//         for (var i = 0; i < numCPUs - 1; i++) {  
-            
-//             workers.push(cluster.fork());
-
-//             // to receive messages from worker process
-//             workers[i].on('message', function(message) {
-//                 console.log(message);
-//             });
-//         };
-
-//         // process is clustered on a core and process id is assigned
-//         cluster.on('online', function(worker) {
-//             console.log('Worker ' + worker.process.pid + ' is listening');
-//         });
-
-//         // listen to exit, keep alive
-//         cluster.on('exit', function(worker, code, signal) { 
-            
-//             console.error('Cluster died, respawning...');
-//             workers.push(cluster.fork());
-            
-//             // to receive messages from worker process
-//             workers[workers.length-1].on('message', function(message) {
-//                 console.log(message);
-//             });
-//         });
-
-//     } 
-
-
-
-
-
-// // // run mile without clustering
-// } else {
-
-//     console.log('Starting without clustering...');
-
-//     // run server on single cluster
-//     server(mile);
-
-// }
-
-
-
-
-
-
-
-
-
-
-// start server
-// todo: move around
-// server(mile);

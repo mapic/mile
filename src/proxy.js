@@ -185,6 +185,7 @@ module.exports = proxy = {
 
         	// return tile to client
             proxy.serveTile(res, options, buffer);
+
         });
 
     },
@@ -197,14 +198,14 @@ module.exports = proxy = {
             if (err) console.log('getProxyTile err: ', err);
             
             // return data if any (and not forced render)
-            // todo: also check size, to fix empty proxy tiles
             if (!options.force_render && data) {
                 console.log('Serving cached proxy tile');
                 return done(null, data); // debug, turned off to create every time
             }
             
-            // create
+            // fetch tile from provider
             proxy.fetchProxyTile(options, done);
+
         });
     },
 
@@ -226,7 +227,6 @@ module.exports = proxy = {
             Body: buffer
         }, function (err, response) {
         	if (err) console.log('err saving proxy tile to S3', err, options);
-        	// console.log('saved proxy tile to S3', response)
             done && done(null);
         });
     },
@@ -327,15 +327,12 @@ module.exports = proxy = {
 			// save to S3 (no need to wait)
 			proxy.putProxyTileS3(response.buffer, options);
 
-			// console.log('HTTP GOT TILE', response.buffer);
-
 			// return tile buffer
 			return done(null, response.buffer);
 		
 		});
 		
 	},
-
 
 
 	_tile2lng : function (x,z) {

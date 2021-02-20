@@ -20,7 +20,6 @@ var RASTERPATH   = '/data/raster_tiles/';
 var GRIDPATH     = '/data/grid_tiles/';
 
 var mile_settings = {
-    // store : 'disk' // or redis or s3
     store : 's3' // or redis or s3
 }
 
@@ -35,7 +34,7 @@ var silentLog = function (err) {
 
 var MAPIC_REDIS_AUTH = process.env.MAPIC_REDIS_AUTH;
 var MAPIC_REDIS_PORT = process.env.MAPIC_REDIS_PORT || 6379;
-var MAPIC_REDIS_DB   = process.env.MAPIC_REDIS_DB || 1;
+var MAPIC_REDIS_DB   = process.env.MAPIC_REDIS_DB   || 1;
 
 // aws access keys (used automatically from ENV)
 process.env.AWS_ACCESS_KEY_ID       = process.env.MAPIC_AWS_S3_ACCESSKEYID      || process.env.MAPIC_AWS_ACCESSKEYID;
@@ -158,7 +157,6 @@ module.exports = store = {
         var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
         var params = {Bucket: bucketName, Key: keyString};
         s3.getObject(params, function(err, data) {
-            // console.log('err, data', err, data);
             if (err || !data) return done(null);
             done(null, data.Body);
         });
