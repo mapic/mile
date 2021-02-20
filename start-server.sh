@@ -18,5 +18,9 @@ yarn install
 # clean up forever
 rm -rf /root/.forever
 
+UV_THREADPOOL_SIZE=$(getconf _NPROCESSORS_ONLN) # number of CPUs on instance
+echo "Setting UV_THREADPOOL_SIZE to numCPUs:  $UV_THREADPOOL_SIZE"
+export UV_THREADPOOL_SIZE
+
 # spin server
 forever -m 100 --spinSleepTime 1000 -f -v -w --watchDirectory src/ src/mile.js
