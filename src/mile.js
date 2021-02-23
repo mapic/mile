@@ -1123,7 +1123,6 @@ module.exports = mile = {
     preRender : function (req, res) {
         return res.send('Deprecated!');
     },
-
     deg_to_rad : function (deg) {
         return deg * Math.PI / 180;
     },
@@ -1179,12 +1178,7 @@ module.exports = mile = {
             return;
         }
         fs.outputFile(xml_filename, xml, function (err) {
-<<<<<<< 95e3a435bc0a1f7467beb0aa65b08251d8ca639e
-            if (err) console.log('debugXML err', err);
-            // if (!err) console.log('wrote xml to ', xml_filename);
-=======
             if (err) console.log(err);
->>>>>>> cleanup
         });
     },
 

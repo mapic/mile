@@ -41,131 +41,6 @@ module.exports = proxy = {
 		grid : 'application/json'
 	},
 
-	serveTile : function (res, options) {
-
-		// tile path on disk
-		var tile_on_disk_path = PROXYPATH + options.provider + '/' + options.type + '/' + options.z + '/' + options.x + '/' + options.y + '.' + options.format;
-
-		// read tile, serve
-		fs.readFile(tile_on_disk_path, function (err, buffer) {
-			if (err) console.error({
-				err_id : 14,
-				err_msg : 'serve tile',
-				error : err
-			});
-
-			// error tile
-			if (err) return proxy.serveErrorTile(res);
-
-			// send tile to client
-			res.writeHead(200, {'Content-Type': mile.headers[options.format]}); 
-			res.end(buffer);
-		});
-
-	},
-
-	serveErrorTile : function (res) {
-		var errorTile = 'public/errorTile.png';
-		fs.readFile('public/noAccessTile.png', function (err, tile) {
-			res.writeHead(200, {'Content-Type': 'image/png'});
-			res.end(tile);
-		});
-	},
-
-	_serveTile : function (options, done) {
-
-		// provider
-		var provider = options.provider;
-
-		// pass to provider
-		if (provider == 'norkart') return proxy._getNorkartTile(options, done);
-		if (provider == 'google') return proxy._getGoogleTile(options, done);
-
-		// provider not supported err
-		var err = 'Provider not supported!', provider
-		if (err) console.error({
-			err_id : 17,
-			err_msg : 'get tile from provider',
-			error : err
-		});
-		done(err);
-	},
-
-	_fetchTile : function (options, done) {
-
-		// check disk first
-		var tile_on_disk_folder = PROXYPATH + options.provider + '/' + options.type + '/' + options.z + '/' + options.x + '/' 
-		var tile_on_disk_path = tile_on_disk_folder + options.y + '.' + options.format;
-
-		// url, headers
-		var url = options.url;
-		var headers = options.headers;
-
-		var ops = [];
-
-		// check disk
-		ops.push(function (callback) {
-
-			fs.readFile(tile_on_disk_path, function (err, data) {
-
-				// found tile on disk
-				if (!err && data) return callback({
-					status : 'got tile!'
-				});
-
-				// didnt find, do next
-				callback(null);
-			});
-		});
-
-		// get tile from http
-		ops.push(function (callback) {
-
-			// create folder
-			fs.ensureDir(tile_on_disk_folder, function (err) {
-				if (err) console.error({
-					err_id : 15,
-					err_msg : 'fetch tile',
-					error : err
-				});
-			
-				var httpOptions = {
-					url: url,
-					timeout : '10000',
-					headers : headers
-				};
-
-				// get tile
-				http.get(httpOptions, tile_on_disk_path, function (err, result) {
-					// console.log('GET tile err', err);
-					// console.log('GET TILE result', result);
-					if (err) console.error({
-						err_id : 16,
-						err_msg : 'fetch tile',
-						error : 'tile_on_disk_path: ' + tile_on_disk_path
-					});
-					
-					// got tile
-					if (!err && result) return callback({
-						status : 'got tile!'
-					});
-
-					// didn't get tile, something wrong					
-					callback({ error: 'Could not get tile from disk nor http.' });
-				});
-			});
-		});
-		
-		// run ops
-		async.series(ops, function (err) {
-
-			// some error
-			if (err.error) return done(err.error);
-
-			// done here
-			done();
-		});
-	},
 
     serveProxyTile : function (req, res) {
 
@@ -249,10 +124,8 @@ module.exports = proxy = {
 		// url schemes
 		var google_types = {
 			vector: "http://mt0.google.com/vt/",
-			aerial : "http://mt0.google.com/vt/lyrs=s&hl=en&",
+            aerial : "http://mt0.google.com/vt/lyrs=s&hl=en&"
 		}
-
-		// http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}
 
 		// google url
 		var url = google_types[options.type] + 'x=' + options.x + '&y=' + options.y + '&z=' + options.z;
