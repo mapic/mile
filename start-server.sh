@@ -18,6 +18,7 @@ yarn install
 # clean up forever
 rm -rf /root/.forever
 
+# set threadpool size
 UV_THREADPOOL_SIZE=$(getconf _NPROCESSORS_ONLN) # number of CPUs on instance
 echo "Setting UV_THREADPOOL_SIZE to numCPUs:  $UV_THREADPOOL_SIZE"
 export UV_THREADPOOL_SIZE
