@@ -2,7 +2,6 @@
 var _ = require('lodash');
 var fs = require('fs-extra');
 var request = require('request');
-var gm = require('gm');
 
 module.exports = tools = { 
 
@@ -53,59 +52,6 @@ module.exports = tools = {
 			if (!quiet) console.log('JSON.parse error of string:', string, e);
 			return false;
 		}
-	},
-
-	// deprecated, but keeping for now
-	_cutWhite : function (options, callback) {
-		var path = options.path;
-		var originalPath = options.originalPath;
-		var returnBuffer = options.returnBuffer;
-
-		gm(originalPath)
-		.whiteThreshold(200, 200, 200, 1)
-		.transparent('#FFFFFF')
-		.write(path, function (err) {
-			if (!err && returnBuffer) {
-				fs.readFile(path, callback);
-			} else {
-				callback(err);
-			}
-		});
-
-	},
-	_cutBlack : function (options, callback) {
-		var path = options.path;
-		var originalPath = options.originalPath;
-		var returnBuffer = options.returnBuffer;
-
-		gm(originalPath)
-		.blackThreshold(20, 20, 20, 1)
-		.transparent('#000000')
-		.write(path, function (err) {
-			if (!err && returnBuffer) {
-				fs.readFile(path, callback);
-			} else {
-				callback(err);
-			}
-		});
-	},
-	cutColor : function (options, callback) {
-		var path = options.path;
-		var originalPath = options.originalPath;
-		var color = options.color;
-		var returnBuffer = options.returnBuffer;
-
-		gm(originalPath)
-		.whiteThreshold(220, 220, 220, 1)
-		.transparent('#FFFFFF')
-		.write(path, function (err) {
-
-			if (!err && returnBuffer) {
-				fs.readFile(path, callback);
-			} else {
-				callback(err);
-			}
-		});
 	},
 
 	getRandomChars : function (len, charSet) {
