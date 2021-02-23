@@ -13,12 +13,6 @@ fi
 BUCKETS=50
 test -n "$4" && BUCKETS=$4
 
-# get config
-# source /mapic/config/env.sh || exit 1
-# MAPIC_PGSQL_USERNAME=systemapic
-# MAPIC_PGSQL_PASSWORD=docker
-
-
 # set -f
 if [ "$5" == "bar" ]; then
 

@@ -1,47 +1,20 @@
 // dependencies
 var _ = require('lodash');
-var fs = require('fs-extra');
 var pg = require('pg');
 var pgnative = require('pg').native
-var kue = require('kue');
-var path = require('path');
-var zlib = require('zlib');
-var uuid = require('uuid');
-var http = require('http-request');
 var async = require('async');
-var redis = require('redis');
-var carto = require('carto');
-var mapnik = require('mapnik');
-var colors = require('colors');
-var request = require('request');
-var mongoose = require('mongoose');
 var exec = require('child_process').exec;
-var mercator = require('./sphericalmercator');
 var geojsonArea = require('geojson-area');
 
 // plugin: deformation query
 var defo = require('./queries/deformation-query');
 
-// var MAPIC_PGSQL_USERNAME = 'systemapic';
-// var MAPIC_PGSQL_PASSWORD = 'docker';
-
-
-// var pgsql_options = {
-//     dbhost: 'postgis',
-//     dbuser: MAPIC_PGSQL_USERNAME,
-//     dbpass: MAPIC_PGSQL_PASSWORD
-// };
 
 var MAPIC_POSTGIS_HOST = process.env.MAPIC_POSTGIS_HOST;
 var MAPIC_POSTGIS_USERNAME = process.env.MAPIC_POSTGIS_USERNAME;
 var MAPIC_POSTGIS_PASSWORD = process.env.MAPIC_POSTGIS_PASSWORD;
 
 
-var pgsql_options = {
-    dbhost: MAPIC_POSTGIS_HOST,
-    dbuser: MAPIC_POSTGIS_USERNAME,
-    dbpass: MAPIC_POSTGIS_PASSWORD
-};
 
 module.exports = queries = { 
 
@@ -71,25 +44,17 @@ module.exports = queries = {
             var layer = layerObject.options;
 
             // set postgis options
-            var pg_username = MAPIC_POSTGIS_USERNAME;
-            var pg_password = MAPIC_POSTGIS_PASSWORD;
             var pg_database = layer.database_name;
 
-            // // set connection string
-            // var conString = 'postgres://' + pg_username + ':' + pg_password + '@postgis/' + pg_database;
-
-            // // initialize a connection pool
-            // pg.connect(conString, function(err, client, pg_done) {
-
+            // create pool
             var pool = new pgnative.Pool({
-                user : pg_username, 
-                password : pg_password,
-                database : pg_database,
-                host : 'postgis'
+                host        : MAPIC_POSTGIS_HOST,
+                user        : MAPIC_POSTGIS_USERNAME, 
+                password    : MAPIC_POSTGIS_PASSWORD,
+                database    : pg_database
             });
 
             // initialize a connection pool
-            // pg.connect(conString, function(err, client, pg_done) {
             pool.connect(function(err, client, pg_done) {
                 if (err) return done(err);
                 if (err) return console.error('error fetching client from pool', err);
@@ -490,10 +455,7 @@ module.exports = queries = {
         var postgis_db = options.postgis_db;
         var variables = options.variables;
         var query = options.query;
-        var dbhost = pgsql_options.dbhost;
-        var dbuser = pgsql_options.dbuser;
-        var dbpass = pgsql_options.dbpass;
-        var conString = 'postgres://'+dbuser+':'+dbpass+'@'+dbhost+'/' + postgis_db;
+        var conString = 'postgres://' + MAPIC_POSTGIS_USERNAME + ':' + MAPIC_POSTGIS_PASSWORD + '@' + MAPIC_POSTGIS_HOST + '/' + postgis_db;
 
         pg.connect(conString, function(err, client, pgcb) {
             if (err) return callback(err);

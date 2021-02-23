@@ -1,29 +1,7 @@
 // dependencies
 var _ = require('lodash');
 var pg = require('pg');
-// var pg = require('pg').native;
-var gm = require('gm');
-var fs = require('fs-extra');
-var kue = require('kue');
-var path = require('path');
-var zlib = require('zlib');
-var uuid = require('uuid');
 var async = require('async');
-var redis = require('redis');
-var carto = require('carto');
-var forge = require('node-forge');
-var mapnik = require('mapnik');
-var colors = require('colors');
-var cluster = require('cluster');
-var mongoose = require('mongoose');
-var request = require('request');
-var numCPUs = require('os').cpus().length;
-var exec = require('child_process').exec;
-var sanitize = require("sanitize-filename");
-var mercator = require('../sphericalmercator');
-var geojsonArea = require('geojson-area');
-var geojsonExtent = require('geojson-extent');
-var topojson = require('topojson');
 var moment = require('moment');
 moment().utc();
 
@@ -33,27 +11,9 @@ if (typeof Promise == 'undefined') {
 }
 
 // modules
-var config = global.config;
+// var config = global.config;
 var store  = require('../store');
 var tools = require('../tools');
-
-// global paths (todo: move to config)
-var VECTORPATH = '/data/vector_tiles/';
-var RASTERPATH = '/data/raster_tiles/';
-var CUBEPATH   = '/data/cube_tiles/';
-var GRIDPATH   = '/data/grid_tiles/';
-var PROXYPATH  = '/data/proxy_tiles/';
-
-
-var MAPIC_PGSQL_USERNAME = 'systemapic';
-var MAPIC_PGSQL_PASSWORD = 'docker';
-
-// postgis conn
-var pgsql_options = {
-    dbhost: 'postgis',
-    dbuser: MAPIC_PGSQL_USERNAME,
-    dbpass: MAPIC_PGSQL_PASSWORD
-};
 
 var MAPIC_POSTGIS_HOST = process.env.MAPIC_POSTGIS_HOST;
 var MAPIC_POSTGIS_USERNAME = process.env.MAPIC_POSTGIS_USERNAME;
@@ -271,10 +231,10 @@ module.exports = snow_query = {
             // var conString = 'postgres://' + pg_username + ':' + pg_password + '@postgis/' + pg_database;
 
             var pool = new pg.Pool({
+                host : MAPIC_POSTGIS_HOST,
                 user : MAPIC_POSTGIS_USERNAME, 
                 password : MAPIC_POSTGIS_PASSWORD,
-                database : pg_database,
-                host : MAPIC_POSTGIS_HOST
+                database : pg_database
             });
 
             // initialize a connection pool

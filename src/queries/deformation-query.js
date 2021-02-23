@@ -1,31 +1,7 @@
 // dependencies
 var _ = require('lodash');
-var pg = require('pg');
-// var pg = require('pg').native;
-var gm = require('gm');
-var fs = require('fs-extra');
-var kue = require('kue');
-var path = require('path');
-var zlib = require('zlib');
-var uuid = require('uuid');
 var async = require('async');
-var redis = require('redis');
-var carto = require('carto');
-var forge = require('node-forge');
-var mapnik = require('mapnik');
-var colors = require('colors');
-var cluster = require('cluster');
-var mongoose = require('mongoose');
-var request = require('request');
-var numCPUs = require('os').cpus().length;
 var exec = require('child_process').exec;
-var sanitize = require("sanitize-filename");
-var mercator = require('../sphericalmercator');
-var geojsonArea = require('geojson-area');
-var geojsonExtent = require('geojson-extent');
-var topojson = require('topojson');
-var moment = require('moment');
-moment().utc();
 
 // first run `npm install promise-polyfill --save
 if (typeof Promise == 'undefined') {
@@ -33,21 +9,8 @@ if (typeof Promise == 'undefined') {
 }
 
 // modules
-var config = global.config;
 var store  = require('../store');
 var tools = require('../tools');
-
-// global paths (todo: move to config)
-var VECTORPATH = '/data/vector_tiles/';
-var RASTERPATH = '/data/raster_tiles/';
-var CUBEPATH   = '/data/cube_tiles/';
-var GRIDPATH   = '/data/grid_tiles/';
-var PROXYPATH  = '/data/proxy_tiles/';
-
-
-var MAPIC_POSTGIS_HOST     = process.env.MAPIC_POSTGIS_HOST;
-var MAPIC_POSTGIS_USERNAME = process.env.MAPIC_POSTGIS_USERNAME;
-var MAPIC_POSTGIS_PASSWORD = process.env.MAPIC_POSTGIS_PASSWORD;
 
 
 module.exports = snow_query = { 

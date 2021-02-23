@@ -1,23 +1,11 @@
 // dependencies
 var _ = require('lodash');
 var fs = require('fs-extra');
-var kue = require('kue');
-var path = require('path');
-var zlib = require('zlib');
-var uuid = require('uuid');
 var async = require('async');
 var redis = require('redis');
-var carto = require('carto');
-var mapnik = require('mapnik');
-var colors = require('colors');
-var cluster = require('cluster');
-var numCPUs = require('os').cpus().length;
-var request = require('request');
 
 // global paths
 var VECTORPATH   = '/data/vector_tiles/';
-var RASTERPATH   = '/data/raster_tiles/';
-var GRIDPATH     = '/data/grid_tiles/';
 
 var mile_settings = {
     store : 's3' // or redis or s3

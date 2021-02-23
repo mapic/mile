@@ -1,26 +1,14 @@
 // dependencies
 var _ = require('lodash');
 var pg = require('pg').native;
-var gm = require('gm');
 var fs = require('fs-extra');
-var kue = require('kue');
-var path = require('path');
-var zlib = require('zlib');
 var uuid = require('uuid');
 var async = require('async');
-var redis = require('redis');
 var carto = require('carto');
 var forge = require('node-forge');
 var mapnik = require('mapnik');
-var colors = require('colors');
-var cluster = require('cluster');
-var mongoose = require('mongoose');
 var request = require('request');
-var numCPUs = require('os').cpus().length;
-var exec = require('child_process').exec;
-var sanitize = require("sanitize-filename");
 var mercator = require('./sphericalmercator');
-var geojsonArea = require('geojson-area');
 var geojsonExtent = require('geojson-extent');
 var topojson = require('topojson');
 var moment = require('moment');
@@ -30,7 +18,6 @@ var turf = {};
 turf.bbox = require('@turf/bbox');
 
 // modules
-var config = global.config;
 var store  = require('./store');
 var tools = require('./tools');
 
@@ -42,22 +29,8 @@ mapnik.register_default_fonts();
 mapnik.register_default_input_plugins();
 
 // global paths (todo: move to config)
-var VECTORPATH = '/data/vector_tiles/';
-var RASTERPATH = '/data/raster_tiles/';
-// var CUBEPATH   = '/data/cube_tiles/';
 var CUBEPATH   = '/data/tiles';
-var GRIDPATH   = '/data/grid_tiles/';
-var PROXYPATH  = '/data/proxy_tiles/';
 
-var MAPIC_PGSQL_USERNAME = 'systemapic';
-var MAPIC_PGSQL_PASSWORD = 'docker';
-
-// postgis conn
-var pgsql_options = {
-    dbhost: 'postgis',
-    dbuser: MAPIC_PGSQL_USERNAME,
-    dbpass: MAPIC_PGSQL_PASSWORD
-};
 
 var MAPIC_POSTGIS_HOST = process.env.MAPIC_POSTGIS_HOST;
 var MAPIC_POSTGIS_USERNAME = process.env.MAPIC_POSTGIS_USERNAME;
@@ -405,7 +378,6 @@ module.exports = cubes = {
         ops.cube = function (callback) {
             cubes.find(cube_id, callback);
         };
-
 
         // geojson string
         if (mask.type == 'geojson') {
@@ -837,17 +809,11 @@ module.exports = cubes = {
         // define settings, xml
         ops.push(function (callback) {
 
-            var pgsql_options = {
-                dbhost: 'postgis',
-                dbuser: MAPIC_PGSQL_USERNAME,
-                dbpass: MAPIC_PGSQL_PASSWORD
-            };
-
             // default settings
             var default_postgis_settings = {
-                user     : pgsql_options.dbuser,
-                password : pgsql_options.dbpass,
-                host     : pgsql_options.dbhost,
+                host     : MAPIC_POSTGIS_HOST,
+                user     : MAPIC_POSTGIS_USERNAME,
+                password : MAPIC_POSTGIS_PASSWORD,
                 srid     : '3857'
             }
 
@@ -1704,23 +1670,15 @@ module.exports = cubes = {
             var query_id = options.query_id;
             var query_num = options.query_num;
 
-            // set postgis options
-            var pg_username = MAPIC_PGSQL_USERNAME;
-            var pg_password = MAPIC_PGSQL_PASSWORD;
-            var pg_database = dataset.database_name;
-
-            // set connection string
-            // var conString = 'postgres://' + pg_username + ':' + pg_password + '@postgis/' + pg_database;
-
+            // create pool
             var pool = new pg.Pool({
-                user : pg_username, 
-                password : pg_password,
-                database : pg_database,
-                host : 'postgis'
+                host : MAPIC_POSTGIS_HOST,
+                user : MAPIC_POSTGIS_USERNAME, 
+                password : MAPIC_POSTGIS_PASSWORD,
+                database : dataset.database_name
             });
 
-            // initialize a connection pool
-            // pg.connect(conString, function(err, client, pg_done) {
+            // connect to pool
             pool.connect(function(err, client, pg_done) {
                 if (err) return done(err);
 
@@ -1812,9 +1770,6 @@ module.exports = cubes = {
         },
 
 
-
-
-
         postgis_snowcover : function (options, done) {
 
             // options
@@ -1827,22 +1782,15 @@ module.exports = cubes = {
             // get postgis compatible geojson
             var pg_geojson = cubes._retriveGeoJSON(geojson);
 
-            // set postgis options
-            var pg_username = MAPIC_PGSQL_USERNAME;
-            var pg_password = MAPIC_PGSQL_PASSWORD;
-            var pg_database = dataset.database_name;
-
-            // set connection string
-            // var conString = 'postgres://' + pg_username + ':' + pg_password + '@postgis/' + pg_database;
+            // create pool
             var pool = new pg.Pool({
-                user : pg_username, 
-                password : pg_password,
-                database : pg_database,
-                host : 'postgis'
+                host : MAPIC_POSTGIS_HOST,
+                user : MAPIC_POSTGIS_USERNAME, 
+                password : MAPIC_POSTGIS_PASSWORD,
+                database : dataset.database_name
             });
 
-            // initialize a connection pool
-            // pg.connect(conString, function(err, client, pg_done) {
+            // connect to pool
             pool.connect(function(err, client, pg_done) {
                 if (err) return console.error('error fetching client from pool', err);
 

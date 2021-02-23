@@ -1,31 +1,15 @@
 // dependencies
 var _ = require('lodash');
 var fs = require('fs-extra');
-var kue = require('kue');
-var path = require('path');
-var zlib = require('zlib');
+var zlib = require('zlib'); // for vector tile zipping
 var uuid = require('uuid');
 var async = require('async');
-var redis = require('redis');
-var carto = require('carto');
+var carto = require('carto'); // used by cartoRenderer, very possible breaking changes
 var mapnik = require('mapnik');
-var colors = require('colors');
-var cluster = require('cluster');
-var numCPUs = require('os').cpus().length;
-var mongoose = require('mongoose');
 var request = require('request');
-var exec = require('child_process').exec;
-var pg = require('pg');
-var gm = require('gm');
-var sanitize = require("sanitize-filename");
 var mercator = require('./sphericalmercator');
-var geojsonArea = require('geojson-area');
-var crypto = require('crypto');
-var https = require('https');
 var geojsonExtent = require('geojson-extent');
 var proj4 = require('proj4');
-const os = require('os')
-const util = require('util')
 var AWS = require('aws-sdk');
 
 console.warn = function () {}; // remove annoying carto warning
@@ -53,13 +37,6 @@ mapnik.register_default_fonts();
 mapnik.register_default_input_plugins();
 
 console.log('Mapnik version: ', mapnik.version);
-
-// global paths (todo: move to config)
-var VECTORPATH   = '/data/vector_tiles/';
-var RASTERPATH   = '/data/raster_tiles/';
-var GRIDPATH     = '/data/grid_tiles/';
-var PROXYPATH    = '/data/proxy_tiles/';
-
 
 // postgis env
 var MAPIC_POSTGIS_HOST     = process.env.MAPIC_POSTGIS_HOST;

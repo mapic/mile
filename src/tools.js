@@ -1,21 +1,8 @@
 // dependencies
 var _ = require('lodash');
 var fs = require('fs-extra');
-var kue = require('kue');
-var path = require('path');
-var zlib = require('zlib');
-var uuid = require('uuid');
-var async = require('async');
-var redis = require('redis');
-var carto = require('carto');
-var mapnik = require('mapnik');
-var colors = require('colors');
-var cluster = require('cluster');
-var numCPUs = require('os').cpus().length;
-var mongoose = require('mongoose');
 var request = require('request');
-var http = require('http-request');
-
+var gm = require('gm');
 
 module.exports = tools = { 
 
