@@ -308,7 +308,6 @@ module.exports = proxy = {
 		});
 	},
 
-	
 	_fetchProxyTile : function (options, done) {
 
 		var httpOptions = {
@@ -333,7 +332,6 @@ module.exports = proxy = {
 		});
 		
 	},
-
 
 	_tile2lng : function (x,z) {
 		return (x/Math.pow(2,z)*360-180);

@@ -77,7 +77,6 @@ module.exports = function (mile) {
 		mile.cubes.update(req, res);
 	});
 
-
 	// add mask
 	app.post('/v2/cubes/mask', mile.checkAccess, function (req, res) {
 		mile.cubes.mask(req, res);

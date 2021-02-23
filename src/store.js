@@ -65,7 +65,6 @@ if (!process.env.TRAVIS) {
         // create bucket
         s3.createBucket({
             Bucket : bucketName,
-            // Region : 'eu-central-1'
         }, function(err, data) {
             if (err) return console.log("Error", err);
             console.log("Created S3 bucket @", data.Location);
@@ -114,7 +113,7 @@ module.exports = store = {
         if (mile_settings.store == 's3')    return store._saveRasterTileS3(tile, params, done);
         return done('mile_settings.store not set!');
     },
-    _readRasterTile : function (params, done) {
+    getRasterTile : function (params, done) {
         if (mile_settings.store == 'redis') return store._readRasterTileRedis(params, done);
         if (mile_settings.store == 'disk')  return store._readRasterTileDisk(params, done);
         if (mile_settings.store == 's3')    return store._readRasterTileS3(params, done);
@@ -128,7 +127,6 @@ module.exports = store = {
         if (mile_settings.store == 's3') return store._getGridTileS3(params, done);
         store._getGridTileRedis(params, done); // old default
     },
-
 
     safeParse : function (string) {
         try {
@@ -179,7 +177,6 @@ module.exports = store = {
         });
     },
 
-
     // read/write to redis
     _saveVectorTileRedis : function (tile, params, done) {
         // save png to redis
@@ -192,24 +189,24 @@ module.exports = store = {
         var key = new Buffer(keyString);
         store.layers.get(key, done);
     },
-    _saveRasterTileRedis : function (tile, params, done) {
-        // save png to redis
-        var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
-        var key = new Buffer(keyString);
-        store.layers.set(key, tile.encodeSync('png'), done);
-    },
-    _readRasterTileRedis : function (params, done) {
-        var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
-        var key = new Buffer(keyString);
-        store.layers.get(key, done);
-    },
-    _saveGridTileRedis : function (key, data, done) {
-        store.layers.set(key, data, done);
-    },
-    _getGridTileRedis : function (params, done) {
-        var keyString = 'grid_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
-        store.layers.get(keyString, done);
-    },
+    // _saveRasterTileRedis : function (tile, params, done) {
+    //     // save png to redis
+    //     var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
+    //     var key = new Buffer(keyString);
+    //     store.layers.set(key, tile.encodeSync('png'), done);
+    // },
+    // _readRasterTileRedis : function (params, done) {
+    //     var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
+    //     var key = new Buffer(keyString);
+    //     store.layers.get(key, done);
+    // },
+    // _saveGridTileRedis : function (key, data, done) {
+    //     store.layers.set(key, data, done);
+    // },
+    // _getGridTileRedis : function (params, done) {
+    //     var keyString = 'grid_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y;
+    //     store.layers.get(keyString, done);
+    // },
 
 
     // read/write to disk
@@ -226,22 +223,22 @@ module.exports = store = {
             done(null, buffer);
         });
     },
-    _saveRasterTileDisk : function (tile, params, done) {
-        var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
-        var path = RASTERPATH + keyString;
-        tile.encode('png8', function (err, buffer) {
-            fs.outputFile(path, buffer, function (err) {
-                done(null);
-            });
-        });
-    },
-    _readRasterTileDisk : function (params, done) {
-        var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
-        var path = RASTERPATH + keyString;
-        fs.readFile(path, function (err, buffer) {
-            if (err) return done(null);
-            done(null, buffer);
-        });
-    },
+    // _saveRasterTileDisk : function (tile, params, done) {
+    //     var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
+    //     var path = RASTERPATH + keyString;
+    //     tile.encode('png8', function (err, buffer) {
+    //         fs.outputFile(path, buffer, function (err) {
+    //             done(null);
+    //         });
+    //     });
+    // },
+    // _readRasterTileDisk : function (params, done) {
+    //     var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
+    //     var path = RASTERPATH + keyString;
+    //     fs.readFile(path, function (err, buffer) {
+    //         if (err) return done(null);
+    //         done(null, buffer);
+    //     });
+    // },
 
 }

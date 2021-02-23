@@ -28,6 +28,8 @@ const os = require('os')
 const util = require('util')
 var AWS = require('aws-sdk');
 
+console.warn = function () {}; // remove annoying carto warning
+
 var turf = {};
 turf.booleanOverlap = require('@turf/boolean-overlap');
 turf.bboxPolygon = require('@turf/bbox-polygon');
@@ -209,6 +211,7 @@ module.exports = mile = {
                 // return tile to client
                 res.writeHead(200, {'Content-Type': mile.headers[type]});
                 res.end(data[0]);
+
             });
         });
     },
@@ -338,6 +341,7 @@ module.exports = mile = {
             vector_upload_status.timestamp = new Date().getTime();
             vector_upload_status.processing_success = false; // reset
 
+            // save upload status
             mile.setUploadStatus({
                 access_token : access_token,
                 upload_status : vector_upload_status
@@ -614,7 +618,7 @@ module.exports = mile = {
                     metadata         : upload_status.metadata,
                     data_type        : requested_layer.data_type || upload_status.data_type || 'vector',
 
-                    // optional                             // defaults
+                    // optional                          // defaults
                     geom_column      : geom_column      || 'the_geom_3857',
                     geom_type        : geom_type        || 'geometry',
                     raster_band      : raster_band      || 0,
@@ -682,18 +686,15 @@ module.exports = mile = {
 
     // create raster tile from postgis
     createRasterTile : function (params, storedLayer, done) {
-         mile._renderRasterTile(params, function (err) {
-         // mile._renderRasterTileLegacy(params, function (err) {
+         mile.renderRasterTile(params, function (err) {
             if (err) return done(err);
-
-            // tile is now in S3 (or disk, etc.)
-            store._readRasterTile(params, done);
+            store.getRasterTile(params, done);
         });
     },
 
     // create grid tile from postgis
     createGridTile : function (params, storedLayer, done) {
-         mile._renderGridTile(params, function (err) {
+         mile.renderGridTile(params, function (err) {
             if (err) return done(err);
             store.getGridTile(params, done);
         });
@@ -768,8 +769,6 @@ module.exports = mile = {
             postgis_settings.simplify_geometries = true; // no effect :(
             postgis_settings.simplify_clip_resolution = 3.0;
 
-            // everything in spherical mercator (3857)! ... 
-            // mercator.proj4 == 3857 == +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs +over
             try {   
                 map = new mapnik.Map(256, 256, mercator.proj4);
                 layer = new mapnik.Layer('layer', mercator.proj4);
@@ -853,17 +852,21 @@ module.exports = mile = {
         data.triage = 'raster';
         
         var params = {
-            FunctionName: 'mapnik-debug-2', /* required */
+            FunctionName: 'mapnik', /* required */
             Payload: JSON.stringify(data),
+            LogType: 'Tail'
         };
-
+        
+        console.log('invoking lambda (raster)');
         lambda.invoke(params, function(err, data) {
-            if (err) {
-                console.log(err, err.stack); // an error occurred
-            } else {    
-                console.log(data.Payload);           // successful response
+            if (err) console.log('lambda err:', err, err.stack); // an error occurred
 
-            }
+            // print result
+            const buff = Buffer.from(data.LogResult, 'base64');
+            const str = buff.toString('utf-8');
+            var info = _.replace(str.split('\tDuration')[1], '\t\n', '');
+            var costs = '[raster] Duration' + info;
+            console.log(costs);
 
             // should be all good
             done(err);
@@ -887,16 +890,21 @@ module.exports = mile = {
         data.triage = 'grid';
         
         var params = {
-            FunctionName: 'mapnik-debug-2', /* required */
+            FunctionName: 'mapnik', /* required */
             Payload: JSON.stringify(data),
+            LogType: 'Tail'
         };
 
+        console.log('invoking lambda (grid)');
         lambda.invoke(params, function(err, data) {
-            if (err) {
-                console.log(err, err.stack); // an error occurred
-            } else {    
-                console.log(data.Payload);           // successful response
-            }
+            if (err) console.log(err, err.stack); // an error occurred
+
+            // print result
+            const buff = Buffer.from(data.LogResult, 'base64');
+            const str = buff.toString('utf-8');
+            var info = _.replace(str.split('\tDuration')[1], '\t\n', '');
+            var costs = '[grid] Duration' + info;
+            console.log(costs);
 
             // should be all good
             done(err);
@@ -906,13 +914,18 @@ module.exports = mile = {
     },
 
 
-    _renderRasterTile : function (params, done) {
-
-        // benchmark
-        var prepareStartTime = Date.now();
+    renderRasterTile : function (params, done) {
 
         // prepare data
-        mile._prepareTile(params, function (err, data) {
+        mile.prepareTile(params, function (err, data) {
+            if (err) {
+                console.log('prepareTile err:', err, data);
+                return done(err);
+            }
+            if (!data) {
+                console.log('prepareTile no data!', data);
+                return done('no data!');
+            }
 
             // render tile on lambda
             mile.invokeLambdaRaster(data, done);
@@ -921,7 +934,27 @@ module.exports = mile = {
         
     },
 
-    _prepareTile : function (params, done) {
+    renderGridTile : function (params, done) {
+
+        // prepare data
+        mile.prepareTile(params, function (err, data) {
+            if (err) {
+                console.log('prepareTile err:', err, data);
+                return done(err);
+            }
+            if (!data) {
+                console.log('prepareTile no data!', data);
+                return done('no data!');
+            }
+
+            // render tile on lambda
+            mile.invokeLambdaGrid(data, done);
+            
+        });
+    },
+
+
+    prepareTile : function (params, done) {
 
         // parse url into layerUuid, zxy, type
         var ops = [];
@@ -1061,14 +1094,7 @@ module.exports = mile = {
                 bufferSize : 128,
                 proj : mercator.proj4,
                 params : params,
-                aws : {
-                    S3_BUCKETNAME           : 'mapic-s3.' + process.env.MAPIC_DOMAIN,
-                    AWS_REGION              : process.env.MAPIC_AWS_S3_REGION,
-
-                    // todo! 
-                    AWS_ACCESS_KEY_ID       : process.env.MAPIC_AWS_S3_ACCESSKEYID || process.env.MAPIC_AWS_ACCESSKEYID,
-                    AWS_SECRET_ACCESS_KEY   : process.env.MAPIC_AWS_S3_SECRETACCESSKEY || process.env.MAPIC_AWS_SECRETACCESSKEY,
-                }
+                s3_bucketname : 'mapic-s3.' + process.env.MAPIC_DOMAIN
             }
 
             callback(null, data);
@@ -1076,148 +1102,27 @@ module.exports = mile = {
         });
 
         // run ops
-        async.waterfall(ops, done);
+        async.waterfall(ops, function (err, data) {
+            if (err) {
+                console.log('some error preparing tile:', err);
+                return done(err);
+            }
+            if (!data) {
+                console.log('no data from preparing tile:');
+                return done('no data');
+            }
 
-    },
-
-    _renderGridTile : function (params, done) {
-
-        // prepare data
-        mile._prepareTile(params, function (err, data) {
-
-            // render tile on lambda
-            mile.invokeLambdaGrid(data, done);
-            
+            // all good
+            return done(null, data);
         });
+
     },
 
+  
 
     preRender : function (req, res) {
         return res.send('Deprecated!');
     },
-
-    requestPrerender : function (options) {
-        var tiles = options.tiles;
-        var access_token = options.access_token;
-        var layer_id = options.layer_id;
-        var raster_ops = [];
-        var grid_ops = [];
-        var os = require('os');
-        var cpuCount = os.cpus().length;
-        var nt = 6; // parallel tile requests
-        // var nt = cpuCount - 1; // parallel tile requests
-        var nt = os.cpus().length; // parallel tile requests
-
-        console.log('Pre-rendering', (_.size(tiles) * 2), 'tiles')
-        var timeStartRaster = Date.now();
-
-        // create array of tile requests
-        _.each(tiles, function (tile) {
-            
-            // raster tiles
-            raster_ops.push(function(done) {
-                var url = 'https://tiles-a-' + process.env.MAPIC_DOMAIN + '/v2/tiles/' + layer_id + '/' + tile.z + '/' + tile.x + '/' + tile.y + '.png?access_token=' + access_token;
-                https.get(url, function (err) {
-                    done();
-                });
-            });
-
-        });
-
-        // request only n tiles at a time
-        async.parallelLimit(raster_ops, nt, function (err, results) {
-            var timeEnd = Date.now();
-            var benched = (timeEnd - timeStartRaster) / 1000;
-            console.log('Pre-rendering of raster tiles done! That took', benched, 'seconds.');
-
-
-            var timeStartGrid = Date.now();
-
-              // create array of tile requests
-            _.each(tiles, function (tile) {
-
-                // grid tiles
-                grid_ops.push(function(done) {
-                    var url = 'https://grid-a-' + process.env.MAPIC_DOMAIN + '/v2/tiles/' + layer_id + '/' + tile.z + '/' + tile.x + '/' + tile.y + '.grid?access_token=' + access_token;
-                    https.get(url, function (err) {
-                        done();
-                    });
-                });
-            });
-
-            // request only n tiles at a time
-            async.parallelLimit(grid_ops, nt, function (err, results) {
-                var timeEnd = Date.now();
-                var benched = (timeEnd - timeStartGrid) / 1000;
-                console.log('Pre-rendering of grid tiles done! That took', benched, 'seconds.');
-            });
-
-        });
-
-
-    },
-
-    create_prerender_tiles_array : function (options, zoom) {
-        var tiles = [];
-        var maxZoom = zoom ? zoom : 7;
-        _.times(maxZoom, function (z) {
-            z++;
-            tiles.push(cubes.create_tile_array_at_zoom(options, z));
-        });
-        return _.flatten(tiles);
-    },
-
-    create_tile_array_at_zoom : function (options, zoom) {
-        var extent = options.extent;
-        var layer_id = options.layer_id;
-        var mask_id = options.mask_id;
-        var dataset_id = options.dataset_id;
-
-        // latitude
-        var north = parseFloat(extent[1]);
-        var south = parseFloat(extent[3]);
-
-        // longitutde
-        var west = parseFloat(extent[0]);
-        var east = parseFloat(extent[2]);
-
-        var minLng = west;
-        var maxLng = east;
-        var minLat = south;
-        var maxLat = north;
-
-        var minTileX = mile.lon_to_tile_x(minLng, zoom);
-        var maxTileX = mile.lon_to_tile_x(maxLng, zoom);
-
-        var minTileY = mile.lat_to_tile_y(minLat, zoom);
-        var maxTileY = mile.lat_to_tile_y(maxLat, zoom);
-
-        var x = minTileX;
-        var z = zoom;
-        var tiles = [];
-        while (x <= maxTileX) {
-            var y = minTileY;
-            while (y <= maxTileY) {
-                var tile = {
-                    z : z, 
-                    x : x, 
-                    y : y,
-                    layer_id : layer_id, 
-                    dataset_id : dataset_id,
-                    mask_id : mask_id,
-                    type : 'png',
-
-                }
-                tiles.push(tile);
-                y++;
-            }
-            x++;
-        }
-        return tiles;
-    },
-
-
-
 
     deg_to_rad : function (deg) {
         return deg * Math.PI / 180;
@@ -1250,12 +1155,12 @@ module.exports = mile = {
         try  {
             // carto renderer
             var xml = new carto.Renderer().render(options);
-            callback(null, xml);
+            return callback(null, xml);
 
         } catch (e) {
             console.log('carto render error:', e);
             var err = { message : 'CartoCSS rendering failed: ' + e.toString() }
-            callback(err);
+            return callback(err);
         }
 
     },
@@ -1318,17 +1223,20 @@ module.exports = mile = {
         if (outside_extent) return done('outside extent');
 
         // check cache
-        store._readRasterTile(params, function (err, data) {
+        store.getRasterTile(params, function (err, data) {
             if (err) console.log('getRasterTile err: ', err);
             
             // return data if any (and not forced render)
-            if (!params.force_render && data) {
-                console.log('Serving cached tile');
+            if (!data || params.force_render == 'true') {
+
+                // create tile
+                mile.createRasterTile(params, storedLayer, done);
+
+            } else {
+                console.log('Serving cached raster tile');
                 return done(null, data); // debug, turned off to create every time
             }
             
-            // create
-            mile.createRasterTile(params, storedLayer, done);
         });
     },
 
@@ -1349,7 +1257,6 @@ module.exports = mile = {
     // return tiles from disk or create
     getGridTile : function (params, storedLayer, done) {
 
-        // console.log('getRasterTile params', params, storedLayer);
         var outside_extent = mile._isOutsideExtent({
             params : params, 
             layer : storedLayer
@@ -1359,11 +1266,17 @@ module.exports = mile = {
         // check cache
         store.getGridTile(params, function (err, data) {
 
-            // found, return data
-            if (data) return done(null, data);
+            // return data if any (and not forced render)
+            if (!data || params.force_render == 'true') {
 
-            // not found, create
-            mile.createGridTile(params, storedLayer, done);
+                // not found, create
+                mile.createGridTile(params, storedLayer, done);
+
+            } else {
+                console.log('Serving cached grid tile');
+                return done(null, data); // debug, turned off to create every time
+            }
+
         });
     },
 
