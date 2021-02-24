@@ -3,6 +3,7 @@ var _ = require('lodash');
 var fs = require('fs-extra');
 var async = require('async');
 var redis = require('redis');
+var AWS = require('aws-sdk');
 
 // global paths
 var VECTORPATH   = '/data/vector_tiles/';
@@ -28,12 +29,12 @@ var MAPIC_REDIS_DB   = process.env.MAPIC_REDIS_DB   || 1;
 process.env.AWS_ACCESS_KEY_ID       = process.env.MAPIC_AWS_S3_ACCESSKEYID      || process.env.MAPIC_AWS_ACCESSKEYID;
 process.env.AWS_SECRET_ACCESS_KEY   = process.env.MAPIC_AWS_S3_SECRETACCESSKEY  || process.env.MAPIC_AWS_SECRETACCESSKEY;
 
+
 if (!process.env.TRAVIS) {
 
     try {
-        var AWS = require('aws-sdk');
-        var s3 = new AWS.S3({region: 'eu-central-1'});
         var bucketName = 'mapic-s3.' + process.env.MAPIC_DOMAIN;
+        var s3 = new AWS.S3({region: 'eu-central-1'});
     } catch (e) {
         console.log('AWS error: ', e);
     };
@@ -132,7 +133,6 @@ module.exports = store = {
         var keyString = 'raster_tile:' + params.layerUuid + ':' + params.z + ':' + params.x + ':' + params.y + '.png';
         var params = {Bucket: bucketName, Key: keyString};
         s3.getObject(params, function(err, data) {
-            if (err) console.log('err: ', err, keyString, params)
             if (err || !data) return done(null);
             done(null, data.Body);
         });
