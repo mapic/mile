@@ -657,7 +657,7 @@ module.exports = mile = {
     createVectorTile : function (params, storedLayer, done) {
         mile._renderVectorTile(params, function (err) {
             if (err) return done(err);
-            store._readVectorTile(params, done);
+            store.getVectorTile(params, done);
         });
     },
 
@@ -724,9 +724,9 @@ module.exports = mile = {
 
             // default settings
             var default_postgis_settings = {
-                user        : pgsql_options.dbuser,
-                password    : pgsql_options.dbpass,
-                host        : pgsql_options.dbhost,
+                user        : MAPIC_POSTGIS_USERNAME,
+                password    : MAPIC_POSTGIS_PASSWORD,
+                host        : MAPIC_POSTGIS_HOST,
                 type        : 'postgis',
                 geometry_field  : 'the_geom_3857',
                 srid        : '3857'
@@ -808,7 +808,7 @@ module.exports = mile = {
                     return done(err);
                 }
 
-                store._saveVectorTile(tile, params, done);
+                store.saveVectorTile(tile, params, done);
             });
         });
 
@@ -1215,7 +1215,7 @@ module.exports = mile = {
     getVectorTile : function (params, storedLayer, done) {
 
         // check redis
-        store._readVectorTile(params, function (err, data) {
+        store.getVectorTile(params, function (err, data) {
 
             // return data
             if (data) return done(null, data);   // debug, turned off to create every time
