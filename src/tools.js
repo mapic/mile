@@ -54,6 +54,16 @@ module.exports = tools = {
 		}
 	},
 
+	safeStringify : function (o) {
+		try {
+			var s = JSON.stringify(o);
+			return s;
+		} catch (e) {
+			if (!quiet) console.log('JSON.stringify error of object:', o, e);
+			return false;
+		}
+	},
+
 	getRandomChars : function (len, charSet) {
 		charSet = charSet || 'abcdefghijklmnopqrstuvwxyz';
 		var randomString = '';

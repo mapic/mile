@@ -1160,7 +1160,7 @@ module.exports = mile = {
     },
 
     _isOutsideExtent : function (options) {
-        
+
         var params = options.params;
         var layer = options.layer;   
 
@@ -1169,16 +1169,19 @@ module.exports = mile = {
         var coords = options.params;
         var metadata = tools.safeParse(layer.options.metadata);
 
+        // hack/fix when dataset only contains one point
+        if (metadata.row_count == '1') return false;
+
         // get bboxes
         var tile_bounding_box = mercator.xyz_to_envelope(parseInt(coords.x), parseInt(coords.y), parseInt(coords.z), false);
         var extent_geojson = metadata.extent_geojson;
         var raster_extent_latlng = geojsonExtent(extent_geojson);
         var poly1 = turf.bboxPolygon(tile_bounding_box);
-        var poly1 = turf.projection.toWgs84(poly1);
-        var poly2 = turf.bboxPolygon(raster_extent_latlng);
+        var poly2 = turf.projection.toWgs84(poly1);
+        var poly3 = turf.bboxPolygon(raster_extent_latlng);
         
         // check for overlap
-        var intersection = turf.intersect(poly1, poly2);
+        var intersection = turf.intersect(poly2, poly3);
 
         return _.isNull(intersection);
     },
