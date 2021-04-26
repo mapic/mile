@@ -66,7 +66,7 @@
     "promise-polyfill": "^6.0.2",
     "prompt": "^1.0.0",
     "protocol-buffers": "^3.1.6",
-    "redis": "^2.6.2",
+    "redis": "^3.1.1",
     "request": "^2.58.0",
     "sanitize-filename": "^1.5.3",
     "snyk": "^1.36.2",
