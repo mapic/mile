@@ -49,7 +49,7 @@
     "http-status": "^1.0.1",
     "kue": "^0.11.4",
     "lodash": "^4.17.15",
-    "mapnik": "3.x",
+    "mapnik": "4.5.6",
     "mapnik-omnivore": "^8.1.0",
     "mmmagic": "^0.4.1",
     "mocha": "^4.0.1",
