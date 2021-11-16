@@ -28,7 +28,7 @@
     "@turf/projection": "^5.0.4",
     "@turf/turf": "^5.0.4",
     "async": "^2.1.2",
-    "aws-sdk": "^2.106.0",
+    "aws-sdk": "^2.814.0",
     "bars": "jstrace/bars",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.13.2",
